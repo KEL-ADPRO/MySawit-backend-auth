@@ -1,12 +1,13 @@
 package com.mysawit.mysawit_auth.util;
 
 import com.mysawit.mysawit_auth.model.Role;
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.*;
 
 import java.util.UUID;
 
-@Data
+@Getter
+@Builder
+@NoArgsConstructor
 @AllArgsConstructor
 public class AuthResponse {
     private String token;
@@ -15,4 +16,5 @@ public class AuthResponse {
     private String name;
     private String email;
     private Role role;
+    private String nomorSertifMandor;
 }

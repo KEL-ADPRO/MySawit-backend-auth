@@ -8,6 +8,7 @@ class MySawitAuthApplicationTests {
 
 	@Test
 	void contextLoads() {
+		MySawitAuthApplication.main(new String[]{});
 	}
 
 }

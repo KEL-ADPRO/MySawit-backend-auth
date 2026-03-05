@@ -3,30 +3,33 @@ package com.mysawit.mysawit_auth.util;
 import com.mysawit.mysawit_auth.model.Role;
 import com.mysawit.mysawit_auth.model.User;
 import com.mysawit.mysawit_auth.repository.AuthRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+
+import java.util.UUID;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class DataSeeder implements CommandLineRunner {
-
+    @Autowired
     private final AuthRepository authRepository;
-    private final PasswordEncoder passwordEncoder;
+    private final PasswordHasher passwordHasher;
 
     @Override
+    @Transactional
     public void run(String... args) {
-        if (authRepository.findByEmail("admin@mysawit.com").isEmpty()) {
-            User admin = new User(
-                    "admin",
-                    "Admin Utama",
-                    "admin@mysawit.com",
-                    passwordEncoder.encode("admin123"),
-                    Role.ADMIN
-            );
+        if (authRepository.findByEmail("admin@mysawit.com") == null) {
+            User admin = new User();
+            admin.setName("admin");
+            admin.setUsername("Admin Utama");
+            admin.setEmail("admin@gmail.com");
+            admin.setPassword(passwordHasher.hash("admin123"));
+            admin.setRole(Role.ADMIN);
             authRepository.save(admin);
             log.info("=== Default admin created: admin@mysawit.com / admin123 ===");
         }

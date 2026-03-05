@@ -1,18 +1,19 @@
 package com.mysawit.mysawit_auth.model;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.util.UUID;
 
 @Entity
+@Builder
 @Table (name = "users")
 @NoArgsConstructor
+@AllArgsConstructor
 @Getter @Setter
 public class User {
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(unique = true, nullable = false)
     private UUID id;
 
@@ -34,14 +35,4 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;
-
-    public User(String username, String name, String email, String password, Role role) {
-        this.id = UUID.randomUUID();
-        this.username = username;
-        this.name = name;
-        this.email = email;
-        this.password = password;
-        this.role = role;
-    }
-
 }

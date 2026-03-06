@@ -23,15 +23,15 @@ public class DataSeeder implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) {
-        if (authRepository.findByEmail("admin@mysawit.com") == null) {
+        if (authRepository.findByEmail("admin.MySawit19@gmail.com") == null) {
             User admin = new User();
-            admin.setName("admin");
+            admin.setName("Admin MySawit Kel.19");
             admin.setUsername("Admin Utama");
-            admin.setEmail("admin@gmail.com");
-            admin.setPassword(passwordHasher.hash("admin123"));
+            admin.setEmail("admin.MySawit19@gmail.com");
+            admin.setPassword(passwordHasher.hash("adminKel19"));
             admin.setRole(Role.ADMIN);
             authRepository.save(admin);
-            log.info("=== Default admin created: admin@mysawit.com / admin123 ===");
+            log.info("=== Default admin created: admin.MySawit19@gmail.com / adminKel19 ===");
         }
     }
 }

@@ -4,11 +4,13 @@ import com.mysawit.mysawit_auth.model.Role;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import lombok.Data;
+import lombok.*;
 
-@Data
+@Getter
+@Builder(toBuilder = true)
+@NoArgsConstructor
+@AllArgsConstructor
 public class RegisterRequest {
-
     @NotBlank(message = "Username is required")
     private String username;
 

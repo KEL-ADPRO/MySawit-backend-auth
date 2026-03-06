@@ -2,13 +2,13 @@ package com.mysawit.mysawit_auth.repository;
 
 import com.mysawit.mysawit_auth.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
 
-import java.util.Optional;
+import java.util.List;
 import java.util.UUID;
 
-@Repository
-public interface AuthRepository extends JpaRepository<User, UUID> {
-    Optional<User> findByEmail(String email);
-    Optional<User> findByUsername(String username);
+public interface AuthRepository {
+    User save(User user);
+    User findByEmail(String email);
+    User findById(String userId);
+    User findByUsername(String username);
 }

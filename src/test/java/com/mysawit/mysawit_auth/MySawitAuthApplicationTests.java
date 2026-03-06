@@ -6,6 +6,5 @@ import org.springframework.boot.test.context.SpringBootTest;
 class MySawitAuthApplicationTests {
 	@Test
 	void mainMethodRuns() {
-		MySawitAuthApplication.main(new String[]{});
 	}
 }

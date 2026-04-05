@@ -18,8 +18,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
-import java.util.UUID;
-
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -205,7 +203,7 @@ public class AuthServiceTest {
     @Test
     void loginSuccess() {
         when(authRepository.findByEmail("admin@gmail.com")).thenReturn(adminUser);
-        when(passwordVerifier.matches("admin123", "hashed_admin123")).thenReturn(true);
+        when(passwordHasher.matches("admin123", "hashed_admin123")).thenReturn(true);
         when(jwtUtil.generateToken("admin@gmail.com")).thenReturn("dummy.jwt.token");
 
         LoginRequest request = LoginRequest.builder()
@@ -286,7 +284,7 @@ public class AuthServiceTest {
     @Test
     void loginWrongPassword() {
         when(authRepository.findByEmail("admin@gmail.com")).thenReturn(adminUser);
-        when(passwordVerifier.matches("atmin456", "hashed_atmin456")).thenReturn(false);
+        when(passwordHasher.matches("atmin456", "hashed_atmin456")).thenReturn(false);
 
         LoginRequest request = LoginRequest.builder()
                 .email("admin@gmail.com")

@@ -1,7 +1,5 @@
 package com.mysawit.mysawit_auth.controller;
 
-import com.mysawit.mysawit_auth.exception.EmailAlreadyExistsException;
-import com.mysawit.mysawit_auth.exception.MandorSertifMissingException;
 import com.mysawit.mysawit_auth.model.Role;
 import com.mysawit.mysawit_auth.service.AuthService;
 import com.mysawit.mysawit_auth.util.ApiResponse;

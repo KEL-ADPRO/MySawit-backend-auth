@@ -4,6 +4,7 @@ import com.mysawit.mysawit_auth.model.Role;
 import com.mysawit.mysawit_auth.service.AuthService;
 import com.mysawit.mysawit_auth.util.ApiResponse;
 import com.mysawit.mysawit_auth.util.AuthResponse;
+import com.mysawit.mysawit_auth.util.LoginRequest;
 import com.mysawit.mysawit_auth.util.RegisterRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

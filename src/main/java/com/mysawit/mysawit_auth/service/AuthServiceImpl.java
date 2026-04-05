@@ -5,9 +5,7 @@ import com.mysawit.mysawit_auth.exception.MandorSertifMissingException;
 import com.mysawit.mysawit_auth.model.Role;
 import com.mysawit.mysawit_auth.model.User;
 import com.mysawit.mysawit_auth.repository.AuthRepository;
-import com.mysawit.mysawit_auth.util.AuthResponse;
-import com.mysawit.mysawit_auth.util.PasswordHasher;
-import com.mysawit.mysawit_auth.util.RegisterRequest;
+import com.mysawit.mysawit_auth.util.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -18,6 +16,7 @@ public class AuthServiceImpl implements AuthService {
     @Autowired
     private final AuthRepository authRepository;
     private final PasswordHasher passwordHasher;
+    private final JwtUtil jwtUtil;
 
     @Override
     public AuthResponse register(final RegisterRequest request) {
@@ -38,7 +37,26 @@ public class AuthServiceImpl implements AuthService {
         guardEmailUnique(request.getEmail());
         guardMandorCertification(request);
         final User saved = authRepository.save(buildUser(request));
-        return toResponse(saved);
+        return toResponse(saved, null);
+    }
+
+    @Override
+    public AuthResponse login(final LoginRequest request) {
+        if (request == null) {
+            throw new IllegalArgumentException("Request must not be null!");
+        } else if (request.getEmail() == null || request.getEmail().isBlank()) {
+            throw new IllegalArgumentException("Email must not be blank!");
+        } else if (request.getPassword() == null || request.getPassword().isBlank()) {
+            throw new IllegalArgumentException("Password must not be blank!");
+        }
+
+        final User user = authRepository.findByEmail(request.getEmail());
+        if (user == null || !passwordHasher.matches(request.getPassword(), user.getPassword())) {
+            throw new IllegalArgumentException("Invalid email or password!");
+        }
+
+        final String token = jwtUtil.generateToken(user.getEmail());
+        return toResponse(user, token);
     }
 
     private void guardEmailUnique(final String email) {
@@ -67,8 +85,9 @@ public class AuthServiceImpl implements AuthService {
                 .build();
     }
 
-    private AuthResponse toResponse(final User user) {
+    private AuthResponse toResponse(final User user, final String token) {
         return AuthResponse.builder()
+                .token(token)
                 .username(user.getUsername())
                 .userId(user.getId())
                 .email(user.getEmail())

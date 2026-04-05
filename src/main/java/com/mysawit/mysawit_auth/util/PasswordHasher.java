@@ -10,4 +10,8 @@ public class PasswordHasher {
     public String hash(final String rawPassword) {
         return encoder.encode(rawPassword);
     }
+
+    public boolean matches(final String rawPassword, final String encodedPassword) {
+        return encoder.matches(rawPassword, encodedPassword);
+    }
 }

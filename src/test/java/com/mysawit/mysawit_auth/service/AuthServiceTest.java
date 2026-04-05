@@ -6,6 +6,7 @@ import com.mysawit.mysawit_auth.model.Role;
 import com.mysawit.mysawit_auth.model.User;
 import com.mysawit.mysawit_auth.repository.AuthRepository;
 import com.mysawit.mysawit_auth.util.AuthResponse;
+import com.mysawit.mysawit_auth.util.JwtUtil;
 import com.mysawit.mysawit_auth.util.PasswordHasher;
 import com.mysawit.mysawit_auth.util.RegisterRequest;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,6 +17,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -33,10 +36,15 @@ public class AuthServiceTest {
     @InjectMocks
     private AuthServiceImpl authService;
 
+    @Mock
+    private JwtUtil jwtUtil;
+
     private RegisterRequest adminRequest;
     private RegisterRequest mandorRequest;
     private RegisterRequest buruhRequest;
     private RegisterRequest supirRequest;
+
+    private User adminUser;
 
     @BeforeEach
     void setUp() {
@@ -192,5 +200,100 @@ public class AuthServiceTest {
 
         assertThrows(EmailAlreadyExistsException.class, () -> authService.register(newRequest));
         verify(authRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    void loginSuccess() {
+        when(authRepository.findByEmail("admin@gmail.com")).thenReturn(adminUser);
+        when(passwordVerifier.matches("admin123", "hashed_admin123")).thenReturn(true);
+        when(jwtUtil.generateToken("admin@gmail.com")).thenReturn("dummy.jwt.token");
+
+        LoginRequest request = LoginRequest.builder()
+                .email("admin@gmail.com")
+                .password("admin123")
+                .build();
+
+        AuthResponse response = authService.login(request);
+
+        verify(authRepository, times(1)).findByEmail("admin@gmail.com");
+        verify(jwtUtil, times(1)).generateToken("admin@gmail.com");
+        assertNotNull(response);
+        assertEquals("dummy.jwt.token", response.getToken());
+        assertEquals("Admin Sawit", response.getUsername());
+        assertEquals("Agus", response.getName());
+        assertEquals("admin@gmail.com", response.getEmail());
+        assertEquals(Role.ADMIN, response.getRole());
+    }
+
+    @Test
+    void loginNullRequest() {
+        assertThrows(IllegalArgumentException.class, () -> authService.login(null));
+    }
+
+    @Test
+    void loginUnknownEmail() {
+        when(authRepository.findByEmail("unknownUser@gmail.com")).thenReturn(null);
+
+        LoginRequest request = LoginRequest.builder()
+                .email("unknownUser@gmail.com")
+                .password("unknownPassword")
+                .build();
+
+        assertThrows(IllegalArgumentException.class, () -> authService.login(request));
+        verify(jwtUtil, never()).generateToken(any());
+    }
+
+    @Test
+    void loginBlankEmail() {
+        LoginRequest request = LoginRequest.builder()
+                .email("  ")
+                .password("admin123")
+                .build();
+
+        assertThrows(IllegalArgumentException.class, () -> authService.login(request));
+    }
+
+    @Test
+    void loginNullEmail() {
+        LoginRequest request = LoginRequest.builder()
+                .email(null)
+                .password("admin123")
+                .build();
+
+        assertThrows(IllegalArgumentException.class, () -> authService.login(request));
+    }
+
+    @Test
+    void loginBlankPassword() {
+        LoginRequest request = LoginRequest.builder()
+                .email("admin@gmail.com")
+                .password("")
+                .build();
+
+        assertThrows(IllegalArgumentException.class, () -> authService.login(request));
+    }
+
+    @Test
+    void loginNullPassword() {
+        LoginRequest request = LoginRequest.builder()
+                .email("admin@gmail.com")
+                .password(null)
+                .build();
+
+        assertThrows(IllegalArgumentException.class, () -> authService.login(request));
+    }
+
+    @Test
+    void loginWrongPassword() {
+        when(authRepository.findByEmail("admin@gmail.com")).thenReturn(adminUser);
+        when(passwordVerifier.matches("atmin456", "hashed_atmin456")).thenReturn(false);
+
+        LoginRequest request = LoginRequest.builder()
+                .email("admin@gmail.com")
+                .password("wrongPassword")
+                .build();
+
+        assertThrows(IllegalArgumentException.class, () -> authService.login(request));
+        verify(jwtUtil, never()).generateToken(any());
     }
 }

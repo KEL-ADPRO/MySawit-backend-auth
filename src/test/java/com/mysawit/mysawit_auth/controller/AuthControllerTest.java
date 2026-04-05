@@ -34,10 +34,14 @@ public class AuthControllerTest {
     private RegisterRequest mandorRequest;
     private RegisterRequest buruhRequest;
     private RegisterRequest supirRequest;
+
     private AuthResponse adminResponse;
     private AuthResponse mandorResponse;
     private AuthResponse buruhResponse;
     private AuthResponse supirResponse;
+
+    private LoginRequest validLoginRequest;
+    private AuthResponse loginResponse;
 
     @BeforeEach
     void setUp() {
@@ -106,10 +110,16 @@ public class AuthControllerTest {
                 .email("budi@gmail.com")
                 .role(Role.SUPIR)
                 .build();
+
+        loginResponse = AuthResponse.builder()
+                .token("dummy.jwt.token")
+                .userId(UUID.fromString("eb558e9f-1c39-460e-8860-71af6af63bd6"))
+                .username("Admin Sawit").name("Agus")
+                .email("admin@gmail.com").role(Role.ADMIN).build();
     }
 
     @Test
-    void registerAdmin_Success() {
+    void registerAdminSuccess() {
         when(authService.register(adminRequest)).thenReturn(adminResponse);
 
         ResponseEntity<ApiResponse<AuthResponse>> result = authController.register(adminRequest);
@@ -118,15 +128,7 @@ public class AuthControllerTest {
         assertEquals("Registration successful", result.getBody().getMessage());
         assertEquals(HttpStatus.CREATED, result.getStatusCode());
         verify(authService, times(1)).register(adminRequest);
-    }
 
-    @Test
-    void registerAdmin_CorrectData() {
-        when(authService.register(adminRequest)).thenReturn(adminResponse);
-
-        ResponseEntity<ApiResponse<AuthResponse>> result = authController.register(adminRequest);
-
-        assertNotNull(result.getBody());
         AuthResponse data = result.getBody().getData();
 
         assertEquals("Admin Sawit", data.getUsername());
@@ -134,10 +136,11 @@ public class AuthControllerTest {
         assertEquals("admin@gmail.com", data.getEmail());
         assertEquals(Role.ADMIN, data.getRole());
         verify(authService, times(1)).register(adminRequest);
+
     }
 
     @Test
-    void registerMandor_Success() {
+    void registerMandorSuccess() {
         when(authService.register(mandorRequest)).thenReturn(mandorResponse);
 
         ResponseEntity<ApiResponse<AuthResponse>> result = authController.register(mandorRequest);
@@ -146,15 +149,7 @@ public class AuthControllerTest {
         assertEquals("Registration successful", result.getBody().getMessage());
         assertEquals(HttpStatus.CREATED, result.getStatusCode());
         verify(authService, times(1)).register(mandorRequest);
-    }
 
-    @Test
-    void registerMandor_CorrectData() {
-        when(authService.register(mandorRequest)).thenReturn(mandorResponse);
-
-        ResponseEntity<ApiResponse<AuthResponse>> result = authController.register(mandorRequest);
-
-        assertNotNull(result.getBody());
         AuthResponse data = result.getBody().getData();
 
         assertEquals("Mandor Sawit", data.getUsername());
@@ -166,7 +161,7 @@ public class AuthControllerTest {
     }
 
     @Test
-    void registerBuruh_Success() {
+    void registerBuruhSuccess() {
         when(authService.register(buruhRequest)).thenReturn(buruhResponse);
 
         ResponseEntity<ApiResponse<AuthResponse>> result = authController.register(buruhRequest);
@@ -175,15 +170,7 @@ public class AuthControllerTest {
         assertEquals("Registration successful", result.getBody().getMessage());
         assertEquals(HttpStatus.CREATED, result.getStatusCode());
         verify(authService, times(1)).register(buruhRequest);
-    }
 
-    @Test
-    void registerBuruh_CorrectData() {
-        when(authService.register(buruhRequest)).thenReturn(buruhResponse);
-
-        ResponseEntity<ApiResponse<AuthResponse>> result = authController.register(buruhRequest);
-
-        assertNotNull(result.getBody());
         AuthResponse data = result.getBody().getData();
 
         assertEquals("Buruh Sawit", data.getUsername());
@@ -194,7 +181,7 @@ public class AuthControllerTest {
     }
 
     @Test
-    void registerSupir_Success() {
+    void registerSupirSuccess() {
         when(authService.register(supirRequest)).thenReturn(supirResponse);
 
         ResponseEntity<ApiResponse<AuthResponse>> result = authController.register(supirRequest);
@@ -203,15 +190,7 @@ public class AuthControllerTest {
         assertEquals("Registration successful", result.getBody().getMessage());
         assertEquals(HttpStatus.CREATED, result.getStatusCode());
         verify(authService, times(1)).register(supirRequest);
-    }
 
-    @Test
-    void registerSupir_CorrectData() {
-        when(authService.register(supirRequest)).thenReturn(supirResponse);
-
-        ResponseEntity<ApiResponse<AuthResponse>> result = authController.register(supirRequest);
-
-        assertNotNull(result.getBody());
         AuthResponse data = result.getBody().getData();
 
         assertEquals("Supir Sawit", data.getUsername());
@@ -219,5 +198,34 @@ public class AuthControllerTest {
         assertEquals("budi@gmail.com", data.getEmail());
         assertEquals(Role.SUPIR, data.getRole());
         verify(authService, times(1)).register(supirRequest);
+    }
+
+    @Test
+    void loginSuccess() {
+        when(authService.login(validLoginRequest)).thenReturn(loginResponse);
+
+        ResponseEntity<ApiResponse<AuthResponse>> result = authController.login(validLoginRequest);
+
+        assertNotNull(result.getBody());
+        assertEquals(HttpStatus.OK, result.getStatusCode());
+        assertTrue(result.getBody().isSuccess());
+        assertEquals("Login successful", result.getBody().getMessage());
+        verify(authService, times(1)).login(validLoginRequest);
+
+        AuthResponse data = result.getBody().getData();
+
+        assertEquals("dummy.jwt.token", data.getToken());
+        assertEquals("Admin Sawit", data.getUsername());
+        assertEquals("Agus", data.getName());
+        assertEquals("admin@gmail.com", data.getEmail());
+        assertEquals(Role.ADMIN, data.getRole());
+    }
+
+    @Test
+    void loginInvalidCredentials() {
+        when(authService.login(validLoginRequest)).thenThrow(new IllegalArgumentException());
+
+        verify(authService, times(1)).login(validLoginRequest);
+        assertThrows(IllegalArgumentException.class, () -> authController.login(validLoginRequest));
     }
 }

@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
-    @Autowired
     private final AuthRepository authRepository;
     private final PasswordHasher passwordHasher;
     private final JwtUtil jwtUtil;

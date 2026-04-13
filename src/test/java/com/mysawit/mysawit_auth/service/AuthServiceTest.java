@@ -20,7 +20,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-@MockitoSettings(strictness = Strictness.LENIENT)
 public class AuthServiceTest {
     @Mock
     private AuthRepository authRepository;
@@ -43,8 +42,6 @@ public class AuthServiceTest {
 
     @BeforeEach
     void setUp() {
-        when(authRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
-
         adminRequest = RegisterRequest.builder()
                 .username("Admin Sawit")
                 .name("Agus")
@@ -81,6 +78,8 @@ public class AuthServiceTest {
 
     @Test
     void registerAdminSuccess() {
+        when(authRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
+
         AuthResponse response = authService.register(adminRequest);
 
         assertEquals("Admin Sawit", response.getUsername());
@@ -91,6 +90,8 @@ public class AuthServiceTest {
 
     @Test
     void registerMandorSuccess() {
+        when(authRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
+
         AuthResponse response = authService.register(mandorRequest);
 
         assertEquals("Mandor Sawit", response.getUsername());
@@ -102,6 +103,8 @@ public class AuthServiceTest {
 
     @Test
     void registerBuruhSuccess() {
+        when(authRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
+
         AuthResponse response = authService.register(buruhRequest);
 
         assertEquals("Buruh Sawit", response.getUsername());
@@ -112,6 +115,8 @@ public class AuthServiceTest {
 
     @Test
     void registerSupirSuccess() {
+        when(authRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
+
         AuthResponse response = authService.register(supirRequest);
 
         assertEquals("Supir Sawit", response.getUsername());
@@ -154,8 +159,6 @@ public class AuthServiceTest {
 
     @Test
     void registerNoPassword() {
-        when(passwordHasher.hash(any())).thenReturn("hashed_password");
-
         RegisterRequest request = adminRequest.toBuilder()
                 .password(null)
                 .build();

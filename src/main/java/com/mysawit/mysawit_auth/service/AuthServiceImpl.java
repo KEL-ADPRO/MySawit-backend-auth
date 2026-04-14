@@ -8,7 +8,6 @@ import com.mysawit.mysawit_auth.model.User;
 import com.mysawit.mysawit_auth.repository.AuthRepository;
 import com.mysawit.mysawit_auth.util.*;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service

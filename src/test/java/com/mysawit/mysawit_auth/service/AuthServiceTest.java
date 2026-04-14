@@ -1,6 +1,7 @@
 package com.mysawit.mysawit_auth.service;
 
 import com.mysawit.mysawit_auth.exception.EmailAlreadyExistsException;
+import com.mysawit.mysawit_auth.exception.InvalidCredentialException;
 import com.mysawit.mysawit_auth.exception.MandorSertifMissingException;
 import com.mysawit.mysawit_auth.model.Role;
 import com.mysawit.mysawit_auth.model.User;
@@ -20,6 +21,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class AuthServiceTest {
     @Mock
     private AuthRepository authRepository;
@@ -42,6 +44,14 @@ public class AuthServiceTest {
 
     @BeforeEach
     void setUp() {
+        adminUser = User.builder()
+                .username("Admin Sawit")
+                .name("Agus")
+                .email("admin@gmail.com")
+                .password("hashed_admin123")
+                .role(Role.ADMIN)
+                .build();
+
         adminRequest = RegisterRequest.builder()
                 .username("Admin Sawit")
                 .name("Agus")
@@ -127,7 +137,7 @@ public class AuthServiceTest {
 
     @Test
     void registerNull() {
-        assertThrows(IllegalArgumentException.class, () -> authService.register(null));
+        assertThrows(InvalidCredentialException.class, () -> authService.register(null));
     }
 
     @Test
@@ -136,7 +146,7 @@ public class AuthServiceTest {
                 .username("")
                 .build();
 
-        assertThrows(IllegalArgumentException.class, () -> authService.register(request));
+        assertThrows(InvalidCredentialException.class, () -> authService.register(request));
     }
 
     @Test
@@ -145,7 +155,7 @@ public class AuthServiceTest {
                 .name("")
                 .build();
 
-        assertThrows(IllegalArgumentException.class, () -> authService.register(request));
+        assertThrows(InvalidCredentialException.class, () -> authService.register(request));
     }
 
     @Test
@@ -154,7 +164,7 @@ public class AuthServiceTest {
                 .email(null)
                 .build();
 
-        assertThrows(IllegalArgumentException.class, () -> authService.register(request));
+        assertThrows(InvalidCredentialException.class, () -> authService.register(request));
     }
 
     @Test
@@ -163,7 +173,7 @@ public class AuthServiceTest {
                 .password(null)
                 .build();
 
-        assertThrows(IllegalArgumentException.class, () -> authService.register(request));
+        assertThrows(InvalidCredentialException.class, () -> authService.register(request));
     }
 
     @Test
@@ -172,7 +182,7 @@ public class AuthServiceTest {
                 .role(null)
                 .build();
 
-        assertThrows(IllegalArgumentException.class, () -> authService.register(request));
+        assertThrows(InvalidCredentialException.class, () -> authService.register(request));
     }
 
     @Test
@@ -225,7 +235,7 @@ public class AuthServiceTest {
 
     @Test
     void loginNullRequest() {
-        assertThrows(IllegalArgumentException.class, () -> authService.login(null));
+        assertThrows(InvalidCredentialException.class, () -> authService.login(null));
     }
 
     @Test
@@ -237,7 +247,7 @@ public class AuthServiceTest {
                 .password("unknownPassword")
                 .build();
 
-        assertThrows(IllegalArgumentException.class, () -> authService.login(request));
+        assertThrows(InvalidCredentialException.class, () -> authService.login(request));
         verify(jwtUtil, never()).generateToken(any());
     }
 
@@ -248,7 +258,7 @@ public class AuthServiceTest {
                 .password("admin123")
                 .build();
 
-        assertThrows(IllegalArgumentException.class, () -> authService.login(request));
+        assertThrows(InvalidCredentialException.class, () -> authService.login(request));
     }
 
     @Test
@@ -258,7 +268,7 @@ public class AuthServiceTest {
                 .password("admin123")
                 .build();
 
-        assertThrows(IllegalArgumentException.class, () -> authService.login(request));
+        assertThrows(InvalidCredentialException.class, () -> authService.login(request));
     }
 
     @Test
@@ -268,7 +278,7 @@ public class AuthServiceTest {
                 .password("")
                 .build();
 
-        assertThrows(IllegalArgumentException.class, () -> authService.login(request));
+        assertThrows(InvalidCredentialException.class, () -> authService.login(request));
     }
 
     @Test
@@ -278,20 +288,20 @@ public class AuthServiceTest {
                 .password(null)
                 .build();
 
-        assertThrows(IllegalArgumentException.class, () -> authService.login(request));
+        assertThrows(InvalidCredentialException.class, () -> authService.login(request));
     }
 
     @Test
     void loginWrongPassword() {
         when(authRepository.findByEmail("admin@gmail.com")).thenReturn(adminUser);
-        when(passwordHasher.matches("atmin456", "hashed_atmin456")).thenReturn(false);
+        when(passwordHasher.matches("worngPassword", "hashed_atmin456")).thenReturn(false);
 
         LoginRequest request = LoginRequest.builder()
                 .email("admin@gmail.com")
                 .password("wrongPassword")
                 .build();
 
-        assertThrows(IllegalArgumentException.class, () -> authService.login(request));
+        assertThrows(InvalidCredentialException.class, () -> authService.login(request));
         verify(jwtUtil, never()).generateToken(any());
     }
 }

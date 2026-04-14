@@ -1,6 +1,7 @@
 package com.mysawit.mysawit_auth.service;
 
 import com.mysawit.mysawit_auth.exception.EmailAlreadyExistsException;
+import com.mysawit.mysawit_auth.exception.InvalidCredentialException;
 import com.mysawit.mysawit_auth.exception.MandorSertifMissingException;
 import com.mysawit.mysawit_auth.model.Role;
 import com.mysawit.mysawit_auth.model.User;
@@ -19,18 +20,12 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public AuthResponse register(final RegisterRequest request) {
-        if (request == null) {
-            throw new IllegalArgumentException("Request must not be null!");
-        } else if (request.getUsername() == null || request.getUsername().isBlank()) {
-            throw new IllegalArgumentException("Username must not be blank!");
-        } else if (request.getName() == null || request.getName().isBlank()) {
-            throw new IllegalArgumentException("Name must not be blank!");
-        } else if (request.getEmail() == null || request.getEmail().isBlank()) {
-            throw new IllegalArgumentException("Email must not be blank!");
-        } else if (request.getPassword() == null || request.getPassword().isBlank()) {
-            throw new IllegalArgumentException("Password must not be blank!");
-        } else if (request.getRole() == null) {
-            throw new IllegalArgumentException("Role must not be null!");
+        if (request == null || request.getUsername() == null ||
+                request.getUsername().isBlank() || request.getName() == null ||
+                request.getName().isBlank() || request.getEmail() == null ||
+                request.getEmail().isBlank() || request.getPassword() == null ||
+                request.getPassword().isBlank()|| request.getRole() == null) {
+            throw new InvalidCredentialException();
         }
 
         guardEmailUnique(request.getEmail());
@@ -41,17 +36,14 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public AuthResponse login(final LoginRequest request) {
-        if (request == null) {
-            throw new IllegalArgumentException("Request must not be null!");
-        } else if (request.getEmail() == null || request.getEmail().isBlank()) {
-            throw new IllegalArgumentException("Email must not be blank!");
-        } else if (request.getPassword() == null || request.getPassword().isBlank()) {
-            throw new IllegalArgumentException("Password must not be blank!");
+        if (request == null || request.getEmail() == null || request.getEmail().isBlank() ||
+                request.getPassword() == null || request.getPassword().isBlank()) {
+            throw new InvalidCredentialException();
         }
 
         final User user = authRepository.findByEmail(request.getEmail());
         if (user == null || !passwordHasher.matches(request.getPassword(), user.getPassword())) {
-            throw new IllegalArgumentException("Invalid email or password!");
+            throw new InvalidCredentialException();
         }
 
         final String token = jwtUtil.generateToken(user.getEmail());

@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.UUID;
 
 @Repository
 @NoArgsConstructor
@@ -31,12 +32,12 @@ public class AuthRepositoryImpl implements AuthRepository {
     }
 
     @Override
-    public User findById(final String userId) {
+    public User findById(final UUID userId) {
         List<User> results = entityManager.createQuery(
                         "SELECT u FROM User u " +
                                 "WHERE u.id = :userId"
                         , User.class)
-                .setParameter("userId", userId)
+                .setParameter("userId", userId.toString())
                 .getResultList();
         return results.isEmpty() ? null : results.getFirst();
     }

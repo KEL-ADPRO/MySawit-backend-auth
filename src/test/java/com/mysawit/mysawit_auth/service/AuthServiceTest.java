@@ -211,7 +211,7 @@ public class AuthServiceTest {
     void loginSuccess() {
         when(authRepository.findByEmail("admin@gmail.com")).thenReturn(adminUser);
         when(passwordHasher.matches("admin123", "hashed_admin123")).thenReturn(true);
-        when(jwtUtil.generateToken("admin@gmail.com")).thenReturn("dummy.jwt.token");
+        when(jwtUtil.generateToken(adminUser.getId(), adminUser.getRole())).thenReturn("dummy.jwt.token");
 
         final LoginRequest request = LoginRequest.builder()
                 .email("admin@gmail.com")
@@ -221,7 +221,7 @@ public class AuthServiceTest {
         AuthResponse response = authService.login(request);
 
         verify(authRepository, times(1)).findByEmail("admin@gmail.com");
-        verify(jwtUtil, times(1)).generateToken("admin@gmail.com");
+        verify(jwtUtil, times(1)).generateToken(adminUser.getId(), adminUser.getRole());
         assertNotNull(response);
         assertEquals("dummy.jwt.token", response.getToken());
         assertEquals("Admin Sawit", response.getUsername());
@@ -245,7 +245,7 @@ public class AuthServiceTest {
                 .build();
 
         assertThrows(InvalidCredentialException.class, () -> authService.login(request));
-        verify(jwtUtil, never()).generateToken(any());
+        verify(jwtUtil, never()).generateToken(any(), any());
     }
 
     @Test
@@ -299,6 +299,6 @@ public class AuthServiceTest {
                 .build();
 
         assertThrows(InvalidCredentialException.class, () -> authService.login(request));
-        verify(jwtUtil, never()).generateToken(any());
+        verify(jwtUtil, never()).generateToken(any(), any());
     }
 }

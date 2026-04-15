@@ -1,5 +1,6 @@
 package com.mysawit.mysawit_auth.util;
 
+import com.mysawit.mysawit_auth.model.Role;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -9,6 +10,7 @@ import org.springframework.stereotype.Component;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.UUID;
 import java.util.function.Function;
 
 @Component
@@ -23,29 +25,35 @@ public class JwtUtil {
         return Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
     }
 
-    public String generateToken(String email) {
+    public String generateToken(final UUID userId, final Role role) {
         return Jwts.builder()
-                .subject(email)
+                .issuer("mysawit-auth")
+                .subject(userId.toString())
+                .claim("role", role.toString())
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
                 .signWith(getSigningKey())
                 .compact();
     }
 
-    public String extractEmail(String token) {
+    public String extractUserId(final String token) {
         return extractClaim(token, Claims::getSubject);
     }
 
-    public boolean isTokenValid(String token, String email) {
-        final String extractedEmail = extractEmail(token);
-        return extractedEmail.equals(email) && !isTokenExpired(token);
+    public String extractRole(final String token) {
+        return extractClaim(token, claims -> claims.get("role", String.class));
     }
 
-    private boolean isTokenExpired(String token) {
+    public boolean isTokenValid(final String token, final UUID userId) {
+        final String extractUserId = extractUserId(token);
+        return extractUserId.equals(userId.toString()) && !isTokenExpired(token);
+    }
+
+    private boolean isTokenExpired(final String token) {
         return extractClaim(token, Claims::getExpiration).before(new Date());
     }
 
-    private <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
+    private <T> T extractClaim(final String token, final Function<Claims, T> claimsResolver) {
         final Claims claims = Jwts.parser()
                 .verifyWith(getSigningKey())
                 .build()

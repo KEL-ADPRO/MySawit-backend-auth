@@ -1,9 +1,11 @@
 package com.mysawit.mysawit_auth.util;
 
+import com.mysawit.mysawit_auth.model.Role;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Field;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -25,33 +27,47 @@ public class JwtUtilTest {
 
     @Test
     public void testGenerateToken() {
-        final String jwt = jwtUtil.generateToken("email@gmail.com");
+        final String jwt = jwtUtil.generateToken(UUID.fromString("eb558e9f-1c39-460e-8860-71af6af63bd6"), Role.ADMIN);
         assertNotNull(jwt);
     }
 
     @Test
-    public void testExtractEmail() {
-        final String jwt = jwtUtil.generateToken("email@gmail.com");
-        final String email = jwtUtil.extractEmail(jwt);
-        assertEquals("email@gmail.com", email);
+    public void testExtractUserID() {
+        final String jwt = jwtUtil.generateToken(UUID.fromString("eb558e9f-1c39-460e-8860-71af6af63bd6"), Role.ADMIN);
+        final String userId = jwtUtil.extractUserId(jwt);
+        assertEquals("eb558e9f-1c39-460e-8860-71af6af63bd6", userId);
     }
 
     @Test
-    public void testExtractEmailInvalid() {
-        final String jwt = jwtUtil.generateToken("email@gmail.com");
-        final String email = jwtUtil.extractEmail(jwt);
-        assertNotEquals("gmail@gmail.com", email);
+    public void testExtractUserIDInvalid() {
+        final String jwt = jwtUtil.generateToken(UUID.fromString("eb558e9f-1c39-460e-8860-71af6af63bd6"), Role.ADMIN);
+        final String userId = jwtUtil.extractUserId(jwt);
+        assertNotEquals("Eb558e9f-1c39-460e-8860-71af6af63bd6", userId);
+    }
+
+    @Test
+    public void testExtractRole() {
+        final String jwt = jwtUtil.generateToken(UUID.fromString("eb558e9f-1c39-460e-8860-71af6af63bd6"), Role.ADMIN);
+        final String role = jwtUtil.extractRole(jwt);
+        assertEquals(Role.ADMIN.toString(), role);
+    }
+
+    @Test
+    public void testExtractRoleInvalid() {
+        final String jwt = jwtUtil.generateToken(UUID.fromString("eb558e9f-1c39-460e-8860-71af6af63bd6"), Role.ADMIN);
+        final String role = jwtUtil.extractRole(jwt);
+        assertNotEquals(Role.BURUH.toString(), role);
     }
 
     @Test
     public void testValidateToken() {
-        final String jwt = jwtUtil.generateToken("email@gmail.com");
-        assertTrue(jwtUtil.isTokenValid(jwt, "email@gmail.com"));
+        final String jwt = jwtUtil.generateToken(UUID.fromString("eb558e9f-1c39-460e-8860-71af6af63bd6"), Role.ADMIN);
+        assertTrue(jwtUtil.isTokenValid(jwt, UUID.fromString("eb558e9f-1c39-460e-8860-71af6af63bd6")));
     }
 
     @Test
     public void testValidateTokenInvalid() {
-        final String jwt = jwtUtil.generateToken("email@gmail.com");
-        assertFalse(jwtUtil.isTokenValid(jwt, "gmail@gmail.com"));
+        final String jwt = jwtUtil.generateToken(UUID.fromString("eb558e9f-1c39-460e-8860-71af6af63bd6"), Role.ADMIN);
+        assertFalse(jwtUtil.isTokenValid(jwt, UUID.fromString("Eb558e9f-1c39-460e-8860-71af6af63bd6")));
     }
 }

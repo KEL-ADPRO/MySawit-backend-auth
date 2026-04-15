@@ -45,7 +45,7 @@ public class AuthServiceImpl implements AuthService {
             throw new InvalidCredentialException();
         }
 
-        final String token = jwtUtil.generateToken(user.getEmail());
+        final String token = jwtUtil.generateToken(user.getId(), user.getRole());
         return toResponse(user, token);
     }
 

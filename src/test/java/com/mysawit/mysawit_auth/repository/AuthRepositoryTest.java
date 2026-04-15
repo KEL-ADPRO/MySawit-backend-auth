@@ -138,7 +138,7 @@ public class AuthRepositoryTest {
     @Test
     void findById_ExistingId() {
         when(entityManager.createQuery(any(String.class), eq(User.class))).thenReturn(typedQuery);
-        when(typedQuery.setParameter("userId", "eb558e9f-1c39-460e-8860-71af6af63bd6")).thenReturn(typedQuery);
+        when(typedQuery.setParameter("userId", UUID.fromString("eb558e9f-1c39-460e-8860-71af6af63bd6"))).thenReturn(typedQuery);
         when(typedQuery.getResultList()).thenReturn(List.of(admin));
 
         final User result = authRepository.findById(UUID.fromString("eb558e9f-1c39-460e-8860-71af6af63bd6"));
@@ -149,7 +149,7 @@ public class AuthRepositoryTest {
     @Test
     void findById_UnknownId() {
         when(entityManager.createQuery(any(String.class), eq(User.class))).thenReturn(typedQuery);
-        when(typedQuery.setParameter("userId", "eb558e9f-1c39-460e-8860-71af6af63bd6")).thenReturn(typedQuery);
+        when(typedQuery.setParameter("userId",  UUID.fromString("eb558e9f-1c39-460e-8860-71af6af63bd6"))).thenReturn(typedQuery);
         when(typedQuery.getResultList()).thenReturn(List.of());
 
         final User result = authRepository.findById(UUID.fromString("eb558e9f-1c39-460e-8860-71af6af63bd6"));

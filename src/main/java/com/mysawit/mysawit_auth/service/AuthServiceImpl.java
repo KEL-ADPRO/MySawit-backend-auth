@@ -7,6 +7,7 @@ import com.mysawit.mysawit_auth.model.Role;
 import com.mysawit.mysawit_auth.model.User;
 import com.mysawit.mysawit_auth.repository.AuthRepository;
 import com.mysawit.mysawit_auth.util.*;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -18,12 +19,13 @@ public class AuthServiceImpl implements AuthService {
     private final JwtUtil jwtUtil;
 
     @Override
+    @Transactional
     public AuthResponse register(final RegisterRequest request) {
         if (request == null || request.getUsername() == null ||
                 request.getUsername().isBlank() || request.getName() == null ||
                 request.getName().isBlank() || request.getEmail() == null ||
                 request.getEmail().isBlank() || request.getPassword() == null ||
-                request.getPassword().isBlank()|| request.getRole() == null) {
+                request.getPassword().isBlank() || request.getRole() == null) {
             throw new InvalidCredentialException();
         }
 

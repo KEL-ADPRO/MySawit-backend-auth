@@ -68,6 +68,6 @@ public class JwtUtilTest {
     @Test
     public void testValidateTokenInvalid() {
         final String jwt = jwtUtil.generateToken(UUID.fromString("eb558e9f-1c39-460e-8860-71af6af63bd6"), Role.ADMIN);
-        assertFalse(jwtUtil.isTokenValid(jwt, UUID.fromString("Eb558e9f-1c39-460e-8860-71af6af63bd6")));
+        assertFalse(jwtUtil.isTokenValid(jwt, UUID.fromString("Ab558e9f-1c39-460e-8860-71af6af63bd6")));
     }
 }

@@ -40,3 +40,5 @@ out/
 application.properties
 .env
 *.env
+
+.java-version

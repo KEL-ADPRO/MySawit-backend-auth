@@ -293,7 +293,7 @@ public class AuthServiceTest {
     @Test
     void loginWrongPassword() {
         when(authRepository.findByEmail("admin@gmail.com")).thenReturn(adminUser);
-        when(passwordHasher.matches("worngPassword", "hashed_atmin456")).thenReturn(false);
+        when(passwordHasher.matches("wrongPassword", "hashed_admin123")).thenReturn(false);
 
         LoginRequest request = LoginRequest.builder()
                 .email("admin@gmail.com")

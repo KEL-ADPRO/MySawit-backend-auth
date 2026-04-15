@@ -224,7 +224,7 @@ public class AuthControllerTest {
     void loginInvalidCredentials() {
         when(authService.login(validLoginRequest)).thenThrow(new IllegalArgumentException());
 
-        verify(authService, times(1)).login(validLoginRequest);
         assertThrows(IllegalArgumentException.class, () -> authController.login(validLoginRequest));
+        verify(authService, times(1)).login(validLoginRequest);
     }
 }

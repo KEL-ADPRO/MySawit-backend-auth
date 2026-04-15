@@ -13,8 +13,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.junit.jupiter.MockitoSettings;
-import org.mockito.quality.Strictness;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -89,7 +87,7 @@ public class AuthServiceTest {
     void registerAdminSuccess() {
         when(authRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
 
-        AuthResponse response = authService.register(adminRequest);
+        final AuthResponse response = authService.register(adminRequest);
 
         assertEquals("Admin Sawit", response.getUsername());
         assertEquals("Agus", response.getName());
@@ -101,7 +99,7 @@ public class AuthServiceTest {
     void registerMandorSuccess() {
         when(authRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
 
-        AuthResponse response = authService.register(mandorRequest);
+        final AuthResponse response = authService.register(mandorRequest);
 
         assertEquals("Mandor Sawit", response.getUsername());
         assertEquals("Burhan", response.getName());
@@ -114,7 +112,7 @@ public class AuthServiceTest {
     void registerBuruhSuccess() {
         when(authRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
 
-        AuthResponse response = authService.register(buruhRequest);
+        final AuthResponse response = authService.register(buruhRequest);
 
         assertEquals("Buruh Sawit", response.getUsername());
         assertEquals("Usep", response.getName());
@@ -126,7 +124,7 @@ public class AuthServiceTest {
     void registerSupirSuccess() {
         when(authRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
 
-        AuthResponse response = authService.register(supirRequest);
+        final AuthResponse response = authService.register(supirRequest);
 
         assertEquals("Supir Sawit", response.getUsername());
         assertEquals("Budi", response.getName());
@@ -141,7 +139,7 @@ public class AuthServiceTest {
 
     @Test
     void registerNoUsername() {
-        RegisterRequest request = adminRequest.toBuilder()
+        final RegisterRequest request = adminRequest.toBuilder()
                 .username("")
                 .build();
 
@@ -150,7 +148,7 @@ public class AuthServiceTest {
 
     @Test
     void registerNoName() {
-        RegisterRequest request = adminRequest.toBuilder()
+        final RegisterRequest request = adminRequest.toBuilder()
                 .name("")
                 .build();
 
@@ -159,7 +157,7 @@ public class AuthServiceTest {
 
     @Test
     void registerNoEmail() {
-        RegisterRequest request = adminRequest.toBuilder()
+        final RegisterRequest request = adminRequest.toBuilder()
                 .email(null)
                 .build();
 
@@ -177,7 +175,7 @@ public class AuthServiceTest {
 
     @Test
     void registerNoRole() {
-        RegisterRequest request = adminRequest.toBuilder()
+        final RegisterRequest request = adminRequest.toBuilder()
                 .role(null)
                 .build();
 
@@ -186,7 +184,7 @@ public class AuthServiceTest {
 
     @Test
     void registerMandorNoSertif() {
-        RegisterRequest request = mandorRequest.toBuilder()
+        final RegisterRequest request = mandorRequest.toBuilder()
                 .nomorSertifMandor(null)
                 .build();
 
@@ -197,7 +195,7 @@ public class AuthServiceTest {
     void registerDuplicateEmail() {
         when(authRepository.findByEmail("admin@gmail.com")).thenReturn(new User());
 
-        RegisterRequest newRequest = RegisterRequest.builder()
+        final RegisterRequest newRequest = RegisterRequest.builder()
                 .username("Admin 2")
                 .name("atmin")
                 .email("admin@gmail.com")
@@ -215,7 +213,7 @@ public class AuthServiceTest {
         when(passwordHasher.matches("admin123", "hashed_admin123")).thenReturn(true);
         when(jwtUtil.generateToken("admin@gmail.com")).thenReturn("dummy.jwt.token");
 
-        LoginRequest request = LoginRequest.builder()
+        final LoginRequest request = LoginRequest.builder()
                 .email("admin@gmail.com")
                 .password("admin123")
                 .build();
@@ -241,7 +239,7 @@ public class AuthServiceTest {
     void loginUnknownEmail() {
         when(authRepository.findByEmail("unknownUser@gmail.com")).thenReturn(null);
 
-        LoginRequest request = LoginRequest.builder()
+        final LoginRequest request = LoginRequest.builder()
                 .email("unknownUser@gmail.com")
                 .password("unknownPassword")
                 .build();
@@ -252,7 +250,7 @@ public class AuthServiceTest {
 
     @Test
     void loginBlankEmail() {
-        LoginRequest request = LoginRequest.builder()
+        final LoginRequest request = LoginRequest.builder()
                 .email("  ")
                 .password("admin123")
                 .build();
@@ -262,7 +260,7 @@ public class AuthServiceTest {
 
     @Test
     void loginNullEmail() {
-        LoginRequest request = LoginRequest.builder()
+        final LoginRequest request = LoginRequest.builder()
                 .email(null)
                 .password("admin123")
                 .build();
@@ -272,7 +270,7 @@ public class AuthServiceTest {
 
     @Test
     void loginBlankPassword() {
-        LoginRequest request = LoginRequest.builder()
+        final LoginRequest request = LoginRequest.builder()
                 .email("admin@gmail.com")
                 .password("")
                 .build();
@@ -282,7 +280,7 @@ public class AuthServiceTest {
 
     @Test
     void loginNullPassword() {
-        LoginRequest request = LoginRequest.builder()
+        final LoginRequest request = LoginRequest.builder()
                 .email("admin@gmail.com")
                 .password(null)
                 .build();
@@ -295,7 +293,7 @@ public class AuthServiceTest {
         when(authRepository.findByEmail("admin@gmail.com")).thenReturn(adminUser);
         when(passwordHasher.matches("wrongPassword", "hashed_admin123")).thenReturn(false);
 
-        LoginRequest request = LoginRequest.builder()
+        final LoginRequest request = LoginRequest.builder()
                 .email("admin@gmail.com")
                 .password("wrongPassword")
                 .build();

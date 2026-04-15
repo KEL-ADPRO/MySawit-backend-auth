@@ -80,7 +80,7 @@ public class AuthRepositoryTest {
     void saveCheck() {
         when(entityManager.merge(admin)).thenReturn(admin);
 
-        User result = authRepository.save(admin);
+        final User result = authRepository.save(admin);
 
         assertEquals(admin, result);
         verify(entityManager, times(1)).merge(admin);
@@ -90,7 +90,7 @@ public class AuthRepositoryTest {
     void saveMandorReturnsUser() {
         when(entityManager.merge(mandor)).thenReturn(mandor);
 
-        User result = authRepository.save(mandor);
+        final User result = authRepository.save(mandor);
 
         assertEquals(mandor, result);
     }
@@ -99,7 +99,7 @@ public class AuthRepositoryTest {
     void saveBuruhReturnsUser() {
         when(entityManager.merge(buruh)).thenReturn(buruh);
 
-        User result = authRepository.save(buruh);
+        final User result = authRepository.save(buruh);
 
         assertEquals(buruh, result);
     }
@@ -108,7 +108,7 @@ public class AuthRepositoryTest {
     void saveSupirReturnsUser() {
         when(entityManager.merge(supir)).thenReturn(supir);
 
-        User result = authRepository.save(supir);
+        final User result = authRepository.save(supir);
 
         assertEquals(supir, result);
     }
@@ -119,7 +119,7 @@ public class AuthRepositoryTest {
         when(typedQuery.setParameter("email", "admin@gmail.com")).thenReturn(typedQuery);
         when(typedQuery.getResultList()).thenReturn(List.of(admin));
 
-        User result = authRepository.findByEmail("admin@gmail.com");
+        final User result = authRepository.findByEmail("admin@gmail.com");
 
         assertEquals(admin, result);
     }
@@ -130,7 +130,7 @@ public class AuthRepositoryTest {
         when(typedQuery.setParameter("email", "unknown@gmail.com")).thenReturn(typedQuery);
         when(typedQuery.getResultList()).thenReturn(List.of());
 
-        User result = authRepository.findByEmail("unknown@gmail.com");
+        final User result = authRepository.findByEmail("unknown@gmail.com");
 
         assertNull(result);
     }
@@ -141,7 +141,7 @@ public class AuthRepositoryTest {
         when(typedQuery.setParameter("userId", "eb558e9f-1c39-460e-8860-71af6af63bd6")).thenReturn(typedQuery);
         when(typedQuery.getResultList()).thenReturn(List.of(admin));
 
-        User result = authRepository.findById("eb558e9f-1c39-460e-8860-71af6af63bd6");
+        final User result = authRepository.findById("eb558e9f-1c39-460e-8860-71af6af63bd6");
 
         assertEquals(admin, result);
     }
@@ -152,7 +152,7 @@ public class AuthRepositoryTest {
         when(typedQuery.setParameter("userId", "nonexistent-id")).thenReturn(typedQuery);
         when(typedQuery.getResultList()).thenReturn(List.of());
 
-        User result = authRepository.findById("nonexistent-id");
+        final User result = authRepository.findById("nonexistent-id");
 
         assertNull(result);
     }
@@ -163,7 +163,7 @@ public class AuthRepositoryTest {
         when(typedQuery.setParameter("username", "Buruh Sawit")).thenReturn(typedQuery);
         when(typedQuery.getResultList()).thenReturn(List.of(buruh));
 
-        User result = authRepository.findByUsername("Buruh Sawit");
+        final User result = authRepository.findByUsername("Buruh Sawit");
 
         assertEquals(buruh, result);
     }
@@ -174,7 +174,7 @@ public class AuthRepositoryTest {
         when(typedQuery.setParameter("username", "unknown")).thenReturn(typedQuery);
         when(typedQuery.getResultList()).thenReturn(List.of());
 
-        User result = authRepository.findByUsername("unknown");
+        final User result = authRepository.findByUsername("unknown");
 
         assertNull(result);
     }

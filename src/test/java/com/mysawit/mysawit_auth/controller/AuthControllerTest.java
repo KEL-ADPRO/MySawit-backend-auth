@@ -121,14 +121,14 @@ public class AuthControllerTest {
     void registerAdminSuccess() {
         when(authService.register(adminRequest)).thenReturn(adminResponse);
 
-        ResponseEntity<ApiResponse<AuthResponse>> result = authController.register(adminRequest);
+        final ResponseEntity<ApiResponse<AuthResponse>> result = authController.register(adminRequest);
 
         assertNotNull(result.getBody());
         assertEquals("Registration successful", result.getBody().getMessage());
         assertEquals(HttpStatus.CREATED, result.getStatusCode());
         verify(authService, times(1)).register(adminRequest);
 
-        AuthResponse data = result.getBody().getData();
+        final AuthResponse data = result.getBody().getData();
 
         assertEquals("Admin Sawit", data.getUsername());
         assertEquals("Agus", data.getName());
@@ -142,14 +142,14 @@ public class AuthControllerTest {
     void registerMandorSuccess() {
         when(authService.register(mandorRequest)).thenReturn(mandorResponse);
 
-        ResponseEntity<ApiResponse<AuthResponse>> result = authController.register(mandorRequest);
+        final ResponseEntity<ApiResponse<AuthResponse>> result = authController.register(mandorRequest);
 
         assertNotNull(result.getBody());
         assertEquals("Registration successful", result.getBody().getMessage());
         assertEquals(HttpStatus.CREATED, result.getStatusCode());
         verify(authService, times(1)).register(mandorRequest);
 
-        AuthResponse data = result.getBody().getData();
+        final AuthResponse data = result.getBody().getData();
 
         assertEquals("Mandor Sawit", data.getUsername());
         assertEquals("Burhan", data.getName());
@@ -163,14 +163,14 @@ public class AuthControllerTest {
     void registerBuruhSuccess() {
         when(authService.register(buruhRequest)).thenReturn(buruhResponse);
 
-        ResponseEntity<ApiResponse<AuthResponse>> result = authController.register(buruhRequest);
+        final ResponseEntity<ApiResponse<AuthResponse>> result = authController.register(buruhRequest);
 
         assertNotNull(result.getBody());
         assertEquals("Registration successful", result.getBody().getMessage());
         assertEquals(HttpStatus.CREATED, result.getStatusCode());
         verify(authService, times(1)).register(buruhRequest);
 
-        AuthResponse data = result.getBody().getData();
+        final AuthResponse data = result.getBody().getData();
 
         assertEquals("Buruh Sawit", data.getUsername());
         assertEquals("Usep", data.getName());
@@ -183,14 +183,14 @@ public class AuthControllerTest {
     void registerSupirSuccess() {
         when(authService.register(supirRequest)).thenReturn(supirResponse);
 
-        ResponseEntity<ApiResponse<AuthResponse>> result = authController.register(supirRequest);
+        final ResponseEntity<ApiResponse<AuthResponse>> result = authController.register(supirRequest);
 
         assertNotNull(result.getBody());
         assertEquals("Registration successful", result.getBody().getMessage());
         assertEquals(HttpStatus.CREATED, result.getStatusCode());
         verify(authService, times(1)).register(supirRequest);
 
-        AuthResponse data = result.getBody().getData();
+        final AuthResponse data = result.getBody().getData();
 
         assertEquals("Supir Sawit", data.getUsername());
         assertEquals("Budi", data.getName());
@@ -203,7 +203,7 @@ public class AuthControllerTest {
     void loginSuccess() {
         when(authService.login(validLoginRequest)).thenReturn(loginResponse);
 
-        ResponseEntity<ApiResponse<AuthResponse>> result = authController.login(validLoginRequest);
+        final ResponseEntity<ApiResponse<AuthResponse>> result = authController.login(validLoginRequest);
 
         assertNotNull(result.getBody());
         assertEquals(HttpStatus.OK, result.getStatusCode());
@@ -211,7 +211,7 @@ public class AuthControllerTest {
         assertEquals("Login successful", result.getBody().getMessage());
         verify(authService, times(1)).login(validLoginRequest);
 
-        AuthResponse data = result.getBody().getData();
+        final AuthResponse data = result.getBody().getData();
 
         assertEquals("dummy.jwt.token", data.getToken());
         assertEquals("Admin Sawit", data.getUsername());

@@ -37,7 +37,7 @@ public class AuthRepositoryImpl implements AuthRepository {
                         "SELECT u FROM User u " +
                                 "WHERE u.id = :userId"
                         , User.class)
-                .setParameter("userId", userId.toString())
+                .setParameter("userId", userId)
                 .getResultList();
         return results.isEmpty() ? null : results.getFirst();
     }

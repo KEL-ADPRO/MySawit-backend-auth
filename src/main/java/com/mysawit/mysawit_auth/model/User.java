@@ -17,6 +17,9 @@ public class User {
     @Column(unique = true, nullable = false)
     private UUID id;
 
+    @Column(unique = true)
+    private String googleId;
+
     @Column(unique = true, nullable = false)
     private String username;
 

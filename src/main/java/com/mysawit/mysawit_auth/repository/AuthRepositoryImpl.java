@@ -43,8 +43,14 @@ public class AuthRepositoryImpl implements AuthRepository {
     }
 
     @Override
-    public User findByGoogleId(String googleId) {
-        return null;
+    public User findByGoogleId(final String googleId) {
+        List<User> results = entityManager.createQuery(
+                        "SELECT u FROM User u " +
+                                "WHERE u.googleId = :googleId"
+                        , User.class)
+                .setParameter("googleId", googleId)
+                .getResultList();
+        return results.isEmpty() ? null : results.getFirst();
     }
 
     @Override

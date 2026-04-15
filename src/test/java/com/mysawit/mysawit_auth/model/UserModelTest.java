@@ -181,7 +181,7 @@ public class UserModelTest {
 
     @Test
     void noArgsConstructor() {
-        User user = new User();
+        final User user = new User();
 
         assertNull(user.getId());
         assertNull(user.getUsername());

@@ -3,6 +3,7 @@ package com.mysawit.mysawit_auth.controller;
 import com.mysawit.mysawit_auth.service.AuthService;
 import com.mysawit.mysawit_auth.util.ApiResponse;
 import com.mysawit.mysawit_auth.util.AuthResponse;
+import com.mysawit.mysawit_auth.util.LoginRequest;
 import com.mysawit.mysawit_auth.util.RegisterRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,8 +19,14 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/register")
-    public ResponseEntity<ApiResponse<AuthResponse>> register(@Valid @RequestBody RegisterRequest request) {
+    public ResponseEntity<ApiResponse<AuthResponse>> register(@Valid @RequestBody final RegisterRequest request) {
         AuthResponse response = authService.register(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.successResponse("Registration successful", response));
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<ApiResponse<AuthResponse>> login(@Valid @RequestBody final LoginRequest request) {
+        AuthResponse response = authService.login(request);
+        return ResponseEntity.ok(ApiResponse.successResponse("Login successful", response));
     }
 }

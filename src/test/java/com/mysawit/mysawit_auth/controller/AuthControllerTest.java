@@ -2,10 +2,10 @@ package com.mysawit.mysawit_auth.controller;
 
 import com.mysawit.mysawit_auth.model.Role;
 import com.mysawit.mysawit_auth.service.AuthService;
-import com.mysawit.mysawit_auth.util.ApiResponse;
-import com.mysawit.mysawit_auth.util.AuthResponse;
-import com.mysawit.mysawit_auth.util.LoginRequest;
-import com.mysawit.mysawit_auth.util.RegisterRequest;
+import com.mysawit.mysawit_auth.dto.response.ApiResponse;
+import com.mysawit.mysawit_auth.dto.response.AuthResponse;
+import com.mysawit.mysawit_auth.dto.request.LoginRequest;
+import com.mysawit.mysawit_auth.dto.request.RegisterRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

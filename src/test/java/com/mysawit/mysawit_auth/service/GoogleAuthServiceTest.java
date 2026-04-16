@@ -1,9 +1,12 @@
 package com.mysawit.mysawit_auth.service;
 
+import com.mysawit.mysawit_auth.dto.request.GoogleAuthRequest;
+import com.mysawit.mysawit_auth.dto.request.GoogleUserInfo;
 import com.mysawit.mysawit_auth.dto.response.AuthResponse;
 import com.mysawit.mysawit_auth.model.Role;
 import com.mysawit.mysawit_auth.model.User;
 import com.mysawit.mysawit_auth.repository.AuthRepository;
+import com.mysawit.mysawit_auth.util.GoogleTokenVerifier;
 import com.mysawit.mysawit_auth.util.JwtUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -55,7 +58,7 @@ public class GoogleAuthServiceTest {
 
     @Test
     void nullGoogleRequest() {
-        assertThrows(UnsupportedOperationException.class, () -> googleAuthService.loginOrRegister(null));
+        assertThrows(IllegalArgumentException.class, () -> googleAuthService.loginOrRegister(null));
     }
 
     @Test

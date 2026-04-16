@@ -34,8 +34,8 @@ public class GoogleTokenVerifier {
         validateAudience(payload);
 
         final String googleId = payload.get("sub");
-        final String email    = payload.get("email");
-        final String name     = payload.getOrDefault("name", email);
+        final String email = payload.get("email");
+        final String name = payload.getOrDefault("name", email);
 
         if (googleId == null || googleId.isBlank() || email == null || email.isBlank()) {
             throw new IllegalArgumentException("Google token is missing required fields");
@@ -60,9 +60,10 @@ public class GoogleTokenVerifier {
             if (response.getBody() == null) {
                 throw new IllegalArgumentException("Empty response");
             }
+
             return response.getBody();
         } catch (RestClientException e) {
-            throw new IllegalArgumentException("Invalid Google ID token");
+            throw new IllegalArgumentException("Invalid Google ID token", e);
         }
     }
 

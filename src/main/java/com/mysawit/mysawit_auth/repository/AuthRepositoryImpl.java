@@ -12,6 +12,8 @@ import java.util.UUID;
 @Repository
 @NoArgsConstructor
 public class AuthRepositoryImpl implements AuthRepository {
+    private static final String SELECT_USER = "SELECT u FROM User u ";
+
     @PersistenceContext
     private EntityManager entityManager;
 
@@ -23,7 +25,7 @@ public class AuthRepositoryImpl implements AuthRepository {
     @Override
     public User findByEmail(final String email) {
         List<User> results = entityManager.createQuery(
-                        "SELECT u FROM User u " +
+                        SELECT_USER +
                                 "WHERE u.email = :email"
                         , User.class)
                 .setParameter("email", email)
@@ -34,7 +36,7 @@ public class AuthRepositoryImpl implements AuthRepository {
     @Override
     public User findById(final UUID userId) {
         List<User> results = entityManager.createQuery(
-                        "SELECT u FROM User u " +
+                        SELECT_USER +
                                 "WHERE u.id = :userId"
                         , User.class)
                 .setParameter("userId", userId)
@@ -45,7 +47,7 @@ public class AuthRepositoryImpl implements AuthRepository {
     @Override
     public User findByGoogleId(final String googleId) {
         List<User> results = entityManager.createQuery(
-                        "SELECT u FROM User u " +
+                        SELECT_USER +
                                 "WHERE u.googleId = :googleId"
                         , User.class)
                 .setParameter("googleId", googleId)
@@ -56,7 +58,7 @@ public class AuthRepositoryImpl implements AuthRepository {
     @Override
     public User findByUsername(final String username) {
         List<User> results = entityManager.createQuery(
-                        "SELECT u FROM User u " +
+                        SELECT_USER +
                                 "WHERE u.username = :username"
                         , User.class)
                 .setParameter("username", username)

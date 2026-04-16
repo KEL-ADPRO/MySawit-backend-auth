@@ -1,8 +1,8 @@
 package com.mysawit.mysawit_auth.service;
 
-import com.mysawit.mysawit_auth.util.AuthResponse;
-import com.mysawit.mysawit_auth.util.LoginRequest;
-import com.mysawit.mysawit_auth.util.RegisterRequest;
+import com.mysawit.mysawit_auth.dto.response.AuthResponse;
+import com.mysawit.mysawit_auth.dto.request.LoginRequest;
+import com.mysawit.mysawit_auth.dto.request.RegisterRequest;
 
 public interface AuthService {
     AuthResponse register(RegisterRequest request);

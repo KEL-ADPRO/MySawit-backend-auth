@@ -9,6 +9,7 @@ import com.mysawit.mysawit_auth.model.User;
 import com.mysawit.mysawit_auth.repository.AuthRepository;
 import com.mysawit.mysawit_auth.util.GoogleTokenVerifier;
 import com.mysawit.mysawit_auth.util.JwtUtil;
+import com.mysawit.mysawit_auth.util.PasswordHasher;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,6 +20,7 @@ public class GoogleAuthServiceImpl implements GoogleAuthService {
     private final AuthRepository authRepository;
     private final GoogleTokenVerifier googleTokenVerifier;
     private final JwtUtil jwtUtil;
+    private final PasswordHasher passwordHasher;
 
     @Override
     @Transactional
@@ -40,8 +42,10 @@ public class GoogleAuthServiceImpl implements GoogleAuthService {
     private User resolveByEmailOrCreate(final GoogleAuthRequest request, final GoogleUserInfo userInfo) {
         final User existingByEmail = authRepository.findByEmail(userInfo.getEmail());
         if (existingByEmail != null) {
-            existingByEmail.setGoogleId(userInfo.getGoogleId());
-            return authRepository.save(existingByEmail);
+            if (existingByEmail.getGoogleId() != null) {
+                return existingByEmail;
+            }
+            throw new IllegalArgumentException("Email is already registered! Log in with password instead");
         }
         return createNewUser(request, userInfo);
     }
@@ -60,6 +64,7 @@ public class GoogleAuthServiceImpl implements GoogleAuthService {
         final User newUser = User.builder()
                 .googleId(userInfo.getGoogleId())
                 .email(userInfo.getEmail())
+                .password(passwordHasher.hash(userInfo.getEmail()))
                 .name(userInfo.getName())
                 .username(request.getUsername())
                 .role(request.getRole())

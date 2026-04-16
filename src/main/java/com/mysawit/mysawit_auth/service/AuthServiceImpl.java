@@ -1,15 +1,14 @@
 package com.mysawit.mysawit_auth.service;
 
 import com.mysawit.mysawit_auth.exception.EmailAlreadyExistsException;
+import com.mysawit.mysawit_auth.exception.InvalidCredentialException;
 import com.mysawit.mysawit_auth.exception.MandorSertifMissingException;
 import com.mysawit.mysawit_auth.model.Role;
 import com.mysawit.mysawit_auth.model.User;
 import com.mysawit.mysawit_auth.repository.AuthRepository;
-import com.mysawit.mysawit_auth.util.AuthResponse;
-import com.mysawit.mysawit_auth.util.PasswordHasher;
-import com.mysawit.mysawit_auth.util.RegisterRequest;
+import com.mysawit.mysawit_auth.util.*;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -17,27 +16,39 @@ import org.springframework.stereotype.Service;
 public class AuthServiceImpl implements AuthService {
     private final AuthRepository authRepository;
     private final PasswordHasher passwordHasher;
+    private final JwtUtil jwtUtil;
 
     @Override
+    @Transactional
     public AuthResponse register(final RegisterRequest request) {
-        if (request == null) {
-            throw new IllegalArgumentException("Request must not be null!");
-        } else if (request.getUsername() == null || request.getUsername().isBlank()) {
-            throw new IllegalArgumentException("Username must not be blank!");
-        } else if (request.getName() == null || request.getName().isBlank()) {
-            throw new IllegalArgumentException("Name must not be blank!");
-        } else if (request.getEmail() == null || request.getEmail().isBlank()) {
-            throw new IllegalArgumentException("Email must not be blank!");
-        } else if (request.getPassword() == null || request.getPassword().isBlank()) {
-            throw new IllegalArgumentException("Password must not be blank!");
-        } else if (request.getRole() == null) {
-            throw new IllegalArgumentException("Role must not be null!");
+        if (request == null || request.getUsername() == null ||
+                request.getUsername().isBlank() || request.getName() == null ||
+                request.getName().isBlank() || request.getEmail() == null ||
+                request.getEmail().isBlank() || request.getPassword() == null ||
+                request.getPassword().isBlank() || request.getRole() == null) {
+            throw new InvalidCredentialException();
         }
 
         guardEmailUnique(request.getEmail());
         guardMandorCertification(request);
         final User saved = authRepository.save(buildUser(request));
-        return toResponse(saved);
+        return toResponse(saved, null);
+    }
+
+    @Override
+    public AuthResponse login(final LoginRequest request) {
+        if (request == null || request.getEmail() == null || request.getEmail().isBlank() ||
+                request.getPassword() == null || request.getPassword().isBlank()) {
+            throw new InvalidCredentialException();
+        }
+
+        final User user = authRepository.findByEmail(request.getEmail());
+        if (user == null || !passwordHasher.matches(request.getPassword(), user.getPassword())) {
+            throw new InvalidCredentialException();
+        }
+
+        final String token = jwtUtil.generateToken(user.getId(), user.getRole());
+        return toResponse(user, token);
     }
 
     private void guardEmailUnique(final String email) {
@@ -66,8 +77,9 @@ public class AuthServiceImpl implements AuthService {
                 .build();
     }
 
-    private AuthResponse toResponse(final User user) {
+    private AuthResponse toResponse(final User user, final String token) {
         return AuthResponse.builder()
+                .token(token)
                 .username(user.getUsername())
                 .userId(user.getId())
                 .email(user.getEmail())

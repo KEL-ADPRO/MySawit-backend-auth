@@ -1,21 +1,18 @@
 package com.mysawit.mysawit_auth.service;
 
 import com.mysawit.mysawit_auth.exception.EmailAlreadyExistsException;
+import com.mysawit.mysawit_auth.exception.InvalidCredentialException;
 import com.mysawit.mysawit_auth.exception.MandorSertifMissingException;
 import com.mysawit.mysawit_auth.model.Role;
 import com.mysawit.mysawit_auth.model.User;
 import com.mysawit.mysawit_auth.repository.AuthRepository;
-import com.mysawit.mysawit_auth.util.AuthResponse;
-import com.mysawit.mysawit_auth.util.PasswordHasher;
-import com.mysawit.mysawit_auth.util.RegisterRequest;
+import com.mysawit.mysawit_auth.util.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.junit.jupiter.MockitoSettings;
-import org.mockito.quality.Strictness;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -32,13 +29,26 @@ public class AuthServiceTest {
     @InjectMocks
     private AuthServiceImpl authService;
 
+    @Mock
+    private JwtUtil jwtUtil;
+
     private RegisterRequest adminRequest;
     private RegisterRequest mandorRequest;
     private RegisterRequest buruhRequest;
     private RegisterRequest supirRequest;
 
+    private User adminUser;
+
     @BeforeEach
     void setUp() {
+        adminUser = User.builder()
+                .username("Admin Sawit")
+                .name("Agus")
+                .email("admin@gmail.com")
+                .password("hashed_admin123")
+                .role(Role.ADMIN)
+                .build();
+
         adminRequest = RegisterRequest.builder()
                 .username("Admin Sawit")
                 .name("Agus")
@@ -77,7 +87,7 @@ public class AuthServiceTest {
     void registerAdminSuccess() {
         when(authRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
 
-        AuthResponse response = authService.register(adminRequest);
+        final AuthResponse response = authService.register(adminRequest);
 
         assertEquals("Admin Sawit", response.getUsername());
         assertEquals("Agus", response.getName());
@@ -89,7 +99,7 @@ public class AuthServiceTest {
     void registerMandorSuccess() {
         when(authRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
 
-        AuthResponse response = authService.register(mandorRequest);
+        final AuthResponse response = authService.register(mandorRequest);
 
         assertEquals("Mandor Sawit", response.getUsername());
         assertEquals("Burhan", response.getName());
@@ -102,7 +112,7 @@ public class AuthServiceTest {
     void registerBuruhSuccess() {
         when(authRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
 
-        AuthResponse response = authService.register(buruhRequest);
+        final AuthResponse response = authService.register(buruhRequest);
 
         assertEquals("Buruh Sawit", response.getUsername());
         assertEquals("Usep", response.getName());
@@ -114,7 +124,7 @@ public class AuthServiceTest {
     void registerSupirSuccess() {
         when(authRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
 
-        AuthResponse response = authService.register(supirRequest);
+        final AuthResponse response = authService.register(supirRequest);
 
         assertEquals("Supir Sawit", response.getUsername());
         assertEquals("Budi", response.getName());
@@ -124,34 +134,34 @@ public class AuthServiceTest {
 
     @Test
     void registerNull() {
-        assertThrows(IllegalArgumentException.class, () -> authService.register(null));
+        assertThrows(InvalidCredentialException.class, () -> authService.register(null));
     }
 
     @Test
     void registerNoUsername() {
-        RegisterRequest request = adminRequest.toBuilder()
+        final RegisterRequest request = adminRequest.toBuilder()
                 .username("")
                 .build();
 
-        assertThrows(IllegalArgumentException.class, () -> authService.register(request));
+        assertThrows(InvalidCredentialException.class, () -> authService.register(request));
     }
 
     @Test
     void registerNoName() {
-        RegisterRequest request = adminRequest.toBuilder()
+        final RegisterRequest request = adminRequest.toBuilder()
                 .name("")
                 .build();
 
-        assertThrows(IllegalArgumentException.class, () -> authService.register(request));
+        assertThrows(InvalidCredentialException.class, () -> authService.register(request));
     }
 
     @Test
     void registerNoEmail() {
-        RegisterRequest request = adminRequest.toBuilder()
+        final RegisterRequest request = adminRequest.toBuilder()
                 .email(null)
                 .build();
 
-        assertThrows(IllegalArgumentException.class, () -> authService.register(request));
+        assertThrows(InvalidCredentialException.class, () -> authService.register(request));
     }
 
     @Test
@@ -160,21 +170,21 @@ public class AuthServiceTest {
                 .password(null)
                 .build();
 
-        assertThrows(IllegalArgumentException.class, () -> authService.register(request));
+        assertThrows(InvalidCredentialException.class, () -> authService.register(request));
     }
 
     @Test
     void registerNoRole() {
-        RegisterRequest request = adminRequest.toBuilder()
+        final RegisterRequest request = adminRequest.toBuilder()
                 .role(null)
                 .build();
 
-        assertThrows(IllegalArgumentException.class, () -> authService.register(request));
+        assertThrows(InvalidCredentialException.class, () -> authService.register(request));
     }
 
     @Test
     void registerMandorNoSertif() {
-        RegisterRequest request = mandorRequest.toBuilder()
+        final RegisterRequest request = mandorRequest.toBuilder()
                 .nomorSertifMandor(null)
                 .build();
 
@@ -185,7 +195,7 @@ public class AuthServiceTest {
     void registerDuplicateEmail() {
         when(authRepository.findByEmail("admin@gmail.com")).thenReturn(new User());
 
-        RegisterRequest newRequest = RegisterRequest.builder()
+        final RegisterRequest newRequest = RegisterRequest.builder()
                 .username("Admin 2")
                 .name("atmin")
                 .email("admin@gmail.com")
@@ -195,5 +205,100 @@ public class AuthServiceTest {
 
         assertThrows(EmailAlreadyExistsException.class, () -> authService.register(newRequest));
         verify(authRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    void loginSuccess() {
+        when(authRepository.findByEmail("admin@gmail.com")).thenReturn(adminUser);
+        when(passwordHasher.matches("admin123", "hashed_admin123")).thenReturn(true);
+        when(jwtUtil.generateToken(adminUser.getId(), adminUser.getRole())).thenReturn("dummy.jwt.token");
+
+        final LoginRequest request = LoginRequest.builder()
+                .email("admin@gmail.com")
+                .password("admin123")
+                .build();
+
+        AuthResponse response = authService.login(request);
+
+        verify(authRepository, times(1)).findByEmail("admin@gmail.com");
+        verify(jwtUtil, times(1)).generateToken(adminUser.getId(), adminUser.getRole());
+        assertNotNull(response);
+        assertEquals("dummy.jwt.token", response.getToken());
+        assertEquals("Admin Sawit", response.getUsername());
+        assertEquals("Agus", response.getName());
+        assertEquals("admin@gmail.com", response.getEmail());
+        assertEquals(Role.ADMIN, response.getRole());
+    }
+
+    @Test
+    void loginNullRequest() {
+        assertThrows(InvalidCredentialException.class, () -> authService.login(null));
+    }
+
+    @Test
+    void loginUnknownEmail() {
+        when(authRepository.findByEmail("unknownUser@gmail.com")).thenReturn(null);
+
+        final LoginRequest request = LoginRequest.builder()
+                .email("unknownUser@gmail.com")
+                .password("unknownPassword")
+                .build();
+
+        assertThrows(InvalidCredentialException.class, () -> authService.login(request));
+        verify(jwtUtil, never()).generateToken(any(), any());
+    }
+
+    @Test
+    void loginBlankEmail() {
+        final LoginRequest request = LoginRequest.builder()
+                .email("  ")
+                .password("admin123")
+                .build();
+
+        assertThrows(InvalidCredentialException.class, () -> authService.login(request));
+    }
+
+    @Test
+    void loginNullEmail() {
+        final LoginRequest request = LoginRequest.builder()
+                .email(null)
+                .password("admin123")
+                .build();
+
+        assertThrows(InvalidCredentialException.class, () -> authService.login(request));
+    }
+
+    @Test
+    void loginBlankPassword() {
+        final LoginRequest request = LoginRequest.builder()
+                .email("admin@gmail.com")
+                .password("")
+                .build();
+
+        assertThrows(InvalidCredentialException.class, () -> authService.login(request));
+    }
+
+    @Test
+    void loginNullPassword() {
+        final LoginRequest request = LoginRequest.builder()
+                .email("admin@gmail.com")
+                .password(null)
+                .build();
+
+        assertThrows(InvalidCredentialException.class, () -> authService.login(request));
+    }
+
+    @Test
+    void loginWrongPassword() {
+        when(authRepository.findByEmail("admin@gmail.com")).thenReturn(adminUser);
+        when(passwordHasher.matches("wrongPassword", "hashed_admin123")).thenReturn(false);
+
+        final LoginRequest request = LoginRequest.builder()
+                .email("admin@gmail.com")
+                .password("wrongPassword")
+                .build();
+
+        assertThrows(InvalidCredentialException.class, () -> authService.login(request));
+        verify(jwtUtil, never()).generateToken(any(), any());
     }
 }

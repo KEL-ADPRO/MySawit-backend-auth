@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.UUID;
 
 @Repository
 @NoArgsConstructor
@@ -22,16 +23,20 @@ public class AuthRepositoryImpl implements AuthRepository {
     @Override
     public User findByEmail(final String email) {
         List<User> results = entityManager.createQuery(
-                        "SELECT u FROM User u WHERE u.email = :email", User.class)
+                        "SELECT u FROM User u " +
+                                "WHERE u.email = :email"
+                        , User.class)
                 .setParameter("email", email)
                 .getResultList();
         return results.isEmpty() ? null : results.getFirst();
     }
 
     @Override
-    public User findById(final String userId) {
+    public User findById(final UUID userId) {
         List<User> results = entityManager.createQuery(
-                        "SELECT u FROM User u WHERE u.id = :userId", User.class)
+                        "SELECT u FROM User u " +
+                                "WHERE u.id = :userId"
+                        , User.class)
                 .setParameter("userId", userId)
                 .getResultList();
         return results.isEmpty() ? null : results.getFirst();
@@ -40,7 +45,9 @@ public class AuthRepositoryImpl implements AuthRepository {
     @Override
     public User findByUsername(final String username) {
         List<User> results = entityManager.createQuery(
-                        "SELECT u FROM User u WHERE u.username = :username", User.class)
+                        "SELECT u FROM User u " +
+                                "WHERE u.username = :username"
+                        , User.class)
                 .setParameter("username", username)
                 .getResultList();
         return results.isEmpty() ? null : results.getFirst();

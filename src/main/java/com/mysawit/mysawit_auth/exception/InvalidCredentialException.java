@@ -6,11 +6,11 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import java.io.Serial;
 
 @ResponseStatus(HttpStatus.BAD_REQUEST)
-public class MandorSertifMissingException extends RuntimeException {
+public class InvalidCredentialException extends RuntimeException {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public MandorSertifMissingException() {
-        super("Nomor sertifikasi mandor is required for MANDOR role");
+    public InvalidCredentialException() {
+        super("Invalid credentials");
     }
 }

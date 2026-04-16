@@ -8,6 +8,7 @@ import com.mysawit.mysawit_auth.model.User;
 import com.mysawit.mysawit_auth.repository.AuthRepository;
 import com.mysawit.mysawit_auth.util.GoogleTokenVerifier;
 import com.mysawit.mysawit_auth.util.JwtUtil;
+import com.mysawit.mysawit_auth.util.PasswordHasher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,6 +23,9 @@ import static org.mockito.Mockito.*;
 public class GoogleAuthServiceTest {
     @Mock
     private AuthRepository authRepository;
+
+    @Mock
+    private PasswordHasher passwordHasher;
 
     @InjectMocks
     private GoogleAuthServiceImpl googleAuthService;

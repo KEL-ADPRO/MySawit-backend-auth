@@ -6,23 +6,19 @@ import com.mysawit.mysawit_auth.repository.AuthRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
-
-import java.util.UUID;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class DataSeeder implements CommandLineRunner {
-    @Autowired
     private final AuthRepository authRepository;
     private final PasswordHasher passwordHasher;
 
     @Override
     @Transactional
-    public void run(String... args) {
+    public void run(final String... args) {
         if (authRepository.findByEmail("admin.MySawit19@gmail.com") == null) {
             User admin = new User();
             admin.setName("Admin MySawit Kel.19");

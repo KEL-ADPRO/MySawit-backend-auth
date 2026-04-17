@@ -36,4 +36,19 @@ public class AuthController {
             return ResponseEntity.badRequest().body(ApiResponse.errorResponse(e.getMessage()));
         }
     }
+
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<AuthResponse>> getMe(@RequestHeader("Authorization") final String authHeader) {
+        try {
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                return ResponseEntity.badRequest().body(ApiResponse.errorResponse("Invalid Authorization header"));
+            }
+
+            final String token = authHeader.substring(7);
+            final AuthResponse response = authService.getLoggedInUser(token);
+            return ResponseEntity.ok(ApiResponse.successResponse("User retrieved", response));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(ApiResponse.errorResponse(e.getMessage()));
+        }
+    }
 }

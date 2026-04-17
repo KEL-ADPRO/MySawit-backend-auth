@@ -60,6 +60,7 @@ public class AuthServiceImpl implements AuthService {
     public AuthResponse getLoggedInUser(final String token) {
         final String userId = jwtUtil.extractUserId(token);
         final User user = authRepository.findById(UUID.fromString(userId));
+
         if (user == null) {
             throw new InvalidCredentialException();
         }

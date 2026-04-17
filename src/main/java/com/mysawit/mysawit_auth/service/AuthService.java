@@ -7,4 +7,5 @@ import com.mysawit.mysawit_auth.dto.request.RegisterRequest;
 public interface AuthService {
     AuthResponse register(RegisterRequest request);
     AuthResponse login(LoginRequest request);
+    AuthResponse getLoggedInUser(String token);
 }

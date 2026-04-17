@@ -7,9 +7,14 @@ import com.mysawit.mysawit_auth.model.Role;
 import com.mysawit.mysawit_auth.model.User;
 import com.mysawit.mysawit_auth.repository.AuthRepository;
 import com.mysawit.mysawit_auth.util.*;
+import com.mysawit.mysawit_auth.dto.request.LoginRequest;
+import com.mysawit.mysawit_auth.dto.request.RegisterRequest;
+import com.mysawit.mysawit_auth.dto.response.AuthResponse;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -48,6 +53,17 @@ public class AuthServiceImpl implements AuthService {
         }
 
         final String token = jwtUtil.generateToken(user.getId(), user.getRole());
+        return toResponse(user, token);
+    }
+
+    @Override
+    public AuthResponse getLoggedInUser(final String token) {
+        final String userId = jwtUtil.extractUserId(token);
+        final User user = authRepository.findById(UUID.fromString(userId));
+
+        if (user == null) {
+            throw new InvalidCredentialException();
+        }
         return toResponse(user, token);
     }
 

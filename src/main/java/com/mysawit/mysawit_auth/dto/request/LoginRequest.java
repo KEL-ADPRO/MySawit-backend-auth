@@ -1,4 +1,4 @@
-package com.mysawit.mysawit_auth.util;
+package com.mysawit.mysawit_auth.dto.request;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

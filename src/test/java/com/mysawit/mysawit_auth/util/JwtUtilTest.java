@@ -26,41 +26,41 @@ public class JwtUtilTest {
     }
 
     @Test
-    public void testGenerateToken() {
+    void testGenerateToken() {
         final String jwt = jwtUtil.generateToken(UUID.fromString("eb558e9f-1c39-460e-8860-71af6af63bd6"), Role.ADMIN);
         assertNotNull(jwt);
     }
 
     @Test
-    public void testExtractUserID() {
+    void testExtractUserID() {
         final String jwt = jwtUtil.generateToken(UUID.fromString("eb558e9f-1c39-460e-8860-71af6af63bd6"), Role.ADMIN);
         final String userId = jwtUtil.extractUserId(jwt);
         assertEquals("eb558e9f-1c39-460e-8860-71af6af63bd6", userId);
     }
 
     @Test
-    public void testExtractUserIDInvalid() {
+    void testExtractUserIDInvalid() {
         final String jwt = jwtUtil.generateToken(UUID.fromString("eb558e9f-1c39-460e-8860-71af6af63bd6"), Role.ADMIN);
         final String userId = jwtUtil.extractUserId(jwt);
         assertNotEquals("Eb558e9f-1c39-460e-8860-71af6af63bd6", userId);
     }
 
     @Test
-    public void testExtractRole() {
+    void testExtractRole() {
         final String jwt = jwtUtil.generateToken(UUID.fromString("eb558e9f-1c39-460e-8860-71af6af63bd6"), Role.ADMIN);
         final String role = jwtUtil.extractRole(jwt);
         assertEquals(Role.ADMIN.toString(), role);
     }
 
     @Test
-    public void testExtractRoleInvalid() {
+    void testExtractRoleInvalid() {
         final String jwt = jwtUtil.generateToken(UUID.fromString("eb558e9f-1c39-460e-8860-71af6af63bd6"), Role.ADMIN);
         final String role = jwtUtil.extractRole(jwt);
         assertNotEquals(Role.BURUH.toString(), role);
     }
 
     @Test
-    public void testValidateToken() {
+    void testValidateToken() {
         final String jwt = jwtUtil.generateToken(UUID.fromString("eb558e9f-1c39-460e-8860-71af6af63bd6"), Role.ADMIN);
         assertTrue(jwtUtil.isTokenValid(jwt, UUID.fromString("eb558e9f-1c39-460e-8860-71af6af63bd6")));
     }

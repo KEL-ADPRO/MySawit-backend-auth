@@ -7,6 +7,9 @@ import com.mysawit.mysawit_auth.model.Role;
 import com.mysawit.mysawit_auth.model.User;
 import com.mysawit.mysawit_auth.repository.AuthRepository;
 import com.mysawit.mysawit_auth.util.*;
+import com.mysawit.mysawit_auth.dto.request.LoginRequest;
+import com.mysawit.mysawit_auth.dto.request.RegisterRequest;
+import com.mysawit.mysawit_auth.dto.response.AuthResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,7 +39,6 @@ public class AuthServiceTest {
     private RegisterRequest mandorRequest;
     private RegisterRequest buruhRequest;
     private RegisterRequest supirRequest;
-
     private User adminUser;
 
     @BeforeEach

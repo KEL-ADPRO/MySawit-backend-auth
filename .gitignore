@@ -42,3 +42,5 @@ application.properties
 *.env
 
 .java-version
+
+/src/main/resources/templates/

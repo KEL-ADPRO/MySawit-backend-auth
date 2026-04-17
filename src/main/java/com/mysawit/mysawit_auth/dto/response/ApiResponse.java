@@ -1,4 +1,4 @@
-package com.mysawit.mysawit_auth.util;
+package com.mysawit.mysawit_auth.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -10,11 +10,11 @@ public class ApiResponse<T> {
     private String message;
     private T data;
 
-    public static <T> ApiResponse<T> successResponse(String message, T data) {
+    public static <T> ApiResponse<T> successResponse(final String message, final T data) {
         return new ApiResponse<>(true, message, data);
     }
 
-    public static <T> ApiResponse<T> errorResponse(String message) {
+    public static <T> ApiResponse<T> errorResponse(final String message) {
         return new ApiResponse<>(false, message, null);
     }
 }

@@ -158,6 +158,28 @@ public class AuthRepositoryTest {
     }
 
     @Test
+    void findByGoogleId_ExistingId() {
+        when(entityManager.createQuery(any(String.class), eq(User.class))).thenReturn(typedQuery);
+        when(typedQuery.setParameter("googleId", "google-id")).thenReturn(typedQuery);
+        when(typedQuery.getResultList()).thenReturn(List.of(admin));
+
+        final User result = authRepository.findByGoogleId("google-id");
+
+        assertEquals(admin, result);
+    }
+
+    @Test
+    void findByGoogleId_UnknownId() {
+        when(entityManager.createQuery(any(String.class), eq(User.class))).thenReturn(typedQuery);
+        when(typedQuery.setParameter("googleId",  "google-id")).thenReturn(typedQuery);
+        when(typedQuery.getResultList()).thenReturn(List.of());
+
+        final User result = authRepository.findByGoogleId("google-id");
+
+        assertNull(result);
+    }
+
+    @Test
     void findByUsername_ExistingUsername() {
         when(entityManager.createQuery(any(String.class), eq(User.class))).thenReturn(typedQuery);
         when(typedQuery.setParameter("username", "Buruh Sawit")).thenReturn(typedQuery);

@@ -1,11 +1,14 @@
 package com.mysawit.mysawit_auth.controller;
 
+import com.mysawit.mysawit_auth.exception.EmailAlreadyExistsException;
+import com.mysawit.mysawit_auth.exception.InvalidCredentialException;
+import com.mysawit.mysawit_auth.exception.MandorSertifMissingException;
 import com.mysawit.mysawit_auth.model.Role;
 import com.mysawit.mysawit_auth.service.AuthService;
-import com.mysawit.mysawit_auth.util.ApiResponse;
-import com.mysawit.mysawit_auth.util.AuthResponse;
-import com.mysawit.mysawit_auth.util.LoginRequest;
-import com.mysawit.mysawit_auth.util.RegisterRequest;
+import com.mysawit.mysawit_auth.dto.response.ApiResponse;
+import com.mysawit.mysawit_auth.dto.response.AuthResponse;
+import com.mysawit.mysawit_auth.dto.request.LoginRequest;
+import com.mysawit.mysawit_auth.dto.request.RegisterRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -39,7 +42,7 @@ public class AuthControllerTest {
     private AuthResponse buruhResponse;
     private AuthResponse supirResponse;
 
-    private LoginRequest validLoginRequest;
+    private final LoginRequest validLoginRequest = new LoginRequest();
     private AuthResponse loginResponse;
 
     @BeforeEach
@@ -221,10 +224,50 @@ public class AuthControllerTest {
     }
 
     @Test
-    void loginInvalidCredentials() {
-        when(authService.login(validLoginRequest)).thenThrow(new IllegalArgumentException());
+    void registerInvalidCredentials() {
+        when(authService.register(adminRequest)).thenThrow(new InvalidCredentialException());
 
-        assertThrows(IllegalArgumentException.class, () -> authController.login(validLoginRequest));
-        verify(authService, times(1)).login(validLoginRequest);
+        final ResponseEntity<ApiResponse<AuthResponse>> result = authController.register(adminRequest);
+
+        assertNotNull(result.getBody());
+        assertEquals(HttpStatus.BAD_REQUEST, result.getStatusCode());
+        assertFalse(result.getBody().isSuccess());
+        assertEquals("Invalid credentials", result.getBody().getMessage());
+    }
+
+    @Test
+    void registerEmailAlreadyExists() {
+        when(authService.register(adminRequest)).thenThrow(new EmailAlreadyExistsException(adminRequest.getEmail()));
+
+        final ResponseEntity<ApiResponse<AuthResponse>> result = authController.register(adminRequest);
+
+        assertNotNull(result.getBody());
+        assertEquals(HttpStatus.BAD_REQUEST, result.getStatusCode());
+        assertFalse(result.getBody().isSuccess());
+        assertEquals("Email admin@gmail.com is already registered", result.getBody().getMessage());
+    }
+
+    @Test
+    void registerMandorSertifMissing() {
+        when(authService.register(adminRequest)).thenThrow(new MandorSertifMissingException());
+
+        final ResponseEntity<ApiResponse<AuthResponse>> result = authController.register(adminRequest);
+
+        assertNotNull(result.getBody());
+        assertEquals(HttpStatus.BAD_REQUEST, result.getStatusCode());
+        assertFalse(result.getBody().isSuccess());
+        assertEquals("Nomor sertifikasi mandor is required for MANDOR role", result.getBody().getMessage());
+    }
+
+    @Test
+    void loginInvalidCredentials() {
+        when(authService.login(validLoginRequest)).thenThrow(new InvalidCredentialException());
+
+        final ResponseEntity<ApiResponse<AuthResponse>> result = authController.login(validLoginRequest);
+
+        assertNotNull(result.getBody());
+        assertEquals(HttpStatus.BAD_REQUEST, result.getStatusCode());
+        assertFalse(result.getBody().isSuccess());
+        assertEquals("Invalid credentials", result.getBody().getMessage());
     }
 }

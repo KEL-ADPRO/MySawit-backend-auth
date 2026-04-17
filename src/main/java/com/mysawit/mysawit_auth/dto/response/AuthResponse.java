@@ -1,4 +1,4 @@
-package com.mysawit.mysawit_auth.util;
+package com.mysawit.mysawit_auth.dto.response;
 
 import com.mysawit.mysawit_auth.model.Role;
 import lombok.*;

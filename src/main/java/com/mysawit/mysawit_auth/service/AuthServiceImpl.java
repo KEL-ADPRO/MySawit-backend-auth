@@ -14,6 +14,8 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
@@ -55,8 +57,13 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public AuthResponse getLoggedInUser(String token) {
-        return null;
+    public AuthResponse getLoggedInUser(final String token) {
+        final String userId = jwtUtil.extractUserId(token);
+        final User user = authRepository.findById(UUID.fromString(userId));
+        if (user == null) {
+            throw new InvalidCredentialException();
+        }
+        return toResponse(user, token);
     }
 
     private void guardEmailUnique(final String email) {

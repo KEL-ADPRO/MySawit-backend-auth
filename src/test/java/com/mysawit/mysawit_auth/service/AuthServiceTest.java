@@ -35,6 +35,9 @@ public class AuthServiceTest {
     @Mock
     private JwtUtil jwtUtil;
 
+    @Mock
+    private TokenBlacklist tokenBlacklist;
+
     private RegisterRequest adminRequest;
     private RegisterRequest mandorRequest;
     private RegisterRequest buruhRequest;
@@ -310,16 +313,19 @@ public class AuthServiceTest {
         when(jwtUtil.extractUserId(token)).thenReturn("eb558e9f-1c39-460e-8860-71af6af63bd6");
 
         assertDoesNotThrow(() -> authService.logout(token));
+        verify(tokenBlacklist, times(1)).blacklist(token);
     }
 
     @Test
     void logoutNullToken() {
         assertThrows(InvalidCredentialException.class, () -> authService.logout(null));
+        verify(tokenBlacklist, never()).blacklist(any());
     }
 
     @Test
     void logoutBlankToken() {
         assertThrows(InvalidCredentialException.class, () -> authService.logout("   "));
+        verify(tokenBlacklist, never()).blacklist(any());
     }
 
     @Test
@@ -328,5 +334,17 @@ public class AuthServiceTest {
         doThrow(new RuntimeException("JWT expired")).when(jwtUtil).extractUserId(badToken);
 
         assertThrows(InvalidCredentialException.class, () -> authService.logout(badToken));
+        verify(tokenBlacklist, never()).blacklist(any());
+    }
+
+    @Test
+    void loginWithBlacklistedTokenFails() {
+        when(authRepository.findByEmail("admin@gmail.com")).thenReturn(adminUser);
+        when(passwordHasher.matches("admin123", "hashed_admin123")).thenReturn(true);
+        when(jwtUtil.generateToken(adminUser.getId(), adminUser.getRole())).thenReturn("dummy.jwt.token");
+
+        authService.login(LoginRequest.builder().email("admin@gmail.com").password("admin123").build());
+
+        verify(jwtUtil, times(1)).generateToken(adminUser.getId(), adminUser.getRole());
     }
 }

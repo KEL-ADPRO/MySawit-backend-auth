@@ -68,8 +68,16 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public void logout(String token) {
+    public void logout(final String token) {
+        if (token == null || token.isBlank()) {
+            throw new InvalidCredentialException();
+        }
 
+        try {
+            jwtUtil.extractUserId(token);
+        } catch (Exception e) {
+            throw new InvalidCredentialException();
+        }
     }
 
     private void guardEmailUnique(final String email) {

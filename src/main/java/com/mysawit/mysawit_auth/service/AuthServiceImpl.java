@@ -22,6 +22,7 @@ public class AuthServiceImpl implements AuthService {
     private final AuthRepository authRepository;
     private final PasswordHasher passwordHasher;
     private final JwtUtil jwtUtil;
+    private final TokenBlacklist tokenBlacklist;
 
     @Override
     @Transactional
@@ -78,6 +79,8 @@ public class AuthServiceImpl implements AuthService {
         } catch (Exception e) {
             throw new InvalidCredentialException();
         }
+
+        tokenBlacklist.blacklist(token);
     }
 
     private void guardEmailUnique(final String email) {

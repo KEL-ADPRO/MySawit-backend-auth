@@ -270,4 +270,69 @@ public class AuthControllerTest {
         assertFalse(result.getBody().isSuccess());
         assertEquals("Invalid credentials", result.getBody().getMessage());
     }
+
+    @Test
+    void logoutSuccess() {
+        doNothing().when(authService).logout("valid.jwt.token");
+
+        final ResponseEntity<ApiResponse<Void>> result = authController.logout("Bearer valid.jwt.token");
+
+        assertEquals(HttpStatus.OK, result.getStatusCode());
+        assertNotNull(result.getBody());
+        assertTrue(result.getBody().isSuccess());
+        assertEquals("Logout successful", result.getBody().getMessage());
+        verify(authService, times(1)).logout("valid.jwt.token");
+    }
+
+    @Test
+    void logoutMissingAuthHeader() {
+        final ResponseEntity<ApiResponse<Void>> result = authController.logout(null);
+
+        assertEquals(HttpStatus.BAD_REQUEST, result.getStatusCode());
+        assertNotNull(result.getBody());
+        assertFalse(result.getBody().isSuccess());
+        verify(authService, never()).logout(any());
+    }
+
+    @Test
+    void logoutMalformedAuthHeader() {
+        final ResponseEntity<ApiResponse<Void>> result = authController.logout("NotBearer token");
+
+        assertEquals(HttpStatus.BAD_REQUEST, result.getStatusCode());
+        assertNotNull(result.getBody());
+        assertFalse(result.getBody().isSuccess());
+        verify(authService, never()).logout(any());
+    }
+
+    @Test
+    void logoutInvalidOrExpiredToken() {
+        doThrow(new InvalidCredentialException()).when(authService).logout("bad.token");
+
+        final ResponseEntity<ApiResponse<Void>> result = authController.logout("Bearer bad.token");
+
+        assertEquals(HttpStatus.BAD_REQUEST, result.getStatusCode());
+        assertNotNull(result.getBody());
+        assertFalse(result.getBody().isSuccess());
+        assertEquals("Invalid credentials", result.getBody().getMessage());
+    }
+
+    @Test
+    void getMeValidToken() {
+        when(authService.getLoggedInUser("valid.jwt.token")).thenReturn(adminResponse);
+
+        final ResponseEntity<ApiResponse<AuthResponse>> result = authController.getMe("Bearer valid.jwt.token");
+
+        assertEquals(HttpStatus.OK, result.getStatusCode());
+        assertNotNull(result.getBody());
+        assertTrue(result.getBody().isSuccess());
+        assertEquals("User retrieved", result.getBody().getMessage());
+    }
+
+    @Test
+    void getMeMissingAuthHeader() {
+        final ResponseEntity<ApiResponse<AuthResponse>> result = authController.getMe(null);
+
+        assertEquals(HttpStatus.BAD_REQUEST, result.getStatusCode());
+        assertFalse(result.getBody().isSuccess());
+    }
 }

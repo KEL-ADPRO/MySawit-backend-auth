@@ -9,7 +9,7 @@ public class TokenBlacklistTest {
 
     @BeforeEach
     void setUp() {
-        tokenBlacklist = new TokenBlacklist();
+        tokenBlacklist = new TokenBlacklistImpl();
     }
 
     @Test

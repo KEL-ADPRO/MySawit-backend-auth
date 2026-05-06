@@ -303,4 +303,30 @@ public class AuthServiceTest {
         assertThrows(InvalidCredentialException.class, () -> authService.login(request));
         verify(jwtUtil, never()).generateToken(any(), any());
     }
+
+    @Test
+    void logoutSuccess() {
+        final String token = "valid.jwt.token";
+        when(jwtUtil.extractUserId(token)).thenReturn("eb558e9f-1c39-460e-8860-71af6af63bd6");
+
+        assertDoesNotThrow(() -> authService.logout(token));
+    }
+
+    @Test
+    void logoutNullToken() {
+        assertThrows(InvalidCredentialException.class, () -> authService.logout(null));
+    }
+
+    @Test
+    void logoutBlankToken() {
+        assertThrows(InvalidCredentialException.class, () -> authService.logout("   "));
+    }
+
+    @Test
+    void logoutExpiredOrInvalidTokenThrows() {
+        final String badToken = "expired.or.malformed.token";
+        doThrow(new RuntimeException("JWT expired")).when(jwtUtil).extractUserId(badToken);
+
+        assertThrows(InvalidCredentialException.class, () -> authService.logout(badToken));
+    }
 }

@@ -59,6 +59,10 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public AuthResponse getLoggedInUser(final String token) {
+        if (tokenBlacklist.isBlacklisted(token)) {
+            throw new InvalidCredentialException();
+        }
+
         final String userId = jwtUtil.extractUserId(token);
         final User user = authRepository.findById(UUID.fromString(userId));
 

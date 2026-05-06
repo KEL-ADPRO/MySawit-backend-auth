@@ -347,4 +347,13 @@ public class AuthServiceTest {
 
         verify(jwtUtil, times(1)).generateToken(adminUser.getId(), adminUser.getRole());
     }
+
+    @Test
+    void getMeWithBlacklistedTokenThrows() {
+        final String token = "blacklisted.jwt.token";
+        when(tokenBlacklist.isBlacklisted(token)).thenReturn(true);
+
+        assertThrows(InvalidCredentialException.class, () -> authService.getLoggedInUser(token));
+        verify(authRepository, never()).findById(any());
+    }
 }

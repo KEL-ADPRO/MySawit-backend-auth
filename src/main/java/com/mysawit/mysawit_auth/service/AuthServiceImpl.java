@@ -67,6 +67,11 @@ public class AuthServiceImpl implements AuthService {
         return toResponse(user, token);
     }
 
+    @Override
+    public void logout(String token) {
+
+    }
+
     private void guardEmailUnique(final String email) {
         if (authRepository.findByEmail(email) != null) {
             throw new EmailAlreadyExistsException(email);

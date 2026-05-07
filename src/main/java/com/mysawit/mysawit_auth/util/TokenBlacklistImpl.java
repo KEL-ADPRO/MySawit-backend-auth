@@ -15,16 +15,16 @@ public class TokenBlacklistImpl implements TokenBlacklist {
 
     @Override
     public void blacklist(final String token) {
+        if (token == null) {
+            throw  new IllegalArgumentException("Token is null!");
+        }
+
         final long expiresAt = jwtUtil.extractExpiration(token).getTime();
         blacklistedTokens.put(token, expiresAt);
     }
 
     @Override
     public boolean isBlacklisted(final String token) {
-        if (token == null) {
-            return false;
-        }
-
         final Long expiresAt = blacklistedTokens.get(token);
 
         if (expiresAt == null) {

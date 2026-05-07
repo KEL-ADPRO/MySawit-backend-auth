@@ -20,13 +20,13 @@ public class TokenBlacklistTest {
     private TokenBlacklistImpl tokenBlacklist;
 
     @Test
-    void freshTokenIsNotBlacklisted() {
-        assertFalse(tokenBlacklist.isBlacklisted("fresh.jwt.token"));
+    void nullTokenIsRejected() {
+        assertThrows(IllegalArgumentException.class, () -> tokenBlacklist.blacklist(null));
     }
 
     @Test
-    void nullTokenIsNotBlacklisted() {
-        assertFalse(tokenBlacklist.isBlacklisted(null));
+    void freshTokenIsNotBlacklisted() {
+        assertFalse(tokenBlacklist.isBlacklisted("fresh.jwt.token"));
     }
 
     @Test

@@ -11,7 +11,6 @@ import java.time.Instant;
 @Builder @NoArgsConstructor
 @AllArgsConstructor
 public class BlacklistedToken {
-
     @Id
     @Column(length = 512)
     private String token;

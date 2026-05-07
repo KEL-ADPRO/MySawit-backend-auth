@@ -16,8 +16,8 @@ public class BlacklistedTokenRepositoryImpl implements BlacklistedTokenRepositor
     private EntityManager entityManager;
 
     @Override
-    public void save(final BlacklistedToken token) {
-        entityManager.merge(token);
+    public BlacklistedToken save(final BlacklistedToken token) {
+        return entityManager.merge(token);
     }
 
     @Override

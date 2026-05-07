@@ -40,9 +40,6 @@ public class GoogleAuthServiceImpl implements GoogleAuthService {
     private User resolveByEmailOrCreate(final GoogleAuthRequest request, final GoogleUserInfo userInfo) {
         final User existingByEmail = authRepository.findByEmail(userInfo.getEmail());
         if (existingByEmail != null) {
-            if (existingByEmail.getGoogleId() != null) {
-                return existingByEmail;
-            }
             throw new IllegalArgumentException("Email is already registered! Log in with password instead");
         }
         return createNewUser(request, userInfo);

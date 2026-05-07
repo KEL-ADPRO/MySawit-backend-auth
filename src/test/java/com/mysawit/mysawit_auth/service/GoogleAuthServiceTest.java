@@ -1,7 +1,7 @@
 package com.mysawit.mysawit_auth.service;
 
 import com.mysawit.mysawit_auth.dto.request.GoogleAuthRequest;
-import com.mysawit.mysawit_auth.dto.request.GoogleUserInfo;
+import com.mysawit.mysawit_auth.dto.GoogleUserInfo;
 import com.mysawit.mysawit_auth.dto.response.AuthResponse;
 import com.mysawit.mysawit_auth.model.Role;
 import com.mysawit.mysawit_auth.model.User;

@@ -1,4 +1,4 @@
-package com.mysawit.mysawit_auth.dto.request;
+package com.mysawit.mysawit_auth.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

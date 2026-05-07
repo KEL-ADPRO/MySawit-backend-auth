@@ -22,6 +22,7 @@ public class AuthServiceImpl implements AuthService {
     private final AuthRepository authRepository;
     private final PasswordHasher passwordHasher;
     private final JwtUtil jwtUtil;
+    private final TokenBlacklist tokenBlacklist;
 
     @Override
     @Transactional
@@ -48,7 +49,15 @@ public class AuthServiceImpl implements AuthService {
         }
 
         final User user = authRepository.findByEmail(request.getEmail());
-        if (user == null || !passwordHasher.matches(request.getPassword(), user.getPassword())) {
+        if (user == null) {
+            throw new InvalidCredentialException();
+        }
+
+        if (user.getGoogleId() != null) {
+            throw new IllegalArgumentException("This account uses Google login. Please sign in with Google.");
+        }
+
+        if (!passwordHasher.matches(request.getPassword(), user.getPassword())) {
             throw new InvalidCredentialException();
         }
 
@@ -58,6 +67,10 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public AuthResponse getLoggedInUser(final String token) {
+        if (tokenBlacklist.isBlacklisted(token)) {
+            throw new InvalidCredentialException();
+        }
+
         final String userId = jwtUtil.extractUserId(token);
         final User user = authRepository.findById(UUID.fromString(userId));
 
@@ -65,6 +78,23 @@ public class AuthServiceImpl implements AuthService {
             throw new InvalidCredentialException();
         }
         return toResponse(user, token);
+    }
+
+    @Override
+    public void logout(final String token) {
+        if (token == null || token.isBlank()) {
+            throw new InvalidCredentialException();
+        }
+
+        try {
+            jwtUtil.extractUserId(token);
+        } catch (Exception exception) {
+            final InvalidCredentialException thrownException = new InvalidCredentialException();
+            thrownException.initCause(exception);
+            throw thrownException;
+        }
+
+        tokenBlacklist.blacklist(token);
     }
 
     private void guardEmailUnique(final String email) {

@@ -203,4 +203,28 @@ public class AuthRepositoryIntegrationTest {
         final User found = authRepository.findByUsername("Ghost User");
         assertNull(found);
     }
+
+    @Test
+    void findByGoogleId_Found() {
+        final User googleUser = User.builder()
+                .username("googleuser")
+                .name("Google User")
+                .email("google@gmail.com")
+                .googleId("google-id-12345")
+                .role(Role.BURUH)
+                .build();
+        authRepository.save(googleUser);
+        entityManager.flush();
+        entityManager.clear();
+
+        final User found = authRepository.findByGoogleId("google-id-12345");
+
+        assertNotNull(found);
+        assertEquals("google-id-12345", found.getGoogleId());
+    }
+
+    @Test
+    void findByGoogleId_NotFound() {
+        assertNull(authRepository.findByGoogleId("nonexistent-google-id"));
+    }
 }

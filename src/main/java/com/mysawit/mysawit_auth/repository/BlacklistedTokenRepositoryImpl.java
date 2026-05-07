@@ -21,7 +21,7 @@ public class BlacklistedTokenRepositoryImpl implements BlacklistedTokenRepositor
     }
 
     @Override
-    public boolean existsByTokenAndExpiresAtAfter(final String token, final Instant now) {
+    public boolean isTokenBlacklisted(final String token, final Instant now) {
         List<BlacklistedToken> results = entityManager.createQuery(
                         "SELECT b FROM BlacklistedToken b " +
                                 "WHERE b.token = :token AND b.expiresAt > :now",

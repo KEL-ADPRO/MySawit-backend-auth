@@ -88,8 +88,10 @@ public class AuthServiceImpl implements AuthService {
 
         try {
             jwtUtil.extractUserId(token);
-        } catch (Exception e) {
-            throw new InvalidCredentialException();
+        } catch (Exception exception) {
+            final InvalidCredentialException thrownException = new InvalidCredentialException();
+            thrownException.initCause(exception);
+            throw thrownException;
         }
 
         tokenBlacklist.blacklist(token);

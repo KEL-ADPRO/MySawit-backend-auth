@@ -64,7 +64,7 @@ public class GoogleAuthServiceImpl implements GoogleAuthService {
         final User newUser = User.builder()
                 .googleId(userInfo.getGoogleId())
                 .email(userInfo.getEmail())
-                .password(passwordHasher.hash(userInfo.getEmail()))
+                .password(null)
                 .name(userInfo.getName())
                 .username(request.getUsername())
                 .role(request.getRole())

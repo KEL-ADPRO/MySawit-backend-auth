@@ -53,6 +53,10 @@ public class AuthServiceImpl implements AuthService {
             throw new InvalidCredentialException();
         }
 
+        if (user.getGoogleId() != null) {
+            throw new IllegalArgumentException("This account uses Google login. Please sign in with Google.");
+        }
+
         final String token = jwtUtil.generateToken(user.getId(), user.getRole());
         return toResponse(user, token);
     }

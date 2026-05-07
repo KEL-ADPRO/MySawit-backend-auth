@@ -9,7 +9,6 @@ import com.mysawit.mysawit_auth.model.User;
 import com.mysawit.mysawit_auth.repository.AuthRepository;
 import com.mysawit.mysawit_auth.util.GoogleTokenVerifier;
 import com.mysawit.mysawit_auth.util.JwtUtil;
-import com.mysawit.mysawit_auth.util.PasswordHasher;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,7 +19,6 @@ public class GoogleAuthServiceImpl implements GoogleAuthService {
     private final AuthRepository authRepository;
     private final GoogleTokenVerifier googleTokenVerifier;
     private final JwtUtil jwtUtil;
-    private final PasswordHasher passwordHasher;
 
     @Override
     @Transactional

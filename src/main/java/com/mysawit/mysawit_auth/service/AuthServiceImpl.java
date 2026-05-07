@@ -49,12 +49,16 @@ public class AuthServiceImpl implements AuthService {
         }
 
         final User user = authRepository.findByEmail(request.getEmail());
-        if (user == null || !passwordHasher.matches(request.getPassword(), user.getPassword())) {
+        if (user == null) {
             throw new InvalidCredentialException();
         }
 
         if (user.getGoogleId() != null) {
             throw new IllegalArgumentException("This account uses Google login. Please sign in with Google.");
+        }
+
+        if (!passwordHasher.matches(request.getPassword(), user.getPassword())) {
+            throw new InvalidCredentialException();
         }
 
         final String token = jwtUtil.generateToken(user.getId(), user.getRole());

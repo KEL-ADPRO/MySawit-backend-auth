@@ -308,6 +308,28 @@ public class AuthServiceTest {
     }
 
     @Test
+    void loginWithGoogleOnlyAccount() {
+        final User googleOnlyUser = User.builder()
+                .email("google@gmail.com")
+                .password(null)
+                .googleId("google-id-12345")
+                .role(Role.BURUH)
+                .username("google@gmail.com")
+                .name("Google User")
+                .build();
+
+        when(authRepository.findByEmail("google@gmail.com")).thenReturn(googleOnlyUser);
+
+        final LoginRequest request = LoginRequest.builder()
+                .email("google@gmail.com")
+                .password("somepassword")
+                .build();
+
+        assertThrows(IllegalArgumentException.class, () -> authService.login(request));
+        verify(jwtUtil, never()).generateToken(any(), any());
+    }
+
+    @Test
     void logoutSuccess() {
         final String token = "valid.jwt.token";
         when(jwtUtil.extractUserId(token)).thenReturn("eb558e9f-1c39-460e-8860-71af6af63bd6");

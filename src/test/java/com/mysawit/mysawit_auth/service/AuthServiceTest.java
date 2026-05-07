@@ -330,6 +330,28 @@ public class AuthServiceTest {
     }
 
     @Test
+    void loginWithNoGoogleIdAndNoPasswordThrows() {
+        final User corruptedUser = User.builder()
+                .email("broken@gmail.com")
+                .googleId(null)
+                .password(null)
+                .role(Role.BURUH)
+                .username("broken@gmail.com")
+                .name("Broken User")
+                .build();
+
+        when(authRepository.findByEmail("broken@gmail.com")).thenReturn(corruptedUser);
+
+        final LoginRequest request = LoginRequest.builder()
+                .email("broken@gmail.com")
+                .password("anything")
+                .build();
+
+        assertThrows(InvalidCredentialException.class, () -> authService.login(request));
+        verify(jwtUtil, never()).generateToken(any(), any());
+    }
+
+    @Test
     void logoutSuccess() {
         final String token = "valid.jwt.token";
         when(jwtUtil.extractUserId(token)).thenReturn("eb558e9f-1c39-460e-8860-71af6af63bd6");

@@ -1,6 +1,6 @@
 package com.mysawit.mysawit_auth.util;
 
-import com.mysawit.mysawit_auth.dto.request.GoogleUserInfo;
+import com.mysawit.mysawit_auth.dto.GoogleUserInfo;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;

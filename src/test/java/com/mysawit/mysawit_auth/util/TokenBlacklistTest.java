@@ -25,6 +25,11 @@ public class TokenBlacklistTest {
     }
 
     @Test
+    void nullTokenIsNotBlacklisted() {
+        assertFalse(tokenBlacklist.isBlacklisted(null));
+    }
+
+    @Test
     void blacklistedTokenIsRecognised() {
         when(jwtUtil.extractExpiration("blacklisted.jwt.token")).thenReturn(new Date(System.currentTimeMillis() + 100));
         tokenBlacklist.blacklist("blacklisted.jwt.token");

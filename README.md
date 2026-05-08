@@ -21,33 +21,42 @@ Insert the example environment variables below to your local `.env` file:
 ```bash
 # Database Configuration (Neon DB / PostgreSQL)
 # Replace the values below with your local or cloud PostgreSQL credentials
-NEON_DB_URL=your_databse_url
-NEON_DB_USERNAME=your_database_username
-NEON_DB_PASSWORD=your_database_password
+NEON_DB_URL=your_db_url
+NEON_DB_USERNAME=your_db_username
+NEON_DB_PASSWORD=your_db_password
 
-# Server Configuration
-# Note: The frontend expects this service to run on port 8082
-SERVER_PORT=8082
+JWT_SECRET=your_jwt_secret
+JWT_ACCESS_EXPIRATION_MS=3600000
+
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+
+PORT=8081
 ```
 *Update the newly created `.env` file with your active PostgreSQL URL, Username, and Password.*
 - Go to or create `src/main/resources/application.properties` and paste
 ```bash
-server.port=8082
+spring.application.name=MySawit-Auth
+
+server.port=${PORT}
 
 spring.datasource.url=${NEON_DB_URL}
-
 spring.datasource.username=${NEON_DB_USERNAME}
 spring.datasource.password=${NEON_DB_PASSWORD}
-
 spring.datasource.driver-class-name=org.postgresql.Driver
-spring.jpa.hibernate.ddl-auto=update
 
+spring.jpa.hibernate.ddl-auto=update
 spring.jpa.show-sql=true
 spring.jpa.properties.hibernate.format_sql=true
-
 spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
-
 spring.jpa.hibernate.naming.physical-strategy=org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+
+jwt.secret=${JWT_SECRET}
+jwt.expiration-ms=${JWT_ACCESS_EXPIRATION_MS}
+
+google.client-id=${GOOGLE_CLIENT_ID}
+google.client-secret=${GOOGLE_CLIENT_SECRET}
+google.scope=email,profile
 ```
 
 **3. Run the Application (via IntelliJ IDEA)**

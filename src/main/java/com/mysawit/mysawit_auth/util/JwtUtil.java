@@ -44,6 +44,10 @@ public class JwtUtil {
         return extractClaim(token, claims -> claims.get("role", String.class));
     }
 
+    public Date extractExpiration(final String token) {
+        return extractClaim(token, Claims::getExpiration);
+    }
+
     public boolean isTokenValid(final String token, final UUID userId) {
         final String extractUserId = extractUserId(token);
         return extractUserId.equals(userId.toString()) && !isTokenExpired(token);

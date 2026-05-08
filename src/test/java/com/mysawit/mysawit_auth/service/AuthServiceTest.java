@@ -35,6 +35,9 @@ public class AuthServiceTest {
     @Mock
     private JwtUtil jwtUtil;
 
+    @Mock
+    private TokenBlacklist tokenBlacklist;
+
     private RegisterRequest adminRequest;
     private RegisterRequest mandorRequest;
     private RegisterRequest buruhRequest;
@@ -302,5 +305,99 @@ public class AuthServiceTest {
 
         assertThrows(InvalidCredentialException.class, () -> authService.login(request));
         verify(jwtUtil, never()).generateToken(any(), any());
+    }
+
+    @Test
+    void loginWithGoogleOnlyAccount() {
+        final User googleOnlyUser = User.builder()
+                .email("google@gmail.com")
+                .password(null)
+                .googleId("google-id-12345")
+                .role(Role.BURUH)
+                .username("google@gmail.com")
+                .name("Google User")
+                .build();
+
+        when(authRepository.findByEmail("google@gmail.com")).thenReturn(googleOnlyUser);
+
+        final LoginRequest request = LoginRequest.builder()
+                .email("google@gmail.com")
+                .password("somepassword")
+                .build();
+
+        assertThrows(IllegalArgumentException.class, () -> authService.login(request));
+        verify(jwtUtil, never()).generateToken(any(), any());
+    }
+
+    @Test
+    void loginWithNoGoogleIdAndNoPasswordThrows() {
+        final User corruptedUser = User.builder()
+                .email("broken@gmail.com")
+                .googleId(null)
+                .password(null)
+                .role(Role.BURUH)
+                .username("broken@gmail.com")
+                .name("Broken User")
+                .build();
+
+        when(authRepository.findByEmail("broken@gmail.com")).thenReturn(corruptedUser);
+
+        final LoginRequest request = LoginRequest.builder()
+                .email("broken@gmail.com")
+                .password("anything")
+                .build();
+
+        assertThrows(InvalidCredentialException.class, () -> authService.login(request));
+        verify(jwtUtil, never()).generateToken(any(), any());
+    }
+
+    @Test
+    void logoutSuccess() {
+        final String token = "valid.jwt.token";
+        when(jwtUtil.extractUserId(token)).thenReturn("eb558e9f-1c39-460e-8860-71af6af63bd6");
+
+        assertDoesNotThrow(() -> authService.logout(token));
+        verify(tokenBlacklist, times(1)).blacklist(token);
+    }
+
+    @Test
+    void logoutNullToken() {
+        assertThrows(InvalidCredentialException.class, () -> authService.logout(null));
+        verify(tokenBlacklist, never()).blacklist(any());
+    }
+
+    @Test
+    void logoutBlankToken() {
+        assertThrows(InvalidCredentialException.class, () -> authService.logout("   "));
+        verify(tokenBlacklist, never()).blacklist(any());
+    }
+
+    @Test
+    void logoutExpiredOrInvalidTokenThrows() {
+        final String badToken = "expired.or.malformed.token";
+        doThrow(new RuntimeException("JWT expired")).when(jwtUtil).extractUserId(badToken);
+
+        assertThrows(InvalidCredentialException.class, () -> authService.logout(badToken));
+        verify(tokenBlacklist, never()).blacklist(any());
+    }
+
+    @Test
+    void loginWithBlacklistedTokenFails() {
+        when(authRepository.findByEmail("admin@gmail.com")).thenReturn(adminUser);
+        when(passwordHasher.matches("admin123", "hashed_admin123")).thenReturn(true);
+        when(jwtUtil.generateToken(adminUser.getId(), adminUser.getRole())).thenReturn("dummy.jwt.token");
+
+        authService.login(LoginRequest.builder().email("admin@gmail.com").password("admin123").build());
+
+        verify(jwtUtil, times(1)).generateToken(adminUser.getId(), adminUser.getRole());
+    }
+
+    @Test
+    void getMeWithBlacklistedTokenThrows() {
+        final String token = "blacklisted.jwt.token";
+        when(tokenBlacklist.isBlacklisted(token)).thenReturn(true);
+
+        assertThrows(InvalidCredentialException.class, () -> authService.getLoggedInUser(token));
+        verify(authRepository, never()).findById(any());
     }
 }

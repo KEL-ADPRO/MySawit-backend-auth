@@ -8,8 +8,11 @@ import com.mysawit.mysawit_auth.exception.EmailAlreadyExistsException;
 import com.mysawit.mysawit_auth.exception.InvalidCredentialException;
 import com.mysawit.mysawit_auth.exception.MandorSertifMissingException;
 import com.mysawit.mysawit_auth.handler.GlobalExceptionHandler;
+import com.mysawit.mysawit_auth.model.AuthProvider;
 import com.mysawit.mysawit_auth.model.Role;
 import com.mysawit.mysawit_auth.service.AuthService;
+import com.mysawit.mysawit_auth.service.strategy.AuthStrategy;
+import com.mysawit.mysawit_auth.service.strategy.AuthStrategyFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,16 +34,22 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ExtendWith(MockitoExtension.class)
 public class AuthControllerTest {
 
+    @Mock
+    private AuthService authService;
+
+    @Mock
+    private AuthStrategyFactory strategyFactory;
+
+    @Mock
+    private AuthStrategy<LoginRequest> strategy;
+
+    @InjectMocks
+    private AuthController authController;
+
     private MockMvc mockMvc;
     private final ObjectMapper objectMapper = new ObjectMapper();
     private LoginRequest validLoginRequest;
     private AuthResponse loginResponse;
-
-    @Mock
-    private AuthService authService;
-
-    @InjectMocks
-    private AuthController authController;
 
     private RegisterRequest adminRequest;
     private RegisterRequest mandorRequest;
@@ -203,7 +212,8 @@ public class AuthControllerTest {
 
     @Test
     void loginSuccess() throws Exception {
-        when(authService.login(any(LoginRequest.class))).thenReturn(loginResponse);
+        doReturn(strategy).when(strategyFactory).resolve(AuthProvider.PASSWORD);
+        when(strategy.authenticate(any(LoginRequest.class))).thenReturn(loginResponse);
 
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -213,7 +223,8 @@ public class AuthControllerTest {
                 .andExpect(jsonPath("$.message").value("Login successful"))
                 .andExpect(jsonPath("$.data.token").value("dummy.jwt.token"));
 
-        verify(authService, times(1)).login(any(LoginRequest.class));
+        verify(strategyFactory, times(1)).resolve(AuthProvider.PASSWORD);
+        verify(strategy, times(1)).authenticate(any(LoginRequest.class));
     }
 
     @Test
@@ -255,7 +266,8 @@ public class AuthControllerTest {
 
     @Test
     void loginInvalidCredentials() throws Exception {
-        when(authService.login(any(LoginRequest.class))).thenThrow(new InvalidCredentialException());
+        doReturn(strategy).when(strategyFactory).resolve(AuthProvider.PASSWORD);
+        when(strategy.authenticate(any(LoginRequest.class))).thenThrow(new  InvalidCredentialException());
 
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -263,6 +275,9 @@ public class AuthControllerTest {
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message").value("Invalid credentials"));
+
+        verify(strategyFactory, times(1)).resolve(AuthProvider.PASSWORD);
+        verify(strategy, times(1)).authenticate(any(LoginRequest.class));
     }
 
     @Test

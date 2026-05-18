@@ -4,8 +4,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mysawit.mysawit_auth.dto.request.GoogleAuthRequest;
 import com.mysawit.mysawit_auth.dto.response.AuthResponse;
 import com.mysawit.mysawit_auth.handler.GlobalExceptionHandler;
+import com.mysawit.mysawit_auth.model.AuthProvider;
 import com.mysawit.mysawit_auth.model.Role;
-import com.mysawit.mysawit_auth.service.GoogleAuthService;
+import com.mysawit.mysawit_auth.service.strategy.AuthStrategy;
+import com.mysawit.mysawit_auth.service.strategy.AuthStrategyFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,16 +28,19 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ExtendWith(MockitoExtension.class)
 public class GoogleAuthControllerTest {
 
+    @Mock
+    private AuthStrategyFactory strategyFactory;
+
+    @Mock
+    private AuthStrategy<GoogleAuthRequest> strategy;
+
+    @InjectMocks
+    private GoogleAuthController googleAuthController;
+
     private MockMvc mockMvc;
     private final ObjectMapper objectMapper = new ObjectMapper();
     private GoogleAuthRequest adminRequest;
     private AuthResponse adminResponse;
-
-    @Mock
-    private GoogleAuthService googleAuthService;
-
-    @InjectMocks
-    private GoogleAuthController googleAuthController;
 
     @BeforeEach
     void setUp() {
@@ -61,7 +66,8 @@ public class GoogleAuthControllerTest {
 
     @Test
     void googleAuthAdminSuccess() throws Exception {
-        when(googleAuthService.loginOrRegister(any(GoogleAuthRequest.class))).thenReturn(adminResponse);
+        doReturn(strategy).when(strategyFactory).resolve(AuthProvider.GOOGLE);
+        when(strategy.authenticate(any(GoogleAuthRequest.class))).thenReturn(adminResponse);
 
         mockMvc.perform(post("/api/auth/google")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -71,13 +77,14 @@ public class GoogleAuthControllerTest {
                 .andExpect(jsonPath("$.data.username").value("Admin Sawit"))
                 .andExpect(jsonPath("$.data.role").value("ADMIN"));
 
-        verify(googleAuthService, times(1)).loginOrRegister(any(GoogleAuthRequest.class));
+        verify(strategyFactory, times(1)).resolve(AuthProvider.GOOGLE);
+        verify(strategy, times(1)).authenticate(any(GoogleAuthRequest.class));
     }
 
     @Test
     void invalidGoogleToken() throws Exception {
-        when(googleAuthService.loginOrRegister(any(GoogleAuthRequest.class)))
-                .thenThrow(new IllegalArgumentException("Invalid Google ID token"));
+        doReturn(strategy).when(strategyFactory).resolve(AuthProvider.GOOGLE);
+        when(strategy.authenticate(any(GoogleAuthRequest.class))).thenThrow(new IllegalArgumentException("Invalid Google ID token"));
 
         mockMvc.perform(post("/api/auth/google")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -87,6 +94,7 @@ public class GoogleAuthControllerTest {
                 .andExpect(jsonPath("$.message").value("Invalid Google ID token"))
                 .andExpect(jsonPath("$.data").doesNotExist());
 
-        verify(googleAuthService, times(1)).loginOrRegister(any(GoogleAuthRequest.class));
+        verify(strategyFactory, times(1)).resolve(AuthProvider.GOOGLE);
+        verify(strategy, times(1)).authenticate(any(GoogleAuthRequest.class));
     }
 }

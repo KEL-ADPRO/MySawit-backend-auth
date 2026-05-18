@@ -11,6 +11,6 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.H2Dialect
     show-sql: true
-  jwt:
-    secret: dummy-secret-key-for-testing-purposes-only-12345
-    expiration: 3600000
+jwt:
+  secret: dummy-secret-key-for-testing-purposes-only-12345
+  expiration: 3600000

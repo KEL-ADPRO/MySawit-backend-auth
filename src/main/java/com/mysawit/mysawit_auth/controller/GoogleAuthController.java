@@ -20,11 +20,7 @@ public class GoogleAuthController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<AuthResponse>> loginOrRegister(@Valid @RequestBody final GoogleAuthRequest request) {
-        try {
-            final AuthResponse response = googleAuthService.loginOrRegister(request);
-            return ResponseEntity.ok(ApiResponse.successResponse("Google authentication successful", response));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(ApiResponse.errorResponse(e.getMessage()));
-        }
+        final AuthResponse response = googleAuthService.loginOrRegister(request);
+        return ResponseEntity.ok(ApiResponse.successResponse("Google authentication successful", response));
     }
 }

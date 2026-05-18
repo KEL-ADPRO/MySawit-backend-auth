@@ -1,7 +1,6 @@
 package com.mysawit.mysawit_auth.service.strategy;
 
 import com.mysawit.mysawit_auth.model.AuthProvider;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;

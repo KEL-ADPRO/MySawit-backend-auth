@@ -4,9 +4,11 @@ import com.mysawit.mysawit_auth.dto.request.GoogleAuthRequest;
 import com.mysawit.mysawit_auth.dto.GoogleUserInfo;
 import com.mysawit.mysawit_auth.dto.response.AuthResponse;
 import com.mysawit.mysawit_auth.exception.MandorSertifMissingException;
+import com.mysawit.mysawit_auth.model.AuthProvider;
 import com.mysawit.mysawit_auth.model.Role;
 import com.mysawit.mysawit_auth.model.User;
 import com.mysawit.mysawit_auth.repository.AuthRepository;
+import com.mysawit.mysawit_auth.service.strategy.AuthStrategy;
 import com.mysawit.mysawit_auth.util.GoogleTokenVerifier;
 import com.mysawit.mysawit_auth.util.JwtUtil;
 import jakarta.transaction.Transactional;
@@ -15,7 +17,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class GoogleAuthServiceImpl implements GoogleAuthService {
+public class GoogleAuthServiceImpl implements GoogleAuthService, AuthStrategy<GoogleAuthRequest> {
     private final AuthRepository authRepository;
     private final GoogleTokenVerifier googleTokenVerifier;
     private final JwtUtil jwtUtil;
@@ -35,6 +37,17 @@ public class GoogleAuthServiceImpl implements GoogleAuthService {
 
         final String token = jwtUtil.generateToken(user.getId(), user.getRole());
         return toResponse(user, token);
+    }
+
+    @Override
+    @Transactional
+    public AuthResponse authenticate(GoogleAuthRequest request) {
+        return this.loginOrRegister(request);
+    }
+
+    @Override
+    public AuthProvider getProviderType() {
+        return AuthProvider.GOOGLE;
     }
 
     private User resolveByEmailOrCreate(final GoogleAuthRequest request, final GoogleUserInfo userInfo) {

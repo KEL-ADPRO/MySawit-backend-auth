@@ -1,8 +1,12 @@
 package com.mysawit.mysawit_auth.service;
 
 import com.mysawit.mysawit_auth.exception.InvalidCredentialException;
+import com.mysawit.mysawit_auth.exception.MandorSertifMissingException;
+import com.mysawit.mysawit_auth.model.AuthProvider;
+import com.mysawit.mysawit_auth.model.Role;
 import com.mysawit.mysawit_auth.model.User;
 import com.mysawit.mysawit_auth.repository.AuthRepository;
+import com.mysawit.mysawit_auth.service.strategy.AuthStrategy;
 import com.mysawit.mysawit_auth.util.*;
 import com.mysawit.mysawit_auth.dto.request.LoginRequest;
 import com.mysawit.mysawit_auth.dto.request.RegisterRequest;
@@ -16,7 +20,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-public class AuthServiceImpl implements AuthService {
+public class AuthServiceImpl implements AuthService, AuthStrategy<LoginRequest> {
     private final AuthRepository authRepository;
     private final PasswordHasher passwordHasher;
     private final JwtUtil jwtUtil;
@@ -93,6 +97,31 @@ public class AuthServiceImpl implements AuthService {
         }
 
         tokenBlacklist.blacklist(token);
+    }
+
+    @Override
+    public AuthResponse authenticate(LoginRequest request) {
+        return this.login(request);
+    }
+
+    @Override
+    public AuthProvider getProviderType() {
+        return AuthProvider.PASSWORD;
+    }
+
+    private void guardEmailUnique(final String email) {
+        if (authRepository.findByEmail(email) != null) {
+            throw new EmailAlreadyExistsException(email);
+        }
+    }
+
+    private void guardMandorCertification(final RegisterRequest request) {
+        final boolean isMandor = request.getRole() == Role.MANDOR;
+        final boolean missingCert = request.getNomorSertifMandor() == null || request.getNomorSertifMandor().isBlank();
+
+        if (isMandor && missingCert) {
+            throw new MandorSertifMissingException();
+        }
     }
 
     private User buildUser(final RegisterRequest request) {

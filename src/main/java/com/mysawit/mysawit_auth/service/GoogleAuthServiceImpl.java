@@ -3,6 +3,7 @@ package com.mysawit.mysawit_auth.service;
 import com.mysawit.mysawit_auth.dto.request.GoogleAuthRequest;
 import com.mysawit.mysawit_auth.dto.GoogleUserInfo;
 import com.mysawit.mysawit_auth.dto.response.AuthResponse;
+import com.mysawit.mysawit_auth.exception.EmailAlreadyExistsException;
 import com.mysawit.mysawit_auth.exception.MandorSertifMissingException;
 import com.mysawit.mysawit_auth.model.AuthProvider;
 import com.mysawit.mysawit_auth.model.Role;
@@ -53,7 +54,7 @@ public class GoogleAuthServiceImpl implements GoogleAuthService, AuthStrategy<Go
     private User resolveByEmailOrCreate(final GoogleAuthRequest request, final GoogleUserInfo userInfo) {
         final User existingByEmail = authRepository.findByEmail(userInfo.getEmail());
         if (existingByEmail != null) {
-            throw new IllegalArgumentException("Email is already registered! Log in with password instead");
+            throw new EmailAlreadyExistsException(userInfo.getEmail());
         }
         return createNewUser(request, userInfo);
     }

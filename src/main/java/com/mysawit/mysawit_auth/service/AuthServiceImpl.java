@@ -1,9 +1,7 @@
 package com.mysawit.mysawit_auth.service;
 
 import com.mysawit.mysawit_auth.exception.InvalidCredentialException;
-import com.mysawit.mysawit_auth.exception.MandorSertifMissingException;
 import com.mysawit.mysawit_auth.model.AuthProvider;
-import com.mysawit.mysawit_auth.model.Role;
 import com.mysawit.mysawit_auth.model.User;
 import com.mysawit.mysawit_auth.repository.AuthRepository;
 import com.mysawit.mysawit_auth.service.strategy.AuthStrategy;
@@ -107,21 +105,6 @@ public class AuthServiceImpl implements AuthService, AuthStrategy<LoginRequest> 
     @Override
     public AuthProvider getProviderType() {
         return AuthProvider.PASSWORD;
-    }
-
-    private void guardEmailUnique(final String email) {
-        if (authRepository.findByEmail(email) != null) {
-            throw new EmailAlreadyExistsException(email);
-        }
-    }
-
-    private void guardMandorCertification(final RegisterRequest request) {
-        final boolean isMandor = request.getRole() == Role.MANDOR;
-        final boolean missingCert = request.getNomorSertifMandor() == null || request.getNomorSertifMandor().isBlank();
-
-        if (isMandor && missingCert) {
-            throw new MandorSertifMissingException();
-        }
     }
 
     private User buildUser(final RegisterRequest request) {

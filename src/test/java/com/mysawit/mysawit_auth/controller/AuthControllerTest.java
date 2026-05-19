@@ -1,27 +1,35 @@
 package com.mysawit.mysawit_auth.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mysawit.mysawit_auth.dto.request.LoginRequest;
+import com.mysawit.mysawit_auth.dto.request.RegisterRequest;
+import com.mysawit.mysawit_auth.dto.response.AuthResponse;
 import com.mysawit.mysawit_auth.exception.EmailAlreadyExistsException;
 import com.mysawit.mysawit_auth.exception.InvalidCredentialException;
 import com.mysawit.mysawit_auth.exception.MandorSertifMissingException;
+import com.mysawit.mysawit_auth.handler.GlobalExceptionHandler;
+import com.mysawit.mysawit_auth.model.AuthProvider;
 import com.mysawit.mysawit_auth.model.Role;
 import com.mysawit.mysawit_auth.service.AuthService;
-import com.mysawit.mysawit_auth.dto.response.ApiResponse;
-import com.mysawit.mysawit_auth.dto.response.AuthResponse;
-import com.mysawit.mysawit_auth.dto.request.LoginRequest;
-import com.mysawit.mysawit_auth.dto.request.RegisterRequest;
+import com.mysawit.mysawit_auth.service.strategy.AuthStrategy;
+import com.mysawit.mysawit_auth.service.strategy.AuthStrategyFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ExtendWith(MockitoExtension.class)
 public class AuthControllerTest {
@@ -29,8 +37,19 @@ public class AuthControllerTest {
     @Mock
     private AuthService authService;
 
+    @Mock
+    private AuthStrategyFactory strategyFactory;
+
+    @Mock
+    private AuthStrategy<LoginRequest> strategy;
+
     @InjectMocks
     private AuthController authController;
+
+    private MockMvc mockMvc;
+    private final ObjectMapper objectMapper = new ObjectMapper();
+    private LoginRequest validLoginRequest;
+    private AuthResponse loginResponse;
 
     private RegisterRequest adminRequest;
     private RegisterRequest mandorRequest;
@@ -42,11 +61,12 @@ public class AuthControllerTest {
     private AuthResponse buruhResponse;
     private AuthResponse supirResponse;
 
-    private final LoginRequest validLoginRequest = new LoginRequest();
-    private AuthResponse loginResponse;
-
     @BeforeEach
     void setUp() {
+        mockMvc = MockMvcBuilders.standaloneSetup(authController)
+                .setControllerAdvice(new GlobalExceptionHandler())
+                .build();
+
         adminRequest = RegisterRequest.builder()
                 .username("Admin Sawit")
                 .name("Agus")
@@ -116,223 +136,212 @@ public class AuthControllerTest {
         loginResponse = AuthResponse.builder()
                 .token("dummy.jwt.token")
                 .userId(UUID.fromString("eb558e9f-1c39-460e-8860-71af6af63bd6"))
-                .username("Admin Sawit").name("Agus")
-                .email("admin@gmail.com").role(Role.ADMIN).build();
+                .username("Admin Sawit")
+                .name("Agus")
+                .email("admin@gmail.com")
+                .role(Role.ADMIN)
+                .build();
+
+        validLoginRequest = new LoginRequest("admin@gmail.com", "admin123");
     }
 
     @Test
-    void registerAdminSuccess() {
-        when(authService.register(adminRequest)).thenReturn(adminResponse);
+    void registerAdminSuccess() throws Exception {
+        when(authService.register(any(RegisterRequest.class))).thenReturn(adminResponse);
 
-        final ResponseEntity<ApiResponse<AuthResponse>> result = authController.register(adminRequest);
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(adminRequest)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("Registration successful"))
+                .andExpect(jsonPath("$.data.username").value("Admin Sawit"))
+                .andExpect(jsonPath("$.data.role").value("ADMIN"));
 
-        assertNotNull(result.getBody());
-        assertEquals("Registration successful", result.getBody().getMessage());
-        assertEquals(HttpStatus.CREATED, result.getStatusCode());
-        verify(authService, times(1)).register(adminRequest);
-
-        final AuthResponse data = result.getBody().getData();
-
-        assertEquals("Admin Sawit", data.getUsername());
-        assertEquals("Agus", data.getName());
-        assertEquals("admin@gmail.com", data.getEmail());
-        assertEquals(Role.ADMIN, data.getRole());
-        verify(authService, times(1)).register(adminRequest);
-
+        verify(authService, times(1)).register(any(RegisterRequest.class));
     }
 
     @Test
-    void registerMandorSuccess() {
-        when(authService.register(mandorRequest)).thenReturn(mandorResponse);
+    void registerMandorSuccess() throws Exception {
+        when(authService.register(any(RegisterRequest.class))).thenReturn(mandorResponse);
 
-        final ResponseEntity<ApiResponse<AuthResponse>> result = authController.register(mandorRequest);
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(mandorRequest)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("Registration successful"))
+                .andExpect(jsonPath("$.data.username").value("Mandor Sawit"))
+                .andExpect(jsonPath("$.data.nomorSertifMandor").value("CERT-001"))
+                .andExpect(jsonPath("$.data.role").value("MANDOR"));
 
-        assertNotNull(result.getBody());
-        assertEquals("Registration successful", result.getBody().getMessage());
-        assertEquals(HttpStatus.CREATED, result.getStatusCode());
-        verify(authService, times(1)).register(mandorRequest);
-
-        final AuthResponse data = result.getBody().getData();
-
-        assertEquals("Mandor Sawit", data.getUsername());
-        assertEquals("Burhan", data.getName());
-        assertEquals("burhan@gmail.com", data.getEmail());
-        assertEquals(Role.MANDOR, data.getRole());
-        assertEquals("CERT-001", data.getNomorSertifMandor());
-        verify(authService, times(1)).register(mandorRequest);
+        verify(authService, times(1)).register(any(RegisterRequest.class));
     }
 
     @Test
-    void registerBuruhSuccess() {
-        when(authService.register(buruhRequest)).thenReturn(buruhResponse);
+    void registerBuruhSuccess() throws Exception {
+        when(authService.register(any(RegisterRequest.class))).thenReturn(buruhResponse);
 
-        final ResponseEntity<ApiResponse<AuthResponse>> result = authController.register(buruhRequest);
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(buruhRequest)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("Registration successful"))
+                .andExpect(jsonPath("$.data.username").value("Buruh Sawit"))
+                .andExpect(jsonPath("$.data.role").value("BURUH"));
 
-        assertNotNull(result.getBody());
-        assertEquals("Registration successful", result.getBody().getMessage());
-        assertEquals(HttpStatus.CREATED, result.getStatusCode());
-        verify(authService, times(1)).register(buruhRequest);
-
-        final AuthResponse data = result.getBody().getData();
-
-        assertEquals("Buruh Sawit", data.getUsername());
-        assertEquals("Usep", data.getName());
-        assertEquals("usep@gmail.com", data.getEmail());
-        assertEquals(Role.BURUH, data.getRole());
-        verify(authService, times(1)).register(buruhRequest);
+        verify(authService, times(1)).register(any(RegisterRequest.class));
     }
 
     @Test
-    void registerSupirSuccess() {
-        when(authService.register(supirRequest)).thenReturn(supirResponse);
+    void registerSupirSuccess() throws Exception {
+        when(authService.register(any(RegisterRequest.class))).thenReturn(supirResponse);
 
-        final ResponseEntity<ApiResponse<AuthResponse>> result = authController.register(supirRequest);
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(supirRequest)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("Registration successful"))
+                .andExpect(jsonPath("$.data.username").value("Supir Sawit"))
+                .andExpect(jsonPath("$.data.role").value("SUPIR"));
 
-        assertNotNull(result.getBody());
-        assertEquals("Registration successful", result.getBody().getMessage());
-        assertEquals(HttpStatus.CREATED, result.getStatusCode());
-        verify(authService, times(1)).register(supirRequest);
-
-        final AuthResponse data = result.getBody().getData();
-
-        assertEquals("Supir Sawit", data.getUsername());
-        assertEquals("Budi", data.getName());
-        assertEquals("budi@gmail.com", data.getEmail());
-        assertEquals(Role.SUPIR, data.getRole());
-        verify(authService, times(1)).register(supirRequest);
+        verify(authService, times(1)).register(any(RegisterRequest.class));
     }
 
     @Test
-    void loginSuccess() {
-        when(authService.login(validLoginRequest)).thenReturn(loginResponse);
+    void loginSuccess() throws Exception {
+        doReturn(strategy).when(strategyFactory).resolve(AuthProvider.PASSWORD);
+        when(strategy.authenticate(any(LoginRequest.class))).thenReturn(loginResponse);
 
-        final ResponseEntity<ApiResponse<AuthResponse>> result = authController.login(validLoginRequest);
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(validLoginRequest)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("Login successful"))
+                .andExpect(jsonPath("$.data.token").value("dummy.jwt.token"));
 
-        assertNotNull(result.getBody());
-        assertEquals(HttpStatus.OK, result.getStatusCode());
-        assertTrue(result.getBody().isSuccess());
-        assertEquals("Login successful", result.getBody().getMessage());
-        verify(authService, times(1)).login(validLoginRequest);
-
-        final AuthResponse data = result.getBody().getData();
-
-        assertEquals("dummy.jwt.token", data.getToken());
-        assertEquals("Admin Sawit", data.getUsername());
-        assertEquals("Agus", data.getName());
-        assertEquals("admin@gmail.com", data.getEmail());
-        assertEquals(Role.ADMIN, data.getRole());
+        verify(strategyFactory, times(1)).resolve(AuthProvider.PASSWORD);
+        verify(strategy, times(1)).authenticate(any(LoginRequest.class));
     }
 
     @Test
-    void registerInvalidCredentials() {
-        when(authService.register(adminRequest)).thenThrow(new InvalidCredentialException());
+    void registerInvalidCredentials() throws Exception {
+        when(authService.register(any(RegisterRequest.class))).thenThrow(new InvalidCredentialException());
 
-        final ResponseEntity<ApiResponse<AuthResponse>> result = authController.register(adminRequest);
-
-        assertNotNull(result.getBody());
-        assertEquals(HttpStatus.BAD_REQUEST, result.getStatusCode());
-        assertFalse(result.getBody().isSuccess());
-        assertEquals("Invalid credentials", result.getBody().getMessage());
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(adminRequest)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Invalid credentials"));
     }
 
     @Test
-    void registerEmailAlreadyExists() {
-        when(authService.register(adminRequest)).thenThrow(new EmailAlreadyExistsException(adminRequest.getEmail()));
+    void registerEmailAlreadyExists() throws Exception {
+        when(authService.register(any(RegisterRequest.class)))
+                .thenThrow(new EmailAlreadyExistsException(adminRequest.getEmail()));
 
-        final ResponseEntity<ApiResponse<AuthResponse>> result = authController.register(adminRequest);
-
-        assertNotNull(result.getBody());
-        assertEquals(HttpStatus.BAD_REQUEST, result.getStatusCode());
-        assertFalse(result.getBody().isSuccess());
-        assertEquals("Email admin@gmail.com is already registered", result.getBody().getMessage());
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(adminRequest)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Email admin@gmail.com is already registered"));
     }
 
     @Test
-    void registerMandorSertifMissing() {
-        when(authService.register(adminRequest)).thenThrow(new MandorSertifMissingException());
+    void registerMandorSertifMissing() throws Exception {
+        when(authService.register(any(RegisterRequest.class))).thenThrow(new MandorSertifMissingException());
 
-        final ResponseEntity<ApiResponse<AuthResponse>> result = authController.register(adminRequest);
-
-        assertNotNull(result.getBody());
-        assertEquals(HttpStatus.BAD_REQUEST, result.getStatusCode());
-        assertFalse(result.getBody().isSuccess());
-        assertEquals("Nomor sertifikasi mandor is required for MANDOR role", result.getBody().getMessage());
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(adminRequest)))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Nomor sertifikasi mandor is required for MANDOR role"));
     }
 
     @Test
-    void loginInvalidCredentials() {
-        when(authService.login(validLoginRequest)).thenThrow(new InvalidCredentialException());
+    void loginInvalidCredentials() throws Exception {
+        doReturn(strategy).when(strategyFactory).resolve(AuthProvider.PASSWORD);
+        when(strategy.authenticate(any(LoginRequest.class))).thenThrow(new  InvalidCredentialException());
 
-        final ResponseEntity<ApiResponse<AuthResponse>> result = authController.login(validLoginRequest);
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(validLoginRequest)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Invalid credentials"));
 
-        assertNotNull(result.getBody());
-        assertEquals(HttpStatus.BAD_REQUEST, result.getStatusCode());
-        assertFalse(result.getBody().isSuccess());
-        assertEquals("Invalid credentials", result.getBody().getMessage());
+        verify(strategyFactory, times(1)).resolve(AuthProvider.PASSWORD);
+        verify(strategy, times(1)).authenticate(any(LoginRequest.class));
     }
 
     @Test
-    void logoutSuccess() {
+    void logoutSuccess() throws Exception {
         doNothing().when(authService).logout("valid.jwt.token");
 
-        final ResponseEntity<ApiResponse<Void>> result = authController.logout("Bearer valid.jwt.token");
+        mockMvc.perform(post("/api/auth/logout")
+                        .header("Authorization", "Bearer valid.jwt.token"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("Logout successful"));
 
-        assertEquals(HttpStatus.OK, result.getStatusCode());
-        assertNotNull(result.getBody());
-        assertTrue(result.getBody().isSuccess());
-        assertEquals("Logout successful", result.getBody().getMessage());
         verify(authService, times(1)).logout("valid.jwt.token");
     }
 
     @Test
-    void logoutMissingAuthHeader() {
-        final ResponseEntity<ApiResponse<Void>> result = authController.logout(null);
+    void logoutMissingAuthHeader() throws Exception {
+        mockMvc.perform(post("/api/auth/logout"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Invalid Authorization header"));
 
-        assertEquals(HttpStatus.BAD_REQUEST, result.getStatusCode());
-        assertNotNull(result.getBody());
-        assertFalse(result.getBody().isSuccess());
         verify(authService, never()).logout(any());
     }
 
     @Test
-    void logoutMalformedAuthHeader() {
-        final ResponseEntity<ApiResponse<Void>> result = authController.logout("NotBearer token");
+    void logoutMalformedAuthHeader() throws Exception {
+        mockMvc.perform(post("/api/auth/logout")
+                        .header("Authorization", "NotBearer token"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Invalid Authorization header"));
 
-        assertEquals(HttpStatus.BAD_REQUEST, result.getStatusCode());
-        assertNotNull(result.getBody());
-        assertFalse(result.getBody().isSuccess());
         verify(authService, never()).logout(any());
     }
 
     @Test
-    void logoutInvalidOrExpiredToken() {
+    void logoutInvalidOrExpiredToken() throws Exception {
         doThrow(new InvalidCredentialException()).when(authService).logout("bad.token");
 
-        final ResponseEntity<ApiResponse<Void>> result = authController.logout("Bearer bad.token");
-
-        assertEquals(HttpStatus.BAD_REQUEST, result.getStatusCode());
-        assertNotNull(result.getBody());
-        assertFalse(result.getBody().isSuccess());
-        assertEquals("Invalid credentials", result.getBody().getMessage());
+        mockMvc.perform(post("/api/auth/logout")
+                        .header("Authorization", "Bearer bad.token"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Invalid credentials"));
     }
 
     @Test
-    void getMeValidToken() {
+    void getMeValidToken() throws Exception {
         when(authService.getLoggedInUser("valid.jwt.token")).thenReturn(adminResponse);
 
-        final ResponseEntity<ApiResponse<AuthResponse>> result = authController.getMe("Bearer valid.jwt.token");
-
-        assertEquals(HttpStatus.OK, result.getStatusCode());
-        assertNotNull(result.getBody());
-        assertTrue(result.getBody().isSuccess());
-        assertEquals("User retrieved", result.getBody().getMessage());
+        mockMvc.perform(get("/api/auth/me")
+                        .header("Authorization", "Bearer valid.jwt.token"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("User retrieved"))
+                .andExpect(jsonPath("$.data.email").value("admin@gmail.com"));
     }
 
     @Test
-    void getMeMissingAuthHeader() {
-        final ResponseEntity<ApiResponse<AuthResponse>> result = authController.getMe(null);
-
-        assertEquals(HttpStatus.BAD_REQUEST, result.getStatusCode());
-        assertFalse(result.getBody().isSuccess());
+    void getMeMissingAuthHeader() throws Exception {
+        mockMvc.perform(get("/api/auth/me"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Invalid Authorization header"));
     }
 }

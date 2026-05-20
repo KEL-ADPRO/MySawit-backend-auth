@@ -5,6 +5,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Field;
+import java.util.Date;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -26,34 +27,40 @@ public class JwtUtilTest {
     }
 
     @Test
-    void testGenerateToken() {
+    void generateNewToken() {
         final String jwt = jwtUtil.generateToken(UUID.fromString("eb558e9f-1c39-460e-8860-71af6af63bd6"), Role.ADMIN);
         assertNotNull(jwt);
     }
 
     @Test
-    void testExtractUserID() {
+    void extractUserIdFromToken() {
         final String jwt = jwtUtil.generateToken(UUID.fromString("eb558e9f-1c39-460e-8860-71af6af63bd6"), Role.ADMIN);
         final String userId = jwtUtil.extractUserId(jwt);
         assertEquals("eb558e9f-1c39-460e-8860-71af6af63bd6", userId);
     }
 
     @Test
-    void testExtractUserIDInvalid() {
+    void extractUserIdFromDifferentToken() {
         final String jwt = jwtUtil.generateToken(UUID.fromString("eb558e9f-1c39-460e-8860-71af6af63bd6"), Role.ADMIN);
         final String userId = jwtUtil.extractUserId(jwt);
         assertNotEquals("Eb558e9f-1c39-460e-8860-71af6af63bd6", userId);
     }
 
     @Test
-    void testValidateToken() {
+    void checkValidToken() {
         final String jwt = jwtUtil.generateToken(UUID.fromString("eb558e9f-1c39-460e-8860-71af6af63bd6"), Role.ADMIN);
         assertTrue(jwtUtil.isTokenValid(jwt, UUID.fromString("eb558e9f-1c39-460e-8860-71af6af63bd6")));
     }
 
     @Test
-    public void testValidateTokenInvalid() {
+    void checkInvalidToken() {
         final String jwt = jwtUtil.generateToken(UUID.fromString("eb558e9f-1c39-460e-8860-71af6af63bd6"), Role.ADMIN);
         assertFalse(jwtUtil.isTokenValid(jwt, UUID.fromString("Ab558e9f-1c39-460e-8860-71af6af63bd6")));
+    }
+
+    @Test
+    void extracExpirationFromToken() {
+        final String jwt = jwtUtil.generateToken(UUID.fromString("eb558e9f-1c39-460e-8860-71af6af63bd6"), Role.ADMIN);
+        assertTrue(jwtUtil.extractExpiration(jwt).after(new Date()));
     }
 }

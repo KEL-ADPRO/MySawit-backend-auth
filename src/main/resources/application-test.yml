@@ -1,0 +1,35 @@
+server:
+  port: 8081
+
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+    show-sql: true
+
+jwt:
+  secret: dummy-secret-key-for-testing-purposes-only-12345
+  expiration-ms: 3600000
+
+google:
+  client-id: dummy-client-id
+  client-secret: dummy-client-secret
+  scope: email,profile
+
+app:
+  blacklist:
+    cleanup-cron: 0 0 * * * *
+  seed:
+    admin:
+      email: admin@gmail.com
+      password: admin123
+      name: admin sawit
+      username: admin

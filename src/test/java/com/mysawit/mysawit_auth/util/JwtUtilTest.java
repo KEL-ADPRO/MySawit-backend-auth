@@ -46,20 +46,6 @@ public class JwtUtilTest {
     }
 
     @Test
-    void testExtractRole() {
-        final String jwt = jwtUtil.generateToken(UUID.fromString("eb558e9f-1c39-460e-8860-71af6af63bd6"), Role.ADMIN);
-        final String role = jwtUtil.extractRole(jwt);
-        assertEquals(Role.ADMIN.toString(), role);
-    }
-
-    @Test
-    void testExtractRoleInvalid() {
-        final String jwt = jwtUtil.generateToken(UUID.fromString("eb558e9f-1c39-460e-8860-71af6af63bd6"), Role.ADMIN);
-        final String role = jwtUtil.extractRole(jwt);
-        assertNotEquals(Role.BURUH.toString(), role);
-    }
-
-    @Test
     void testValidateToken() {
         final String jwt = jwtUtil.generateToken(UUID.fromString("eb558e9f-1c39-460e-8860-71af6af63bd6"), Role.ADMIN);
         assertTrue(jwtUtil.isTokenValid(jwt, UUID.fromString("eb558e9f-1c39-460e-8860-71af6af63bd6")));

@@ -1,6 +1,7 @@
 package com.mysawit.mysawit_auth.service;
 
 import com.mysawit.mysawit_auth.exception.InvalidCredentialException;
+import com.mysawit.mysawit_auth.mapper.AuthResponseMapper;
 import com.mysawit.mysawit_auth.model.AuthProvider;
 import com.mysawit.mysawit_auth.model.User;
 import com.mysawit.mysawit_auth.repository.AuthRepository;
@@ -24,6 +25,7 @@ public class AuthServiceImpl implements AuthService, AuthStrategy<LoginRequest> 
     private final JwtUtil jwtUtil;
     private final TokenBlacklist tokenBlacklist;
     private final RegistrationValidator registrationValidator;
+    private final AuthResponseMapper responseMapper;
 
     @Override
     @Transactional
@@ -38,7 +40,7 @@ public class AuthServiceImpl implements AuthService, AuthStrategy<LoginRequest> 
         registrationValidator.assertMandorCertPresent(request.getRole(), request.getNomorSertifMandor());
 
         final User saved = authRepository.save(buildUser(request));
-        return toResponse(saved, null);
+        return responseMapper.toResponse(saved, null);
     }
 
     @Override
@@ -62,7 +64,7 @@ public class AuthServiceImpl implements AuthService, AuthStrategy<LoginRequest> 
         }
 
         final String token = jwtUtil.generateToken(user.getId(), user.getRole());
-        return toResponse(user, token);
+        return responseMapper.toResponse(user, token);
     }
 
     @Override
@@ -77,7 +79,7 @@ public class AuthServiceImpl implements AuthService, AuthStrategy<LoginRequest> 
         if (user == null) {
             throw new InvalidCredentialException();
         }
-        return toResponse(user, token);
+        return responseMapper.toResponse(user, token);
     }
 
     @Override
@@ -115,18 +117,6 @@ public class AuthServiceImpl implements AuthService, AuthStrategy<LoginRequest> 
                 .password(passwordHasher.hash(request.getPassword()))
                 .role(request.getRole())
                 .nomorSertifMandor(request.getNomorSertifMandor())
-                .build();
-    }
-
-    private AuthResponse toResponse(final User user, final String token) {
-        return AuthResponse.builder()
-                .token(token)
-                .username(user.getUsername())
-                .userId(user.getId())
-                .email(user.getEmail())
-                .name(user.getName())
-                .role(user.getRole())
-                .nomorSertifMandor(user.getNomorSertifMandor())
                 .build();
     }
 }

@@ -41,6 +41,9 @@ public class GoogleAuthServiceTest {
     @Mock
     private AuthResponseMapper responseMapper;
 
+    @Mock
+    private RefreshTokenService refreshTokenService;
+
     @InjectMocks
     private GoogleAuthServiceImpl googleAuthService;
 
@@ -83,7 +86,7 @@ public class GoogleAuthServiceTest {
         when(googleTokenVerifier.verify(PLACEHOLDER_TOKEN)).thenReturn(googleMandorInfo);
         when(authRepository.findByGoogleId(GOOGLE_ID)).thenReturn(googleMandorUser);
         when(jwtUtil.generateToken(googleMandorUser.getId(), googleMandorUser.getRole())).thenReturn("dummy.jwt.token");
-        when(responseMapper.toResponse(googleMandorUser, "dummy.jwt.token")).thenReturn(mandorResponse);
+        when(responseMapper.toResponse(googleMandorUser, "dummy.jwt.token", any())).thenReturn(mandorResponse);
 
         final GoogleAuthRequest request = GoogleAuthRequest.builder()
                 .idToken(PLACEHOLDER_TOKEN)
@@ -99,7 +102,7 @@ public class GoogleAuthServiceTest {
         assertEquals(Role.MANDOR, response.getRole());
 
         verify(authRepository, never()).save(any(User.class));
-        verify(responseMapper).toResponse(googleMandorUser, "dummy.jwt.token");
+        verify(responseMapper).toResponse(googleMandorUser, "dummy.jwt.token", any());
     }
 
     @Test
@@ -108,7 +111,7 @@ public class GoogleAuthServiceTest {
         when(authRepository.findByGoogleId(GOOGLE_ID)).thenReturn(null);
         when(authRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
         when(jwtUtil.generateToken(any(), any())).thenReturn("dummy.jwt.token");
-        when(responseMapper.toResponse(any(User.class), eq("dummy.jwt.token"))).thenReturn(mandorResponse);
+        when(responseMapper.toResponse(any(User.class), eq("dummy.jwt.token"), any())).thenReturn(mandorResponse);
 
         final GoogleAuthRequest request = GoogleAuthRequest.builder()
                 .idToken(PLACEHOLDER_TOKEN)
@@ -130,6 +133,6 @@ public class GoogleAuthServiceTest {
         verify(registrationValidator).assertEmailUnique(googleMandorInfo.getEmail());
         verify(registrationValidator).assertMandorCertPresent(request.getRole(), request.getNomorSertifMandor());
         verify(authRepository, times(1)).save(any(User.class));
-        verify(responseMapper).toResponse(any(User.class), eq("dummy.jwt.token"));
+        verify(responseMapper).toResponse(any(User.class), eq("dummy.jwt.token"), any());
     }
 }

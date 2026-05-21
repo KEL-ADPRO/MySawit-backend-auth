@@ -4,6 +4,7 @@ import com.mysawit.mysawit_auth.dto.response.ApiResponse;
 import com.mysawit.mysawit_auth.exception.EmailAlreadyExistsException;
 import com.mysawit.mysawit_auth.exception.InvalidCredentialException;
 import com.mysawit.mysawit_auth.exception.MandorSertifMissingException;
+import com.mysawit.mysawit_auth.exception.WeakPasswordException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -60,5 +61,12 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ApiResponse.errorResponse("An unexpected error occurred"));
+    }
+
+    @ExceptionHandler(WeakPasswordException.class)
+    public ResponseEntity<ApiResponse<Void>> handleWeakPassword(final WeakPasswordException exception) {
+        return ResponseEntity
+                .status(HttpStatus.UNPROCESSABLE_ENTITY)
+                .body(ApiResponse.errorResponse(exception.getMessage()));
     }
 }

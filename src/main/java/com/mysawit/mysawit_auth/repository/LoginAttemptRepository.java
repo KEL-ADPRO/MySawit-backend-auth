@@ -6,6 +6,6 @@ import java.util.Optional;
 
 public interface LoginAttemptRepository {
     LoginAttempt save(LoginAttempt attempt);
-    Optional<LoginAttempt> findByEmail(String email);
+    LoginAttempt findByEmail(String email);
     void deleteByEmail(String email);
 }

@@ -2,6 +2,7 @@ package com.mysawit.mysawit_auth.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mysawit.mysawit_auth.dto.request.LoginRequest;
+import com.mysawit.mysawit_auth.dto.request.RefreshRequest;
 import com.mysawit.mysawit_auth.dto.request.RegisterRequest;
 import com.mysawit.mysawit_auth.dto.response.AuthResponse;
 import com.mysawit.mysawit_auth.exception.EmailAlreadyExistsException;
@@ -138,6 +139,7 @@ public class AuthControllerTest {
 
         loginResponse = AuthResponse.builder()
                 .token("dummy.jwt.token")
+                .refreshToken("dummy.refresh.token")
                 .userId(UUID.fromString("eb558e9f-1c39-460e-8860-71af6af63bd6"))
                 .username("Admin Sawit")
                 .name("Agus")
@@ -355,5 +357,105 @@ public class AuthControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message").value("Invalid Authorization header"));
+    }
+
+    @Test
+    void refreshSuccessWithCookie() throws Exception {
+        final String oldRefreshToken = "old.refresh.token";
+        final String newAccessToken = "new.jwt.token";
+        final String newRefreshToken = "new.refresh.token";
+
+        final AuthResponse refreshedResponse = AuthResponse.builder()
+                .userId(UUID.fromString("eb558e9f-1c39-460e-8860-71af6af63bd6"))
+                .username("Admin Sawit")
+                .role(Role.ADMIN)
+                .token(newAccessToken)
+                .refreshToken(newRefreshToken)
+                .build();
+
+        when(authService.refresh(oldRefreshToken)).thenReturn(refreshedResponse);
+
+        final String accessCookie = "auth_token=" + newAccessToken + "; Path=/; HttpOnly; SameSite=Strict";
+        final String refreshCookie = "refresh_token=" + newRefreshToken + "; Path=/; HttpOnly; SameSite=Strict";
+
+        when(cookieUtil.addAuthCookie(newAccessToken)).thenReturn(accessCookie);
+        when(cookieUtil.addRefreshCookie(newRefreshToken)).thenReturn(refreshCookie);
+
+        mockMvc.perform(post("/api/auth/refresh")
+                        .cookie(new jakarta.servlet.http.Cookie(CookieUtil.REFRESH_COOKIE_NAME, oldRefreshToken)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("Token refreshed successfully"))
+                .andExpect(jsonPath("$.data.token").value(newAccessToken))
+                .andExpect(header().stringValues(HttpHeaders.SET_COOKIE, accessCookie, refreshCookie));
+
+        verify(authService, times(1)).refresh(oldRefreshToken);
+        verify(cookieUtil, times(1)).addAuthCookie(newAccessToken);
+        verify(cookieUtil, times(1)).addRefreshCookie(newRefreshToken);
+    }
+
+    @Test
+    void refreshSuccessWithRequestBody() throws Exception {
+        final String oldRefreshToken = "old.refresh.token.from.body";
+        final String newAccessToken = "new.jwt.token";
+        final String newRefreshToken = "new.refresh.token";
+
+        final AuthResponse refreshedResponse = AuthResponse.builder()
+                .userId(UUID.fromString("eb558e9f-1c39-460e-8860-71af6af63bd6"))
+                .username("Admin Sawit")
+                .role(Role.ADMIN)
+                .token(newAccessToken)
+                .refreshToken(newRefreshToken)
+                .build();
+
+        when(authService.refresh(oldRefreshToken)).thenReturn(refreshedResponse);
+
+        final String accessCookie = "auth_token=" + newAccessToken + "; Path=/; HttpOnly; SameSite=Strict";
+        final String refreshCookie = "refresh_token=" + newRefreshToken + "; Path=/; HttpOnly; SameSite=Strict";
+
+        when(cookieUtil.addAuthCookie(newAccessToken)).thenReturn(accessCookie);
+        when(cookieUtil.addRefreshCookie(newRefreshToken)).thenReturn(refreshCookie);
+
+        final RefreshRequest requestBody = RefreshRequest.builder()
+                .refreshToken(oldRefreshToken)
+                .build();
+
+        mockMvc.perform(post("/api/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestBody)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("Token refreshed successfully"))
+                .andExpect(jsonPath("$.data.token").value(newAccessToken))
+                .andExpect(header().stringValues(HttpHeaders.SET_COOKIE, accessCookie, refreshCookie));
+
+        verify(authService, times(1)).refresh(oldRefreshToken);
+    }
+
+    @Test
+    void refreshMissingTokenThrows() throws Exception {
+        mockMvc.perform(post("/api/auth/refresh"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Refresh token is missing"));
+
+        verify(authService, never()).refresh(any());
+        verify(cookieUtil, never()).addAuthCookie(any());
+    }
+
+    @Test
+    void refreshInvalidOrExpiredTokenThrows() throws Exception {
+        final String badToken = "expired.or.invalid.refresh.token";
+        when(authService.refresh(badToken)).thenThrow(new InvalidCredentialException());
+
+        mockMvc.perform(post("/api/auth/refresh")
+                        .cookie(new jakarta.servlet.http.Cookie(CookieUtil.REFRESH_COOKIE_NAME, badToken)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Invalid credentials"));
+
+        verify(authService, times(1)).refresh(badToken);
+        verify(cookieUtil, never()).addAuthCookie(any());
+        verify(cookieUtil, never()).addRefreshCookie(any());
     }
 }

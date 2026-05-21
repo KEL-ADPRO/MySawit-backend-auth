@@ -23,7 +23,6 @@ public class RefeshTokenModelTest {
                 .token(TOKEN_VALUE)
                 .expiresAt(EXPIRES_AT)
                 .createdAt(CREATED_AT)
-                .isRevoked(false)
                 .build();
     }
 
@@ -52,12 +51,6 @@ public class RefeshTokenModelTest {
     }
 
     @Test
-    void getIsRevoked() {
-        final boolean revoked = refreshToken.isRevoked();
-        assertFalse(revoked);
-    }
-
-    @Test
     void tokenIsExpired() {
         final Instant pastExpiry = Instant.now().minusSeconds(3600);
         refreshToken.setExpiresAt(pastExpiry);
@@ -69,13 +62,6 @@ public class RefeshTokenModelTest {
         final Instant futureExpiry = Instant.now().plusSeconds(3600);
         refreshToken.setExpiresAt(futureExpiry);
         assertTrue(refreshToken.getExpiresAt().isAfter(Instant.now()));
-    }
-
-    @Test
-    void tokenCanBeRevoked() {
-        assertFalse(refreshToken.isRevoked());
-        refreshToken.setRevoked(true);
-        assertTrue(refreshToken.isRevoked());
     }
 
     @Test
@@ -102,7 +88,6 @@ public class RefeshTokenModelTest {
                 .token("token.1")
                 .expiresAt(Instant.now().plusSeconds(3600))
                 .createdAt(Instant.now())
-                .isRevoked(false)
                 .build();
 
         final RefreshToken token2 = RefreshToken.builder()
@@ -111,7 +96,6 @@ public class RefeshTokenModelTest {
                 .token("token.2")
                 .expiresAt(Instant.now().plusSeconds(3600))
                 .createdAt(Instant.now())
-                .isRevoked(false)
                 .build();
 
         assertNotEquals(token1.getId(), token2.getId());

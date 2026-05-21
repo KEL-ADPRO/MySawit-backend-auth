@@ -105,16 +105,14 @@ public class RefreshTokenRepositoryTest {
         assertTrue(results.isEmpty());
     }
 
-    @Test
-    void findValidTokenByUserIdAndTokenSuccess() {
-        final Instant now = Instant.now();
+        @Test
+    void findByUserIdAndTokenSuccess() {
         when(entityManager.createQuery(any(String.class), eq(RefreshToken.class))).thenReturn(typedQuery);
         when(typedQuery.setParameter("userId", USER_ID)).thenReturn(typedQuery);
         when(typedQuery.setParameter("token", TOKEN_VALUE)).thenReturn(typedQuery);
-        when(typedQuery.setParameter("now", now)).thenReturn(typedQuery);
         when(typedQuery.getResultList()).thenReturn(List.of(refreshToken));
 
-        final RefreshToken result = refreshTokenRepository.findValidByUserIdAndToken(USER_ID, TOKEN_VALUE, now);
+        final RefreshToken result = refreshTokenRepository.findByUserIdAndToken(USER_ID, TOKEN_VALUE);
 
         assertNotNull(result);
         assertEquals(USER_ID, result.getUserId());
@@ -122,65 +120,43 @@ public class RefreshTokenRepositoryTest {
     }
 
     @Test
-    void findValidTokenByUserIdAndTokenNotFound() {
-        final Instant now = Instant.now();
+    void findByUserIdAndTokenNotFound() {
         when(entityManager.createQuery(any(String.class), eq(RefreshToken.class))).thenReturn(typedQuery);
         when(typedQuery.setParameter("userId", USER_ID)).thenReturn(typedQuery);
         when(typedQuery.setParameter("token", "wrong.token")).thenReturn(typedQuery);
-        when(typedQuery.setParameter("now", now)).thenReturn(typedQuery);
         when(typedQuery.getResultList()).thenReturn(List.of());
 
-        final RefreshToken result = refreshTokenRepository.findValidByUserIdAndToken(USER_ID, "wrong.token", now);
+        final RefreshToken result = refreshTokenRepository.findByUserIdAndToken(USER_ID, "wrong.token");
 
         assertNull(result);
     }
 
     @Test
-    void revokeTokenSuccess() {
-        when(entityManager.createQuery(any(String.class), eq(RefreshToken.class))).thenReturn(typedQuery);
-        when(typedQuery.setParameter("token", TOKEN_VALUE)).thenReturn(typedQuery);
-        when(typedQuery.getResultList()).thenReturn(List.of(refreshToken));
-
-        refreshTokenRepository.revokeByToken(TOKEN_VALUE);
-
-        verify(entityManager).merge(any(RefreshToken.class));
-    }
-
-    @Test
-    void revokeAllByUserIdSuccess() {
-        final RefreshToken token1 = RefreshToken.builder()
-                .userId(USER_ID)
-                .token("token.1")
-                .expiresAt(Instant.now().plusSeconds(10))
-                .createdAt(Instant.now())
-                .isRevoked(false)
-                .build();
-
-        final RefreshToken token2 = RefreshToken.builder()
-                .userId(USER_ID)
-                .token("token.2")
-                .expiresAt(Instant.now().plusSeconds(15))
-                .createdAt(Instant.now())
-                .isRevoked(false)
-                .build();
-
-        when(entityManager.createQuery(any(String.class), eq(RefreshToken.class))).thenReturn(typedQuery);
+    void updateRevokedStatusByUserIdSuccess() {
+        when(entityManager.createQuery(any(String.class))).thenReturn(typedQuery);
         when(typedQuery.setParameter("userId", USER_ID)).thenReturn(typedQuery);
-        when(typedQuery.getResultList()).thenReturn(List.of(token1, token2));
+        when(typedQuery.setParameter("revoked", true)).thenReturn(typedQuery);
+        when(typedQuery.executeUpdate()).thenReturn(2); 
 
-        refreshTokenRepository.revokeAllByUserId(USER_ID);
+        refreshTokenRepository.updateRevokedStatusByUserId(USER_ID, true);
 
-        verify(entityManager, times(2)).merge(any(RefreshToken.class));
+        verify(entityManager).createQuery(any(String.class));
+        verify(typedQuery).setParameter("userId", USER_ID);
+        verify(typedQuery).setParameter("revoked", true);
+        verify(typedQuery).executeUpdate();
     }
 
     @Test
-    void deleteExpiredSuccess() {
+    void deleteByExpiryDateBeforeSuccess() {
         Instant now = Instant.now();
-        when(entityManager.createQuery(any(String.class), eq(RefreshToken.class))).thenReturn(typedQuery);
+        when(entityManager.createQuery(any(String.class))).thenReturn(typedQuery);
         when(typedQuery.setParameter("now", now)).thenReturn(typedQuery);
+        when(typedQuery.executeUpdate()).thenReturn(5);
 
-        refreshTokenRepository.deleteExpired(now);
+        refreshTokenRepository.deleteByExpiryDateBefore(now);
 
-        verify(entityManager, times(1)).createQuery(any(String.class), eq(RefreshToken.class));
+        verify(entityManager).createQuery(any(String.class));
+        verify(typedQuery).setParameter("now", now);
+        verify(typedQuery).executeUpdate();
     }
 }

@@ -28,9 +28,9 @@ public class RefreshTokenRepositoryImpl implements RefreshTokenRepository {
     @Override
     public RefreshToken findByToken(String token) {
         final List<RefreshToken> results = entityManager.createQuery(
-                        SELECT_TOKEN +
+                SELECT_TOKEN +
                         "WHERE r.token = :token",
-                        RefreshToken.class)
+                RefreshToken.class)
                 .setParameter("token", token)
                 .getResultList();
         return results.isEmpty() ? null : results.getFirst();
@@ -39,55 +39,43 @@ public class RefreshTokenRepositoryImpl implements RefreshTokenRepository {
     @Override
     public List<RefreshToken> findByUserId(UUID userId) {
         return entityManager.createQuery(
-                        SELECT_TOKEN +
-                                "WHERE r.userId = :userId",
-                        RefreshToken.class)
+                SELECT_TOKEN +
+                        "WHERE r.userId = :userId",
+                RefreshToken.class)
                 .setParameter("userId", userId)
                 .getResultList();
     }
 
     @Override
-    public RefreshToken findValidByUserIdAndToken(UUID userId, String token, Instant now) {
+    public RefreshToken findByUserIdAndToken(UUID userId, String token) {
         final List<RefreshToken> results = entityManager.createQuery(
-                        SELECT_TOKEN +
-                                "WHERE r.userId = :userId " +
-                                "AND r.token = :token " +
-                                "AND r.expiresAt > :now " +
-                                "AND r.isRevoked = false",
-                        RefreshToken.class)
+                SELECT_TOKEN +
+                        "WHERE r.userId = :userId AND r.token = :token",
+                RefreshToken.class)
                 .setParameter("userId", userId)
                 .setParameter("token", token)
-                .setParameter("now", now)
                 .getResultList();
         return results.isEmpty() ? null : results.getFirst();
     }
 
     @Override
-    public void revokeByToken(String token) {
-        final RefreshToken refreshToken = findByToken(token);
-        if (refreshToken != null) {
-            refreshToken.setRevoked(true);
-            entityManager.merge(refreshToken);
-        }
-    }
-
-    @Override
     @Transactional
-    public void revokeAllByUserId(UUID userId) {
-        final List<RefreshToken> tokens = findByUserId(userId);
-        for (final RefreshToken token : tokens) {
-            token.setRevoked(true);
-            entityManager.merge(token);
-        }
-    }
-
-    @Override
-    @Transactional
-    public void deleteExpired(Instant now) {
+    public void updateRevokedStatusByUserId(UUID userId, boolean revoked) {
         entityManager.createQuery(
-                        "DELETE FROM RefreshToken r " +
-                                "WHERE r.expiresAt < :now",
-                        RefreshToken.class)
+                "UPDATE RefreshToken r " +
+                        "SET r.isRevoked = :revoked " +
+                        "WHERE r.userId = :userId")
+                .setParameter("userId", userId)
+                .setParameter("revoked", revoked)
+                .executeUpdate();
+    }
+
+    @Override
+    @Transactional
+    public void deleteByExpiryDateBefore(Instant now) {
+        entityManager.createQuery(
+                "DELETE FROM RefreshToken r " +
+                        "WHERE r.expiresAt < :now")
                 .setParameter("now", now)
                 .executeUpdate();
     }

@@ -41,6 +41,9 @@ public class AuthServiceTest {
     @Mock
     private AuthResponseMapper responseMapper;
 
+    @Mock
+    private LoginAttemptService loginAttemptService;
+
     @InjectMocks
     private AuthServiceImpl authService;
 
@@ -224,6 +227,8 @@ public class AuthServiceTest {
         verify(authRepository, times(1)).findByEmail("admin@gmail.com");
         verify(jwtUtil, times(1)).generateToken(adminUser.getId(), adminUser.getRole());
         verify(responseMapper).toResponse(any(User.class), eq("dummy.jwt.token"));
+        verify(loginAttemptService).recordSuccess("admin@gmail.com");
+        verify(loginAttemptService, never()).recordFailure(any());
     }
 
     @Test
@@ -244,6 +249,8 @@ public class AuthServiceTest {
 
         verify(jwtUtil, never()).generateToken(any(), any());
         verify(responseMapper, never()).toResponse(any(), any());
+        verify(loginAttemptService).recordFailure("unknownUser@gmail.com");
+        verify(loginAttemptService, never()).recordSuccess(any());
     }
 
     @Test
@@ -312,6 +319,8 @@ public class AuthServiceTest {
 
         verify(jwtUtil, never()).generateToken(any(), any());
         verify(responseMapper, never()).toResponse(any(), any());
+        verify(loginAttemptService).recordFailure("admin@gmail.com");
+        verify(loginAttemptService, never()).recordSuccess(any());
     }
 
     @Test

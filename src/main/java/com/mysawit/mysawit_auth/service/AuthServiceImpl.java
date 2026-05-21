@@ -26,6 +26,7 @@ public class AuthServiceImpl implements AuthService, AuthStrategy<LoginRequest> 
     private final TokenBlacklist tokenBlacklist;
     private final RegistrationValidator registrationValidator;
     private final AuthResponseMapper responseMapper;
+    private final LoginAttemptService loginAttemptService;
 
     @Override
     @Transactional
@@ -50,19 +51,25 @@ public class AuthServiceImpl implements AuthService, AuthStrategy<LoginRequest> 
             throw new InvalidCredentialException();
         }
 
+        loginAttemptService.assertNotLocked(request.getEmail());
+
         final User user = authRepository.findByEmail(request.getEmail());
         if (user == null) {
+            loginAttemptService.recordFailure(request.getEmail());
             throw new InvalidCredentialException();
         }
 
         if (user.getGoogleId() != null) {
+            loginAttemptService.recordFailure(request.getEmail());
             throw new IllegalArgumentException("This account uses Google login. Please sign in with Google.");
         }
 
         if (!passwordHasher.matches(request.getPassword(), user.getPassword())) {
+            loginAttemptService.recordFailure(request.getEmail());
             throw new InvalidCredentialException();
         }
 
+        loginAttemptService.recordSuccess(request.getEmail());
         final String token = jwtUtil.generateToken(user.getId(), user.getRole());
         return responseMapper.toResponse(user, token);
     }

@@ -33,3 +33,7 @@ app:
       password: Admin123!
       name: admin sawit
       username: admin
+  cors:
+    allowed-origins: http://localhost:3000
+  cookie:
+    secure: false

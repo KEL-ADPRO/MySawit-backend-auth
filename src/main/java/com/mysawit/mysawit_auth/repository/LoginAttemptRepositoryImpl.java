@@ -8,7 +8,6 @@ import lombok.NoArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Optional;
 
 @Repository
 @NoArgsConstructor
@@ -36,9 +35,9 @@ public class LoginAttemptRepositoryImpl implements LoginAttemptRepository {
     @Override
     @Transactional
     public void deleteByEmail(final String email) {
-        final LoginAttempt existing = findByEmail(email);
-        if (existing != null) {
-            entityManager.remove(existing);
+        final LoginAttempt loginAttempt = findByEmail(email);
+        if (loginAttempt != null) {
+            entityManager.remove(loginAttempt);
         }
     }
 }

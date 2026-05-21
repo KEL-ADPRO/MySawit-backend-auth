@@ -12,6 +12,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.lang.reflect.Field;
+import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -23,6 +24,9 @@ import static org.mockito.Mockito.*;
 public class RefreshTokenServiceTest {
     @Mock
     private RefreshTokenRepository refreshTokenRepository;
+
+    @Mock
+    private SecureRandom secureRandom;
 
     @InjectMocks
     private RefreshTokenServiceImpl refreshTokenService;

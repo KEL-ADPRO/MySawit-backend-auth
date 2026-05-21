@@ -22,14 +22,14 @@ public class LoginAttemptServiceImpl implements LoginAttemptService {
     private long lockDurationMinutes;
 
     @Override
-    public void recordSuccess(String email) {
+    public void recordSuccess(final String email) {
         loginAttemptRepository.deleteByEmail(email);
     }
 
     @Override
-    public void recordFailure(String email) {
-        LoginAttempt loginAttempt = loginAttemptRepository.findByEmail(email);
-        LoginAttempt currentAttempt;
+    public void recordFailure(final String email) {
+        final LoginAttempt loginAttempt = loginAttemptRepository.findByEmail(email);
+        final LoginAttempt currentAttempt;
 
         if (loginAttempt == null) {
             currentAttempt = LoginAttempt.builder()
@@ -51,32 +51,26 @@ public class LoginAttemptServiceImpl implements LoginAttemptService {
     }
 
     @Override
-    public boolean isLocked(String email) {
-        LoginAttempt loginAttempt = loginAttemptRepository.findByEmail(email);
+    public boolean isLocked(final String email) {
+        final LoginAttempt attempt = loginAttemptRepository.findByEmail(email);
 
-        if (loginAttempt == null) {
+        if (attempt == null || attempt.getLockedUntil() == null) {
             return false;
         }
 
-        if (loginAttempt.getLockedUntil() != null) {
-            if (Instant.now().isBefore(loginAttempt.getLockedUntil())) {
-                return true;
-            } else {
-                loginAttemptRepository.deleteByEmail(email);
-                return false;
-            }
+        if (Instant.now().isBefore(attempt.getLockedUntil())) {
+            return true;
         }
 
+        loginAttemptRepository.deleteByEmail(email);
         return false;
     }
 
     @Override
-    public void assertNotLocked(String email) {
-        LoginAttempt loginAttempt = loginAttemptRepository.findByEmail(email);
-        if (loginAttempt != null && loginAttempt.getLockedUntil() != null && Instant.now().isBefore(loginAttempt.getLockedUntil())) {
-            throw new AccountLockedException(loginAttempt.getLockedUntil());
+    public void assertNotLocked(final String email) {
+        if (isLocked(email)) {
+            final LoginAttempt attempt = loginAttemptRepository.findByEmail(email);
+            throw new AccountLockedException(attempt.getLockedUntil());
         }
     }
-
-
 }

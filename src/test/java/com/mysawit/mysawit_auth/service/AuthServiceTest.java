@@ -2,6 +2,7 @@ package com.mysawit.mysawit_auth.service;
 
 import com.mysawit.mysawit_auth.exception.InvalidCredentialException;
 import com.mysawit.mysawit_auth.mapper.AuthResponseMapper;
+import com.mysawit.mysawit_auth.model.RefreshToken;
 import com.mysawit.mysawit_auth.model.Role;
 import com.mysawit.mysawit_auth.model.User;
 import com.mysawit.mysawit_auth.repository.AuthRepository;
@@ -16,6 +17,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -43,6 +46,9 @@ public class AuthServiceTest {
 
     @Mock
     private LoginAttemptService loginAttemptService;
+
+    @Mock
+    private RefreshTokenService refreshTokenService;
 
     @InjectMocks
     private AuthServiceImpl authService;
@@ -133,7 +139,7 @@ public class AuthServiceTest {
     @Test
     void registerAdminSuccess() {
         when(authRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
-        when(responseMapper.toResponse(any(User.class), any())).thenReturn(adminResponse);
+        when(responseMapper.toResponse(any(User.class), any(), any())).thenReturn(adminResponse);
 
         final AuthResponse response = authService.register(adminRequest);
 
@@ -143,13 +149,13 @@ public class AuthServiceTest {
         assertEquals(Role.ADMIN, response.getRole());
 
         verify(registrationValidator).validateRequiredFields(adminRequest.getUsername(), adminRequest.getName(), adminRequest.getEmail(), adminRequest.getRole());
-        verify(responseMapper).toResponse(any(User.class), isNull());
+        verify(responseMapper).toResponse(any(User.class), isNull(), isNull());
     }
 
     @Test
     void registerMandorSuccess() {
         when(authRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
-        when(responseMapper.toResponse(any(User.class), any())).thenReturn(mandorResponse);
+        when(responseMapper.toResponse(any(User.class), any(), any())).thenReturn(mandorResponse);
 
         final AuthResponse response = authService.register(mandorRequest);
 
@@ -160,13 +166,13 @@ public class AuthServiceTest {
         assertEquals("CERT-001", response.getNomorSertifMandor());
 
         verify(registrationValidator).validateRequiredFields(mandorRequest.getUsername(), mandorRequest.getName(), mandorRequest.getEmail(), mandorRequest.getRole());
-        verify(responseMapper).toResponse(any(User.class), isNull());
+        verify(responseMapper).toResponse(any(User.class), isNull(), isNull());
     }
 
     @Test
     void registerBuruhSuccess() {
         when(authRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
-        when(responseMapper.toResponse(any(User.class), any())).thenReturn(buruhResponse);
+        when(responseMapper.toResponse(any(User.class), any(), any())).thenReturn(buruhResponse);
 
         final AuthResponse response = authService.register(buruhRequest);
 
@@ -176,13 +182,13 @@ public class AuthServiceTest {
         assertEquals(Role.BURUH, response.getRole());
 
         verify(registrationValidator).validateRequiredFields(buruhRequest.getUsername(), buruhRequest.getName(), buruhRequest.getEmail(), buruhRequest.getRole());
-        verify(responseMapper).toResponse(any(User.class), isNull());
+        verify(responseMapper).toResponse(any(User.class), isNull(), isNull());
     }
 
     @Test
     void registerSupirSuccess() {
         when(authRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
-        when(responseMapper.toResponse(any(User.class), any())).thenReturn(supirResponse);
+        when(responseMapper.toResponse(any(User.class), any(), any())).thenReturn(supirResponse);
 
         final AuthResponse response = authService.register(supirRequest);
 
@@ -192,23 +198,27 @@ public class AuthServiceTest {
         assertEquals(Role.SUPIR, response.getRole());
 
         verify(registrationValidator).validateRequiredFields(supirRequest.getUsername(), supirRequest.getName(), supirRequest.getEmail(), supirRequest.getRole());
-        verify(responseMapper).toResponse(any(User.class), isNull());
+        verify(responseMapper).toResponse(any(User.class), isNull(), isNull());
     }
 
     @Test
     void loginSuccess() {
         final AuthResponse loginResponse = AuthResponse.builder()
                 .token("dummy.jwt.token")
+                .refreshToken("dummy.refresh.token")
                 .username("Admin Sawit")
                 .name("Agus")
                 .email("admin@gmail.com")
                 .role(Role.ADMIN)
                 .build();
 
+        final RefreshToken refreshToken = RefreshToken.builder().token("dummy.refresh.token").build();
+
         when(authRepository.findByEmail("admin@gmail.com")).thenReturn(adminUser);
         when(passwordHasher.matches("admin123", "hashed_admin123")).thenReturn(true);
         when(jwtUtil.generateToken(adminUser.getId(), adminUser.getRole())).thenReturn("dummy.jwt.token");
-        when(responseMapper.toResponse(any(User.class), any())).thenReturn(loginResponse);
+        when(refreshTokenService.createRefreshToken(adminUser)).thenReturn(refreshToken);
+        when(responseMapper.toResponse(any(User.class), any(), any())).thenReturn(loginResponse);
 
         final LoginRequest request = LoginRequest.builder()
                 .email("admin@gmail.com")
@@ -226,7 +236,7 @@ public class AuthServiceTest {
 
         verify(authRepository, times(1)).findByEmail("admin@gmail.com");
         verify(jwtUtil, times(1)).generateToken(adminUser.getId(), adminUser.getRole());
-        verify(responseMapper).toResponse(any(User.class), eq("dummy.jwt.token"));
+        verify(responseMapper).toResponse(any(User.class), eq("dummy.jwt.token"), any());
         verify(loginAttemptService).recordSuccess("admin@gmail.com");
         verify(loginAttemptService, never()).recordFailure(any());
     }
@@ -248,7 +258,7 @@ public class AuthServiceTest {
         assertThrows(InvalidCredentialException.class, () -> authService.login(request));
 
         verify(jwtUtil, never()).generateToken(any(), any());
-        verify(responseMapper, never()).toResponse(any(), any());
+        verify(responseMapper, never()).toResponse(any(), any(), any());
         verify(loginAttemptService).recordFailure("unknownUser@gmail.com");
         verify(loginAttemptService, never()).recordSuccess(any());
     }
@@ -263,7 +273,7 @@ public class AuthServiceTest {
         assertThrows(InvalidCredentialException.class, () -> authService.login(request));
 
         verify(jwtUtil, never()).generateToken(any(), any());
-        verify(responseMapper, never()).toResponse(any(), any());
+        verify(responseMapper, never()).toResponse(any(), any(), any());
     }
 
     @Test
@@ -276,7 +286,7 @@ public class AuthServiceTest {
         assertThrows(InvalidCredentialException.class, () -> authService.login(request));
 
         verify(jwtUtil, never()).generateToken(any(), any());
-        verify(responseMapper, never()).toResponse(any(), any());
+        verify(responseMapper, never()).toResponse(any(), any(), any());
     }
 
     @Test
@@ -289,7 +299,7 @@ public class AuthServiceTest {
         assertThrows(InvalidCredentialException.class, () -> authService.login(request));
 
         verify(jwtUtil, never()).generateToken(any(), any());
-        verify(responseMapper, never()).toResponse(any(), any());
+        verify(responseMapper, never()).toResponse(any(), any(), any());
     }
 
     @Test
@@ -302,7 +312,7 @@ public class AuthServiceTest {
         assertThrows(InvalidCredentialException.class, () -> authService.login(request));
 
         verify(jwtUtil, never()).generateToken(any(), any());
-        verify(responseMapper, never()).toResponse(any(), any());
+        verify(responseMapper, never()).toResponse(any(), any(), any());
     }
 
     @Test
@@ -318,7 +328,7 @@ public class AuthServiceTest {
         assertThrows(InvalidCredentialException.class, () -> authService.login(request));
 
         verify(jwtUtil, never()).generateToken(any(), any());
-        verify(responseMapper, never()).toResponse(any(), any());
+        verify(responseMapper, never()).toResponse(any(), any(), any());
         verify(loginAttemptService).recordFailure("admin@gmail.com");
         verify(loginAttemptService, never()).recordSuccess(any());
     }
@@ -344,7 +354,7 @@ public class AuthServiceTest {
         assertThrows(IllegalArgumentException.class, () -> authService.login(request));
 
         verify(jwtUtil, never()).generateToken(any(), any());
-        verify(responseMapper, never()).toResponse(any(), any());
+        verify(responseMapper, never()).toResponse(any(), any(), any());
     }
 
     @Test
@@ -368,7 +378,7 @@ public class AuthServiceTest {
         assertThrows(InvalidCredentialException.class, () -> authService.login(request));
 
         verify(jwtUtil, never()).generateToken(any(), any());
-        verify(responseMapper, never()).toResponse(any(), any());
+        verify(responseMapper, never()).toResponse(any(), any(), any());
     }
 
     @Test
@@ -379,7 +389,7 @@ public class AuthServiceTest {
         assertDoesNotThrow(() -> authService.logout(token));
 
         verify(tokenBlacklist, times(1)).blacklist(token);
-        verify(responseMapper, never()).toResponse(any(), any());
+        verify(responseMapper, never()).toResponse(any(), any(), any());
     }
 
     @Test
@@ -387,7 +397,7 @@ public class AuthServiceTest {
         assertThrows(InvalidCredentialException.class, () -> authService.logout(null));
 
         verify(tokenBlacklist, never()).blacklist(any());
-        verify(responseMapper, never()).toResponse(any(), any());
+        verify(responseMapper, never()).toResponse(any(), any(), any());
     }
 
     @Test
@@ -395,7 +405,7 @@ public class AuthServiceTest {
         assertThrows(InvalidCredentialException.class, () -> authService.logout("   "));
 
         verify(tokenBlacklist, never()).blacklist(any());
-        verify(responseMapper, never()).toResponse(any(), any());
+        verify(responseMapper, never()).toResponse(any(), any(), any());
     }
 
     @Test
@@ -406,7 +416,7 @@ public class AuthServiceTest {
         assertThrows(InvalidCredentialException.class, () -> authService.logout(badToken));
 
         verify(tokenBlacklist, never()).blacklist(any());
-        verify(responseMapper, never()).toResponse(any(), any());
+        verify(responseMapper, never()).toResponse(any(), any(), any());
     }
 
     @Test
@@ -418,6 +428,68 @@ public class AuthServiceTest {
 
         verify(authRepository, never()).findById(any());
         verify(jwtUtil, never()).generateToken(any(), any());
-        verify(responseMapper, never()).toResponse(any(), any());
+        verify(responseMapper, never()).toResponse(any(), any(), any());
+    }
+
+    @Test
+    void refreshSuccess() {
+        final String rawToken = "old.refresh.token";
+        final String newAccessToken = "new.jwt.token";
+        final String newRefreshTokenValue = "new.refresh.token";
+        final UUID userId = UUID.randomUUID();
+
+        adminUser.setId(userId);
+
+        final RefreshToken oldRefreshToken = RefreshToken.builder()
+                .userId(userId)
+                .token(rawToken)
+                .build();
+
+        final RefreshToken newRefreshToken = RefreshToken.builder()
+                .userId(userId)
+                .token(newRefreshTokenValue)
+                .build();
+
+        final AuthResponse expectedResponse = AuthResponse.builder()
+                .token(newAccessToken)
+                .refreshToken(newRefreshTokenValue)
+                .username("Admin Sawit")
+                .role(Role.ADMIN)
+                .build();
+
+        when(refreshTokenService.validateAndGet(rawToken)).thenReturn(oldRefreshToken);
+        when(authRepository.findById(userId)).thenReturn(adminUser);
+        when(refreshTokenService.createRefreshToken(adminUser)).thenReturn(newRefreshToken);
+        when(jwtUtil.generateToken(adminUser.getId(), adminUser.getRole())).thenReturn(newAccessToken);
+
+        when(responseMapper.toResponse(any(User.class), anyString(), anyString())).thenReturn(expectedResponse);
+
+        AuthResponse response = authService.refresh(rawToken);
+
+        assertNotNull(response);
+        assertEquals(newAccessToken, response.getToken());
+        assertEquals(newRefreshTokenValue, response.getRefreshToken());
+
+        verify(refreshTokenService).validateAndGet(rawToken);
+        verify(authRepository).findById(userId);
+        verify(refreshTokenService).revokeAll(adminUser);
+        verify(refreshTokenService).createRefreshToken(adminUser);
+        verify(jwtUtil).generateToken(adminUser.getId(), adminUser.getRole());
+        verify(responseMapper).toResponse(adminUser, newAccessToken, newRefreshTokenValue);
+    }
+
+    @Test
+    void refreshInvalidTokenThrows() {
+        final String rawToken = "invalid.or.expired.token";
+        when(refreshTokenService.validateAndGet(rawToken)).thenThrow(new InvalidCredentialException());
+
+        assertThrows(InvalidCredentialException.class, () -> authService.refresh(rawToken));
+
+        verify(refreshTokenService).validateAndGet(rawToken);
+        verify(authRepository, never()).findById(any());
+        verify(refreshTokenService, never()).revokeAll(any());
+        verify(refreshTokenService, never()).createRefreshToken(any());
+        verify(jwtUtil, never()).generateToken(any(), any());
+        verify(responseMapper, never()).toResponse(any(), any(), any());
     }
 }

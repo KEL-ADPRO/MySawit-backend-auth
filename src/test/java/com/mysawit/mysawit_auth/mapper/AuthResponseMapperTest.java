@@ -31,43 +31,43 @@ public class AuthResponseMapperTest {
 
     @Test
     void mapsUserIdCorrectly() {
-        final AuthResponse response = mapper.toResponse(user, "token");
+        final AuthResponse response = mapper.toResponse(user, "access.token", "refresh.token");
         assertEquals(USER_ID, response.getUserId());
     }
 
     @Test
     void mapsUsernameCorrectly() {
-        final AuthResponse response = mapper.toResponse(user, "token");
+        final AuthResponse response = mapper.toResponse(user, "access.token", "refresh.token");
         assertEquals("Admin Sawit", response.getUsername());
     }
 
     @Test
     void mapsNameCorrectly() {
-        final AuthResponse response = mapper.toResponse(user, "token");
+        final AuthResponse response = mapper.toResponse(user, "access.token", "refresh.token");
         assertEquals("Agus", response.getName());
     }
 
     @Test
     void mapsEmailCorrectly() {
-        final AuthResponse response = mapper.toResponse(user, "token");
+        final AuthResponse response = mapper.toResponse(user, "access.token", "refresh.token");
         assertEquals("admin@gmail.com", response.getEmail());
     }
 
     @Test
     void mapsRoleCorrectly() {
-        final AuthResponse response = mapper.toResponse(user, "token");
+        final AuthResponse response = mapper.toResponse(user, "access.token", "refresh.token");
         assertEquals(Role.ADMIN, response.getRole());
     }
 
     @Test
     void mapsTokenCorrectly() {
-        final AuthResponse response = mapper.toResponse(user, "dummy.jwt.token");
-        assertEquals("dummy.jwt.token", response.getToken());
+        final AuthResponse response = mapper.toResponse(user, "access.token", "refresh.token");
+        assertEquals("access.token", response.getToken());
     }
 
     @Test
     void nullTokenIsAllowed() {
-        final AuthResponse response = mapper.toResponse(user, null);
+        final AuthResponse response = mapper.toResponse(user, null, null);
         assertNull(response.getToken());
     }
 
@@ -82,19 +82,19 @@ public class AuthResponseMapperTest {
                 .nomorSertifMandor("CERT-001")
                 .build();
 
-        final AuthResponse response = mapper.toResponse(mandor, "token");
+        final AuthResponse response = mapper.toResponse(mandor, "access.token", "refresh.token");
         assertEquals("CERT-001", response.getNomorSertifMandor());
     }
 
     @Test
     void nullNomorSertifIfItsAbsent() {
-        final AuthResponse response = mapper.toResponse(user, "token");
+        final AuthResponse response = mapper.toResponse(user, "access.token", "refresh.token");
         assertNull(response.getNomorSertifMandor());
     }
 
     @Test
     void doesntExposePassword() {
-        final AuthResponse response = mapper.toResponse(user, "token");
+        final AuthResponse response = mapper.toResponse(user, "access.token", "refresh.token");
         assertNotEquals("hashed_password", response.getToken());
         assertNotEquals("hashed_password", response.getUsername());
         assertNotEquals("hashed_password", response.getName());

@@ -13,12 +13,14 @@ import com.mysawit.mysawit_auth.model.Role;
 import com.mysawit.mysawit_auth.service.AuthService;
 import com.mysawit.mysawit_auth.service.strategy.AuthStrategy;
 import com.mysawit.mysawit_auth.service.strategy.AuthStrategyFactory;
+import com.mysawit.mysawit_auth.util.CookieUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -28,12 +30,10 @@ import java.util.UUID;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @ExtendWith(MockitoExtension.class)
 public class AuthControllerTest {
-
     @Mock
     private AuthService authService;
 
@@ -42,6 +42,9 @@ public class AuthControllerTest {
 
     @Mock
     private AuthStrategy<LoginRequest> strategy;
+
+    @Mock
+    private CookieUtil cookieUtil;
 
     @InjectMocks
     private AuthController authController;
@@ -215,16 +218,21 @@ public class AuthControllerTest {
         doReturn(strategy).when(strategyFactory).resolve(AuthProvider.PASSWORD);
         when(strategy.authenticate(any(LoginRequest.class))).thenReturn(loginResponse);
 
+        String cookie = "auth_token=dummy.jwt.token; Path=/; HttpOnly; SameSite=Strict";
+        when(cookieUtil.addAuthCookie("dummy.jwt.token")).thenReturn(cookie);
+
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validLoginRequest)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Login successful"))
-                .andExpect(jsonPath("$.data.token").value("dummy.jwt.token"));
+                .andExpect(jsonPath("$.data.token").value("dummy.jwt.token"))
+                .andExpect(header().string(HttpHeaders.SET_COOKIE, cookie));
 
         verify(strategyFactory, times(1)).resolve(AuthProvider.PASSWORD);
         verify(strategy, times(1)).authenticate(any(LoginRequest.class));
+        verify(cookieUtil, times(1)).addAuthCookie("dummy.jwt.token");
     }
 
     @Test
@@ -284,11 +292,15 @@ public class AuthControllerTest {
     void logoutSuccess() throws Exception {
         doNothing().when(authService).logout("valid.jwt.token");
 
+        String clearCookie = "auth_token=; Path=/; Max-Age=0; Expires=Thu, 1 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=Strict";
+        when(cookieUtil.clearAuthCookie()).thenReturn(clearCookie);
+
         mockMvc.perform(post("/api/auth/logout")
                         .header("Authorization", "Bearer valid.jwt.token"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.message").value("Logout successful"));
+                .andExpect(jsonPath("$.message").value("Logout successful"))
+                .andExpect(header().string(HttpHeaders.SET_COOKIE, clearCookie));
 
         verify(authService, times(1)).logout("valid.jwt.token");
     }

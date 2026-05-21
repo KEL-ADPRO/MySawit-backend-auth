@@ -3,6 +3,7 @@ package com.mysawit.mysawit_auth.service;
 import com.mysawit.mysawit_auth.dto.request.GoogleAuthRequest;
 import com.mysawit.mysawit_auth.dto.GoogleUserInfo;
 import com.mysawit.mysawit_auth.dto.response.AuthResponse;
+import com.mysawit.mysawit_auth.mapper.AuthResponseMapper;
 import com.mysawit.mysawit_auth.model.Role;
 import com.mysawit.mysawit_auth.model.User;
 import com.mysawit.mysawit_auth.repository.AuthRepository;
@@ -37,11 +38,15 @@ public class GoogleAuthServiceTest {
     @Mock
     private RegistrationValidator registrationValidator;
 
+    @Mock
+    private AuthResponseMapper responseMapper;
+
     @InjectMocks
     private GoogleAuthServiceImpl googleAuthService;
 
     private User googleMandorUser;
     private GoogleUserInfo googleMandorInfo;
+    private AuthResponse mandorResponse;
     private final String PLACEHOLDER_TOKEN = "placeholder.google.id.token";
     private final String GOOGLE_ID = "google-sub-123";
 
@@ -62,6 +67,15 @@ public class GoogleAuthServiceTest {
                 .email("burhan@gmail.com")
                 .name("Burhan")
                 .build();
+
+        mandorResponse = AuthResponse.builder()
+                .token("dummy.jwt.token")
+                .username("Mandor Sawit")
+                .name("Burhan")
+                .email("burhan@gmail.com")
+                .role(Role.MANDOR)
+                .nomorSertifMandor("CERT-001")
+                .build();
     }
 
     @Test
@@ -69,6 +83,7 @@ public class GoogleAuthServiceTest {
         when(googleTokenVerifier.verify(PLACEHOLDER_TOKEN)).thenReturn(googleMandorInfo);
         when(authRepository.findByGoogleId(GOOGLE_ID)).thenReturn(googleMandorUser);
         when(jwtUtil.generateToken(googleMandorUser.getId(), googleMandorUser.getRole())).thenReturn("dummy.jwt.token");
+        when(responseMapper.toResponse(googleMandorUser, "dummy.jwt.token")).thenReturn(mandorResponse);
 
         final GoogleAuthRequest request = GoogleAuthRequest.builder()
                 .idToken(PLACEHOLDER_TOKEN)
@@ -84,6 +99,7 @@ public class GoogleAuthServiceTest {
         assertEquals(Role.MANDOR, response.getRole());
 
         verify(authRepository, never()).save(any(User.class));
+        verify(responseMapper).toResponse(googleMandorUser, "dummy.jwt.token");
     }
 
     @Test
@@ -92,6 +108,7 @@ public class GoogleAuthServiceTest {
         when(authRepository.findByGoogleId(GOOGLE_ID)).thenReturn(null);
         when(authRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
         when(jwtUtil.generateToken(any(), any())).thenReturn("dummy.jwt.token");
+        when(responseMapper.toResponse(any(User.class), eq("dummy.jwt.token"))).thenReturn(mandorResponse);
 
         final GoogleAuthRequest request = GoogleAuthRequest.builder()
                 .idToken(PLACEHOLDER_TOKEN)
@@ -113,5 +130,6 @@ public class GoogleAuthServiceTest {
         verify(registrationValidator).assertEmailUnique(googleMandorInfo.getEmail());
         verify(registrationValidator).assertMandorCertPresent(request.getRole(), request.getNomorSertifMandor());
         verify(authRepository, times(1)).save(any(User.class));
+        verify(responseMapper).toResponse(any(User.class), eq("dummy.jwt.token"));
     }
 }

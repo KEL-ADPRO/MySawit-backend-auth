@@ -4,6 +4,7 @@ import com.mysawit.mysawit_auth.dto.request.GoogleAuthRequest;
 import com.mysawit.mysawit_auth.dto.GoogleUserInfo;
 import com.mysawit.mysawit_auth.dto.response.AuthResponse;
 import com.mysawit.mysawit_auth.exception.EmailAlreadyExistsException;
+import com.mysawit.mysawit_auth.mapper.AuthResponseMapper;
 import com.mysawit.mysawit_auth.model.AuthProvider;
 import com.mysawit.mysawit_auth.model.User;
 import com.mysawit.mysawit_auth.repository.AuthRepository;
@@ -22,6 +23,7 @@ public class GoogleAuthServiceImpl implements GoogleAuthService, AuthStrategy<Go
     private final GoogleTokenVerifier googleTokenVerifier;
     private final JwtUtil jwtUtil;
     private final RegistrationValidator registrationValidator;
+    private final AuthResponseMapper responseMapper;
 
     @Override
     @Transactional
@@ -34,7 +36,7 @@ public class GoogleAuthServiceImpl implements GoogleAuthService, AuthStrategy<Go
         }
 
         final String token = jwtUtil.generateToken(user.getId(), user.getRole());
-        return toResponse(user, token);
+        return responseMapper.toResponse(user, token);
     }
 
     @Override
@@ -74,15 +76,4 @@ public class GoogleAuthServiceImpl implements GoogleAuthService, AuthStrategy<Go
         return authRepository.save(newUser);
     }
 
-    private AuthResponse toResponse(final User user, final String token) {
-        return AuthResponse.builder()
-                .token(token)
-                .userId(user.getId())
-                .username(user.getUsername())
-                .name(user.getName())
-                .email(user.getEmail())
-                .role(user.getRole())
-                .nomorSertifMandor(user.getNomorSertifMandor())
-                .build();
-    }
 }

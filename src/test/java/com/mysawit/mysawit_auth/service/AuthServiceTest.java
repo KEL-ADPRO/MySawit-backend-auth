@@ -1,8 +1,7 @@
 package com.mysawit.mysawit_auth.service;
 
-import com.mysawit.mysawit_auth.exception.EmailAlreadyExistsException;
 import com.mysawit.mysawit_auth.exception.InvalidCredentialException;
-import com.mysawit.mysawit_auth.exception.MandorSertifMissingException;
+import com.mysawit.mysawit_auth.mapper.AuthResponseMapper;
 import com.mysawit.mysawit_auth.model.Role;
 import com.mysawit.mysawit_auth.model.User;
 import com.mysawit.mysawit_auth.repository.AuthRepository;
@@ -39,6 +38,9 @@ public class AuthServiceTest {
     @Mock
     private RegistrationValidator registrationValidator;
 
+    @Mock
+    private AuthResponseMapper responseMapper;
+
     @InjectMocks
     private AuthServiceImpl authService;
 
@@ -47,6 +49,10 @@ public class AuthServiceTest {
     private RegisterRequest buruhRequest;
     private RegisterRequest supirRequest;
     private User adminUser;
+    private AuthResponse adminResponse;
+    private AuthResponse mandorResponse;
+    private AuthResponse buruhResponse;
+    private AuthResponse supirResponse;
 
     @BeforeEach
     void setUp() {
@@ -90,11 +96,41 @@ public class AuthServiceTest {
                 .password("supir123")
                 .role(Role.SUPIR)
                 .build();
+
+        adminResponse = AuthResponse.builder()
+                .username("Admin Sawit")
+                .name("Agus")
+                .email("admin@gmail.com")
+                .role(Role.ADMIN)
+                .build();
+
+        mandorResponse = AuthResponse.builder()
+                .username("Mandor Sawit")
+                .name("Burhan")
+                .email("burhan@gmail.com")
+                .role(Role.MANDOR)
+                .nomorSertifMandor("CERT-001")
+                .build();
+
+        buruhResponse = AuthResponse.builder()
+                .username("Buruh Sawit")
+                .name("Usep")
+                .email("usep@gmail.com")
+                .role(Role.BURUH)
+                .build();
+
+        supirResponse = AuthResponse.builder()
+                .username("Supir Sawit")
+                .name("Budi")
+                .email("budi@gmail.com")
+                .role(Role.SUPIR)
+                .build();
     }
 
     @Test
     void registerAdminSuccess() {
         when(authRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
+        when(responseMapper.toResponse(any(User.class), any())).thenReturn(adminResponse);
 
         final AuthResponse response = authService.register(adminRequest);
 
@@ -104,11 +140,13 @@ public class AuthServiceTest {
         assertEquals(Role.ADMIN, response.getRole());
 
         verify(registrationValidator).validateRequiredFields(adminRequest.getUsername(), adminRequest.getName(), adminRequest.getEmail(), adminRequest.getRole());
+        verify(responseMapper).toResponse(any(User.class), isNull());
     }
 
     @Test
     void registerMandorSuccess() {
         when(authRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
+        when(responseMapper.toResponse(any(User.class), any())).thenReturn(mandorResponse);
 
         final AuthResponse response = authService.register(mandorRequest);
 
@@ -117,11 +155,15 @@ public class AuthServiceTest {
         assertEquals("burhan@gmail.com", response.getEmail());
         assertEquals(Role.MANDOR, response.getRole());
         assertEquals("CERT-001", response.getNomorSertifMandor());
+
+        verify(registrationValidator).validateRequiredFields(mandorRequest.getUsername(), mandorRequest.getName(), mandorRequest.getEmail(), mandorRequest.getRole());
+        verify(responseMapper).toResponse(any(User.class), isNull());
     }
 
     @Test
     void registerBuruhSuccess() {
         when(authRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
+        when(responseMapper.toResponse(any(User.class), any())).thenReturn(buruhResponse);
 
         final AuthResponse response = authService.register(buruhRequest);
 
@@ -129,11 +171,15 @@ public class AuthServiceTest {
         assertEquals("Usep", response.getName());
         assertEquals("usep@gmail.com", response.getEmail());
         assertEquals(Role.BURUH, response.getRole());
+
+        verify(registrationValidator).validateRequiredFields(buruhRequest.getUsername(), buruhRequest.getName(), buruhRequest.getEmail(), buruhRequest.getRole());
+        verify(responseMapper).toResponse(any(User.class), isNull());
     }
 
     @Test
     void registerSupirSuccess() {
         when(authRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
+        when(responseMapper.toResponse(any(User.class), any())).thenReturn(supirResponse);
 
         final AuthResponse response = authService.register(supirRequest);
 
@@ -141,13 +187,25 @@ public class AuthServiceTest {
         assertEquals("Budi", response.getName());
         assertEquals("budi@gmail.com", response.getEmail());
         assertEquals(Role.SUPIR, response.getRole());
+
+        verify(registrationValidator).validateRequiredFields(supirRequest.getUsername(), supirRequest.getName(), supirRequest.getEmail(), supirRequest.getRole());
+        verify(responseMapper).toResponse(any(User.class), isNull());
     }
 
     @Test
     void loginSuccess() {
+        final AuthResponse loginResponse = AuthResponse.builder()
+                .token("dummy.jwt.token")
+                .username("Admin Sawit")
+                .name("Agus")
+                .email("admin@gmail.com")
+                .role(Role.ADMIN)
+                .build();
+
         when(authRepository.findByEmail("admin@gmail.com")).thenReturn(adminUser);
         when(passwordHasher.matches("admin123", "hashed_admin123")).thenReturn(true);
         when(jwtUtil.generateToken(adminUser.getId(), adminUser.getRole())).thenReturn("dummy.jwt.token");
+        when(responseMapper.toResponse(any(User.class), any())).thenReturn(loginResponse);
 
         final LoginRequest request = LoginRequest.builder()
                 .email("admin@gmail.com")
@@ -156,14 +214,16 @@ public class AuthServiceTest {
 
         AuthResponse response = authService.login(request);
 
-        verify(authRepository, times(1)).findByEmail("admin@gmail.com");
-        verify(jwtUtil, times(1)).generateToken(adminUser.getId(), adminUser.getRole());
         assertNotNull(response);
         assertEquals("dummy.jwt.token", response.getToken());
         assertEquals("Admin Sawit", response.getUsername());
         assertEquals("Agus", response.getName());
         assertEquals("admin@gmail.com", response.getEmail());
         assertEquals(Role.ADMIN, response.getRole());
+
+        verify(authRepository, times(1)).findByEmail("admin@gmail.com");
+        verify(jwtUtil, times(1)).generateToken(adminUser.getId(), adminUser.getRole());
+        verify(responseMapper).toResponse(any(User.class), eq("dummy.jwt.token"));
     }
 
     @Test
@@ -181,7 +241,9 @@ public class AuthServiceTest {
                 .build();
 
         assertThrows(InvalidCredentialException.class, () -> authService.login(request));
+
         verify(jwtUtil, never()).generateToken(any(), any());
+        verify(responseMapper, never()).toResponse(any(), any());
     }
 
     @Test
@@ -192,6 +254,9 @@ public class AuthServiceTest {
                 .build();
 
         assertThrows(InvalidCredentialException.class, () -> authService.login(request));
+
+        verify(jwtUtil, never()).generateToken(any(), any());
+        verify(responseMapper, never()).toResponse(any(), any());
     }
 
     @Test
@@ -202,6 +267,9 @@ public class AuthServiceTest {
                 .build();
 
         assertThrows(InvalidCredentialException.class, () -> authService.login(request));
+
+        verify(jwtUtil, never()).generateToken(any(), any());
+        verify(responseMapper, never()).toResponse(any(), any());
     }
 
     @Test
@@ -212,6 +280,9 @@ public class AuthServiceTest {
                 .build();
 
         assertThrows(InvalidCredentialException.class, () -> authService.login(request));
+
+        verify(jwtUtil, never()).generateToken(any(), any());
+        verify(responseMapper, never()).toResponse(any(), any());
     }
 
     @Test
@@ -222,6 +293,9 @@ public class AuthServiceTest {
                 .build();
 
         assertThrows(InvalidCredentialException.class, () -> authService.login(request));
+
+        verify(jwtUtil, never()).generateToken(any(), any());
+        verify(responseMapper, never()).toResponse(any(), any());
     }
 
     @Test
@@ -235,7 +309,9 @@ public class AuthServiceTest {
                 .build();
 
         assertThrows(InvalidCredentialException.class, () -> authService.login(request));
+
         verify(jwtUtil, never()).generateToken(any(), any());
+        verify(responseMapper, never()).toResponse(any(), any());
     }
 
     @Test
@@ -257,7 +333,9 @@ public class AuthServiceTest {
                 .build();
 
         assertThrows(IllegalArgumentException.class, () -> authService.login(request));
+
         verify(jwtUtil, never()).generateToken(any(), any());
+        verify(responseMapper, never()).toResponse(any(), any());
     }
 
     @Test
@@ -279,7 +357,9 @@ public class AuthServiceTest {
                 .build();
 
         assertThrows(InvalidCredentialException.class, () -> authService.login(request));
+
         verify(jwtUtil, never()).generateToken(any(), any());
+        verify(responseMapper, never()).toResponse(any(), any());
     }
 
     @Test
@@ -288,19 +368,25 @@ public class AuthServiceTest {
         when(jwtUtil.extractUserId(token)).thenReturn("eb558e9f-1c39-460e-8860-71af6af63bd6");
 
         assertDoesNotThrow(() -> authService.logout(token));
+
         verify(tokenBlacklist, times(1)).blacklist(token);
+        verify(responseMapper, never()).toResponse(any(), any());
     }
 
     @Test
     void logoutNullToken() {
         assertThrows(InvalidCredentialException.class, () -> authService.logout(null));
+
         verify(tokenBlacklist, never()).blacklist(any());
+        verify(responseMapper, never()).toResponse(any(), any());
     }
 
     @Test
     void logoutBlankToken() {
         assertThrows(InvalidCredentialException.class, () -> authService.logout("   "));
+
         verify(tokenBlacklist, never()).blacklist(any());
+        verify(responseMapper, never()).toResponse(any(), any());
     }
 
     @Test
@@ -309,18 +395,9 @@ public class AuthServiceTest {
         doThrow(new RuntimeException("JWT expired")).when(jwtUtil).extractUserId(badToken);
 
         assertThrows(InvalidCredentialException.class, () -> authService.logout(badToken));
+
         verify(tokenBlacklist, never()).blacklist(any());
-    }
-
-    @Test
-    void loginWithBlacklistedTokenFails() {
-        when(authRepository.findByEmail("admin@gmail.com")).thenReturn(adminUser);
-        when(passwordHasher.matches("admin123", "hashed_admin123")).thenReturn(true);
-        when(jwtUtil.generateToken(adminUser.getId(), adminUser.getRole())).thenReturn("dummy.jwt.token");
-
-        authService.login(LoginRequest.builder().email("admin@gmail.com").password("admin123").build());
-
-        verify(jwtUtil, times(1)).generateToken(adminUser.getId(), adminUser.getRole());
+        verify(responseMapper, never()).toResponse(any(), any());
     }
 
     @Test
@@ -329,6 +406,9 @@ public class AuthServiceTest {
         when(tokenBlacklist.isBlacklisted(token)).thenReturn(true);
 
         assertThrows(InvalidCredentialException.class, () -> authService.getLoggedInUser(token));
+
         verify(authRepository, never()).findById(any());
+        verify(jwtUtil, never()).generateToken(any(), any());
+        verify(responseMapper, never()).toResponse(any(), any());
     }
 }

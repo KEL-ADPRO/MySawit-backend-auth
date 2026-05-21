@@ -77,7 +77,7 @@ public class LoginAttempRepositoryTest {
         when(typedQuery.setParameter("email", "user@gmail.com")).thenReturn(typedQuery);
         when(typedQuery.getResultList()).thenReturn(List.of(loginAttempt));
 
-        loginAttemptRepository.deleteByEmail("admin@gmail.com");
+        loginAttemptRepository.deleteByEmail("user@gmail.com");
 
         verify(entityManager, times(1)).remove(loginAttempt);
     }
@@ -88,7 +88,7 @@ public class LoginAttempRepositoryTest {
         when(typedQuery.setParameter("email", "user@gmail.com")).thenReturn(typedQuery);
         when(typedQuery.getResultList()).thenReturn(List.of());
 
-        loginAttemptRepository.deleteByEmail("admin@gmail.com");
+        loginAttemptRepository.deleteByEmail("user@gmail.com");
 
         verify(entityManager, times(0)).remove(loginAttempt);
     }

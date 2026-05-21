@@ -3,6 +3,7 @@ package com.mysawit.mysawit_auth.repository;
 import com.mysawit.mysawit_auth.model.BlacklistedToken;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import jakarta.transaction.Transactional;
 import lombok.NoArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -16,6 +17,7 @@ public class BlacklistedTokenRepositoryImpl implements BlacklistedTokenRepositor
     private EntityManager entityManager;
 
     @Override
+    @Transactional
     public BlacklistedToken save(final BlacklistedToken token) {
         return entityManager.merge(token);
     }
@@ -33,6 +35,7 @@ public class BlacklistedTokenRepositoryImpl implements BlacklistedTokenRepositor
     }
 
     @Override
+    @Transactional
     public void deleteExpired(final Instant now) {
         entityManager.createQuery(
                         "DELETE FROM BlacklistedToken b WHERE b.expiresAt < :now")

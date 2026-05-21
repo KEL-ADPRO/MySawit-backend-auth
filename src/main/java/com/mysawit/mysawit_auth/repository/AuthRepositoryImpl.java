@@ -3,6 +3,7 @@ package com.mysawit.mysawit_auth.repository;
 import com.mysawit.mysawit_auth.model.User;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import jakarta.transaction.Transactional;
 import lombok.NoArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -18,6 +19,7 @@ public class AuthRepositoryImpl implements AuthRepository {
     private EntityManager entityManager;
 
     @Override
+    @Transactional
     public User save(final User user) {
         return entityManager.merge(user);
     }

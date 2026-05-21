@@ -13,11 +13,17 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.security.SecureRandom;
 import java.util.List;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+    @Bean
+    public SecureRandom secureRandom() {
+        return new SecureRandom();
+    }
+
     @Bean
     public SecurityFilterChain securityFilterChain(final HttpSecurity http, final RateLimitFilter rateLimitFilter) throws Exception {
         http

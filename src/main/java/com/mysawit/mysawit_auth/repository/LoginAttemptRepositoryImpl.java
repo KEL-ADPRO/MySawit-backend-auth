@@ -24,7 +24,8 @@ public class LoginAttemptRepositoryImpl implements LoginAttemptRepository {
     @Override
     public LoginAttempt findByEmail(final String email) {
         final List<LoginAttempt> results = entityManager.createQuery(
-                        "SELECT l FROM LoginAttempt l WHERE l.email = :email",
+                        "SELECT l FROM LoginAttempt l " +
+                                "WHERE l.email = :email",
                         LoginAttempt.class)
                 .setParameter("email", email)
                 .getResultList();

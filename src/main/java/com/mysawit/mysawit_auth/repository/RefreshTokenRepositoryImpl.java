@@ -26,9 +26,8 @@ public class RefreshTokenRepositoryImpl implements RefreshTokenRepository {
     @Override
     public RefreshToken findByToken(final String token) {
         final List<RefreshToken> results = entityManager.createQuery(
-                "SELECT r FROM RefreshToken r " +
-                        "JOIN FETCH r.userId " +
-                        "WHERE r.token = :token",
+                        "SELECT r FROM RefreshToken r " +
+                                "WHERE r.token = :token",
                         RefreshToken.class)
                 .setParameter("token", token)
                 .getResultList();

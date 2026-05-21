@@ -1,4 +1,4 @@
-package com.mysawit.mysawit_auth.security;
+package com.mysawit.mysawit_auth.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

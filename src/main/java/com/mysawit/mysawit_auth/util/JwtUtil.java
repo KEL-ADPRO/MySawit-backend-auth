@@ -27,7 +27,7 @@ public class JwtUtil {
     @PostConstruct
     public void validateSecret() {
         if (jwtSecret == null || jwtSecret.getBytes(StandardCharsets.UTF_8).length < MIN_SECRET_BYTES) {
-            throw new IllegalStateException("JWT secret must be at least 32 characters (256 bits) for HMAC-SHA256. " + "Set a strong value via the JWT_SECRET environment variable");
+            throw new IllegalStateException("JWT secret must be at least 32 characters (256 bits) for HMAC-SHA256. " + "Set a strong value via the JWT_SECRET environment variable.");
         }
     }
 

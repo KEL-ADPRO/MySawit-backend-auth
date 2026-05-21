@@ -4,6 +4,7 @@ import com.mysawit.mysawit_auth.dto.request.GoogleAuthRequest;
 import com.mysawit.mysawit_auth.dto.GoogleUserInfo;
 import com.mysawit.mysawit_auth.dto.response.AuthResponse;
 import com.mysawit.mysawit_auth.mapper.AuthResponseMapper;
+import com.mysawit.mysawit_auth.model.RefreshToken;
 import com.mysawit.mysawit_auth.model.Role;
 import com.mysawit.mysawit_auth.model.User;
 import com.mysawit.mysawit_auth.repository.AuthRepository;
@@ -86,7 +87,9 @@ public class GoogleAuthServiceTest {
         when(googleTokenVerifier.verify(PLACEHOLDER_TOKEN)).thenReturn(googleMandorInfo);
         when(authRepository.findByGoogleId(GOOGLE_ID)).thenReturn(googleMandorUser);
         when(jwtUtil.generateToken(googleMandorUser.getId(), googleMandorUser.getRole())).thenReturn("dummy.jwt.token");
-        when(responseMapper.toResponse(googleMandorUser, "dummy.jwt.token", any())).thenReturn(mandorResponse);
+        final RefreshToken refreshToken = RefreshToken.builder().token("dummy.refresh.token").userId(googleMandorUser.getId()).build();
+        when(refreshTokenService.createRefreshToken(googleMandorUser)).thenReturn(refreshToken);
+        when(responseMapper.toResponse(googleMandorUser, "dummy.jwt.token", "dummy.refresh.token")).thenReturn(mandorResponse);
 
         final GoogleAuthRequest request = GoogleAuthRequest.builder()
                 .idToken(PLACEHOLDER_TOKEN)
@@ -102,7 +105,7 @@ public class GoogleAuthServiceTest {
         assertEquals(Role.MANDOR, response.getRole());
 
         verify(authRepository, never()).save(any(User.class));
-        verify(responseMapper).toResponse(googleMandorUser, "dummy.jwt.token", any());
+        verify(responseMapper).toResponse(googleMandorUser, "dummy.jwt.token", "dummy.refresh.token");
     }
 
     @Test
@@ -111,7 +114,9 @@ public class GoogleAuthServiceTest {
         when(authRepository.findByGoogleId(GOOGLE_ID)).thenReturn(null);
         when(authRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
         when(jwtUtil.generateToken(any(), any())).thenReturn("dummy.jwt.token");
-        when(responseMapper.toResponse(any(User.class), eq("dummy.jwt.token"), any())).thenReturn(mandorResponse);
+        final RefreshToken refreshToken = RefreshToken.builder().token("dummy.refresh.token").userId(googleMandorUser.getId()).build();
+        when(refreshTokenService.createRefreshToken(any(User.class))).thenReturn(refreshToken);
+        when(responseMapper.toResponse(any(User.class), eq("dummy.jwt.token"), eq("dummy.refresh.token"))).thenReturn(mandorResponse);
 
         final GoogleAuthRequest request = GoogleAuthRequest.builder()
                 .idToken(PLACEHOLDER_TOKEN)
@@ -133,6 +138,6 @@ public class GoogleAuthServiceTest {
         verify(registrationValidator).assertEmailUnique(googleMandorInfo.getEmail());
         verify(registrationValidator).assertMandorCertPresent(request.getRole(), request.getNomorSertifMandor());
         verify(authRepository, times(1)).save(any(User.class));
-        verify(responseMapper).toResponse(any(User.class), eq("dummy.jwt.token"), any());
+        verify(responseMapper).toResponse(any(User.class), eq("dummy.jwt.token"), eq("dummy.refresh.token"));
     }
 }

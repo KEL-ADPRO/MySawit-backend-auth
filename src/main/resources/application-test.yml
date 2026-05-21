@@ -30,6 +30,6 @@ app:
   seed:
     admin:
       email: admin@gmail.com
-      password: admin123
+      password: Admin123!
       name: admin sawit
       username: admin

@@ -94,11 +94,12 @@ public class RefreshTokenRepositoryTest {
 
     @Test
     void findByUserIdEmpty() {
+        UUID id = UUID.randomUUID();
         when(entityManager.createQuery(any(String.class), eq(RefreshToken.class))).thenReturn(typedQuery);
-        when(typedQuery.setParameter("userId", UUID.randomUUID())).thenReturn(typedQuery);
+        when(typedQuery.setParameter("userId", id)).thenReturn(typedQuery);
         when(typedQuery.getResultList()).thenReturn(List.of());
 
-        final List<RefreshToken> results = refreshTokenRepository.findByUserId(UUID.randomUUID());
+        final List<RefreshToken> results = refreshTokenRepository.findByUserId(id);
 
         assertNotNull(results);
         assertTrue(results.isEmpty());
@@ -110,7 +111,7 @@ public class RefreshTokenRepositoryTest {
         when(entityManager.createQuery(any(String.class), eq(RefreshToken.class))).thenReturn(typedQuery);
         when(typedQuery.setParameter("userId", USER_ID)).thenReturn(typedQuery);
         when(typedQuery.setParameter("token", TOKEN_VALUE)).thenReturn(typedQuery);
-        when(typedQuery.setParameter("now", any(Instant.class))).thenReturn(typedQuery);
+        when(typedQuery.setParameter("now", now)).thenReturn(typedQuery);
         when(typedQuery.getResultList()).thenReturn(List.of(refreshToken));
 
         final RefreshToken result = refreshTokenRepository.findValidByUserIdAndToken(USER_ID, TOKEN_VALUE, now);
@@ -126,7 +127,7 @@ public class RefreshTokenRepositoryTest {
         when(entityManager.createQuery(any(String.class), eq(RefreshToken.class))).thenReturn(typedQuery);
         when(typedQuery.setParameter("userId", USER_ID)).thenReturn(typedQuery);
         when(typedQuery.setParameter("token", "wrong.token")).thenReturn(typedQuery);
-        when(typedQuery.setParameter("now", any(Instant.class))).thenReturn(typedQuery);
+        when(typedQuery.setParameter("now", now)).thenReturn(typedQuery);
         when(typedQuery.getResultList()).thenReturn(List.of());
 
         final RefreshToken result = refreshTokenRepository.findValidByUserIdAndToken(USER_ID, "wrong.token", now);
@@ -174,10 +175,12 @@ public class RefreshTokenRepositoryTest {
 
     @Test
     void deleteExpiredSuccess() {
-        when(entityManager.createQuery(any(String.class))).thenReturn(mock());
+        Instant now = Instant.now();
+        when(entityManager.createQuery(any(String.class), eq(RefreshToken.class))).thenReturn(typedQuery);
+        when(typedQuery.setParameter("now", now)).thenReturn(typedQuery);
 
-        refreshTokenRepository.deleteExpired(Instant.now());
+        refreshTokenRepository.deleteExpired(now);
 
-        verify(entityManager).createQuery(any(String.class));
+        verify(entityManager, times(1)).createQuery(any(String.class), eq(RefreshToken.class));
     }
 }

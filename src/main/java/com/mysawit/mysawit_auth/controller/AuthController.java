@@ -26,7 +26,9 @@ public class AuthController {
     private final CookieUtil cookieUtil;
 
     @PostMapping("/register")
-    public ResponseEntity<ApiResponse<AuthResponse>> register(@Valid @RequestBody final RegisterRequest request) {
+    public ResponseEntity<ApiResponse<AuthResponse>> register(
+            @Valid @RequestBody final RegisterRequest request
+    ) {
         final AuthResponse response = authService.register(request);
 
         return ResponseEntity
@@ -35,7 +37,9 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<AuthResponse>> login(@Valid @RequestBody final LoginRequest request) {
+    public ResponseEntity<ApiResponse<AuthResponse>> login(
+            @Valid @RequestBody final LoginRequest request
+    ) {
         final AuthStrategy<LoginRequest> strategy = strategyFactory.resolve(AuthProvider.PASSWORD);
         final AuthResponse authResponse = strategy.authenticate(request);
 
@@ -48,16 +52,22 @@ public class AuthController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<ApiResponse<AuthResponse>> getMe(@RequestHeader(value = "Authorization", required = false) final String authHeader) {
-        final String token = extractBearer(authHeader);
+    public ResponseEntity<ApiResponse<AuthResponse>> getMe(
+            @RequestHeader(value = "Authorization", required = false) final String authHeader,
+            @CookieValue(value = CookieUtil.AUTH_COOKIE_NAME, required = false) final String cookieToken
+    ) {
+        final String token = resolveToken(authHeader, cookieToken);
         final AuthResponse response = authService.getLoggedInUser(token);
 
         return ResponseEntity.ok(ApiResponse.successResponse("User retrieved", response));
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<ApiResponse<Void>> logout(@RequestHeader(value = "Authorization", required = false) final String authHeader) {
-        final String token = extractBearer(authHeader);
+    public ResponseEntity<ApiResponse<Void>> logout(
+            @RequestHeader(value = "Authorization", required = false) final String authHeader,
+            @CookieValue(value = CookieUtil.AUTH_COOKIE_NAME, required = false) final String cookieToken
+    ) {
+        final String token = resolveToken(authHeader, cookieToken);
 
         authService.logout(token);
 
@@ -69,11 +79,15 @@ public class AuthController {
                 .body(ApiResponse.successResponse("Logout successful", null));
     }
 
-    private String extractBearer(final String authHeader) {
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            throw new IllegalArgumentException("Invalid Authorization header");
+    private String resolveToken(final String authHeader, final String cookieToken) {
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            return authHeader.substring(7);
         }
 
-        return authHeader.substring(7);
+        if (cookieToken != null && !cookieToken.isBlank()) {
+            return cookieToken;
+        }
+
+        throw new IllegalArgumentException("Invalid Authorization header");
     }
 }

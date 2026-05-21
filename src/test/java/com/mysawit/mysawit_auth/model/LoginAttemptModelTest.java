@@ -9,13 +9,16 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class LoginAttemptModelTest {
     private LoginAttempt loginAttempt;
+    private final Instant FAIL_TIME = Instant.now();
+    private final Instant LOCK_TIME = Instant.now().plusSeconds(10);
 
     @BeforeEach
     public void setUp() {
         loginAttempt = LoginAttempt.builder()
                 .email("user@gmail.com")
                 .failedCount(3)
-                .lastFailedAt(Instant.now())
+                .lastFailedAt(FAIL_TIME)
+                .lockedUntil(LOCK_TIME)
                 .build();
     }
 
@@ -33,19 +36,15 @@ public class LoginAttemptModelTest {
 
     @Test
     void getLastFailedAt() {
-        final Instant failTime = Instant.now();
-        loginAttempt.setLastFailedAt(failTime);
         final Instant lastFailedAt = loginAttempt.getLastFailedAt();
 
-        assertEquals(failTime, lastFailedAt);
+        assertEquals(FAIL_TIME, lastFailedAt);
     }
 
     @Test
     void getLockedUntil() {
-        final Instant lockTime = Instant.now().plusSeconds(10);
-        loginAttempt.setLockedUntil(lockTime);
         final Instant lockedUntil = loginAttempt.getLockedUntil();
 
-        assertEquals(lockTime, lockedUntil);
+        assertEquals(LOCK_TIME, lockedUntil);
     }
 }

@@ -42,7 +42,6 @@ public class RefreshTokenRepositoryTest {
                 .token(TOKEN_VALUE)
                 .expiresAt(Instant.now().plusSeconds(10))
                 .createdAt(Instant.now())
-                .isRevoked(false)
                 .build();
     }
 

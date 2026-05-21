@@ -3,6 +3,7 @@ package com.mysawit.mysawit_auth.repository;
 import com.mysawit.mysawit_auth.model.RefreshToken;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import jakarta.transaction.Transactional;
 import lombok.NoArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -13,10 +14,13 @@ import java.util.UUID;
 @Repository
 @NoArgsConstructor
 public class RefreshTokenRepositoryImpl implements RefreshTokenRepository {
+    private static final String SELECT_TOKEN = "SELECT r FROM RefreshToken r ";
+
     @PersistenceContext
     private EntityManager entityManager;
 
     @Override
+    @Transactional
     public RefreshToken save(final RefreshToken token) {
         return entityManager.merge(token);
     }
@@ -24,7 +28,7 @@ public class RefreshTokenRepositoryImpl implements RefreshTokenRepository {
     @Override
     public RefreshToken findByToken(String token) {
         final List<RefreshToken> results = entityManager.createQuery(
-                "SELECT r FROM RefreshToken r " +
+                        SELECT_TOKEN +
                         "WHERE r.token = :token",
                         RefreshToken.class)
                 .setParameter("token", token)
@@ -35,7 +39,7 @@ public class RefreshTokenRepositoryImpl implements RefreshTokenRepository {
     @Override
     public List<RefreshToken> findByUserId(UUID userId) {
         return entityManager.createQuery(
-                        "SELECT r FROM RefreshToken r " +
+                        SELECT_TOKEN +
                                 "WHERE r.userId = :userId",
                         RefreshToken.class)
                 .setParameter("userId", userId)
@@ -45,7 +49,7 @@ public class RefreshTokenRepositoryImpl implements RefreshTokenRepository {
     @Override
     public RefreshToken findValidByUserIdAndToken(UUID userId, String token, Instant now) {
         final List<RefreshToken> results = entityManager.createQuery(
-                        "SELECT r FROM RefreshToken r " +
+                        SELECT_TOKEN +
                                 "WHERE r.userId = :userId " +
                                 "AND r.token = :token " +
                                 "AND r.expiresAt > :now " +
@@ -68,6 +72,7 @@ public class RefreshTokenRepositoryImpl implements RefreshTokenRepository {
     }
 
     @Override
+    @Transactional
     public void revokeAllByUserId(UUID userId) {
         final List<RefreshToken> tokens = findByUserId(userId);
         for (final RefreshToken token : tokens) {
@@ -77,6 +82,7 @@ public class RefreshTokenRepositoryImpl implements RefreshTokenRepository {
     }
 
     @Override
+    @Transactional
     public void deleteExpired(Instant now) {
         entityManager.createQuery(
                         "DELETE FROM RefreshToken r " +

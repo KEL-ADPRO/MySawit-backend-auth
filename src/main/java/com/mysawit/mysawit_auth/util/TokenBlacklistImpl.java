@@ -1,17 +1,17 @@
 package com.mysawit.mysawit_auth.util;
 
+import com.mysawit.mysawit_auth.model.BlacklistedToken;
+import com.mysawit.mysawit_auth.repository.BlacklistedTokenRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+
+import java.time.Instant;
 
 @Component
+@RequiredArgsConstructor
 public class TokenBlacklistImpl implements TokenBlacklist {
-    private final ConcurrentMap<String, Long> blacklistedTokens = new ConcurrentHashMap<>();
+    private final BlacklistedTokenRepository blacklistedTokenRepository;
     private final JwtUtil jwtUtil;
-
-    public TokenBlacklistImpl(final JwtUtil jwtUtil) {
-        this.jwtUtil = jwtUtil;
-    }
 
     @Override
     public void blacklist(final String token) {
@@ -19,23 +19,18 @@ public class TokenBlacklistImpl implements TokenBlacklist {
             throw  new IllegalArgumentException("Token is null!");
         }
 
-        final long expiresAt = jwtUtil.extractExpiration(token).getTime();
-        blacklistedTokens.put(token, expiresAt);
+        final Instant expiresAt = jwtUtil.extractExpiration(token).toInstant();
+
+        final BlacklistedToken blacklistedToken = BlacklistedToken.builder()
+                .token(token)
+                .expiresAt(expiresAt)
+                .build();
+
+        blacklistedTokenRepository.save(blacklistedToken);
     }
 
     @Override
     public boolean isBlacklisted(final String token) {
-        final Long expiresAt = blacklistedTokens.get(token);
-
-        if (expiresAt == null) {
-            return false;
-        }
-
-        if (System.currentTimeMillis() > expiresAt) {
-            blacklistedTokens.remove(token);
-            return false;
-        }
-
-        return true;
+        return blacklistedTokenRepository.isTokenBlacklisted(token, Instant.now());
     }
 }

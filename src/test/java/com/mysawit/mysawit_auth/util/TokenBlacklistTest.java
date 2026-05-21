@@ -1,18 +1,24 @@
 package com.mysawit.mysawit_auth.util;
 
+import com.mysawit.mysawit_auth.model.BlacklistedToken;
+import com.mysawit.mysawit_auth.repository.BlacklistedTokenRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Instant;
 import java.util.Date;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class TokenBlacklistTest {
+    @Mock
+    private BlacklistedTokenRepository tokenRepository;
+
     @Mock
     private JwtUtil jwtUtil;
 
@@ -22,31 +28,46 @@ public class TokenBlacklistTest {
     @Test
     void nullTokenIsRejected() {
         assertThrows(IllegalArgumentException.class, () -> tokenBlacklist.blacklist(null));
+        verify(tokenRepository, never()).save(any());
     }
 
     @Test
     void freshTokenIsNotBlacklisted() {
-        assertFalse(tokenBlacklist.isBlacklisted("fresh.jwt.token"));
+        final String token = "fresh.jwt.token";
+        when(tokenRepository.isTokenBlacklisted(eq(token), any(Instant.class))).thenReturn(false);
+
+        assertFalse(tokenBlacklist.isBlacklisted(token));
     }
 
     @Test
-    void blacklistedTokenIsRecognised() {
-        when(jwtUtil.extractExpiration("blacklisted.jwt.token")).thenReturn(new Date(System.currentTimeMillis() + 100));
-        tokenBlacklist.blacklist("blacklisted.jwt.token");
-        assertTrue(tokenBlacklist.isBlacklisted("blacklisted.jwt.token"));
+    void expiredTokenIsBlacklisted() {
+        final String token = "expired.jwt.token";
+        when(tokenRepository.isTokenBlacklisted(eq(token), any(Instant.class))).thenReturn(true);
+
+        assertTrue(tokenBlacklist.isBlacklisted(token));
+    }
+
+    @Test
+    void blacklistSavesToRepository() {
+        final String token = "valid.jwt.token";
+        final Date expiry = new Date(System.currentTimeMillis() + 10_000);
+        when(jwtUtil.extractExpiration(token)).thenReturn(expiry);
+
+        tokenBlacklist.blacklist(token);
+
+        verify(tokenRepository, times(1)).save(any(BlacklistedToken.class));
     }
 
     @Test
     void blacklistingOneTokenDoesNotAffectAnother() {
-        when(jwtUtil.extractExpiration("jwt.token.a")).thenReturn(new Date(System.currentTimeMillis() + 1000));
-        tokenBlacklist.blacklist("jwt.token.a");
-        assertFalse(tokenBlacklist.isBlacklisted("jwt.token.b"));
-    }
+        final String tokenA = "jwt.token.a";
+        final String tokenB = "jwt.token.b";
+        final Date expiry = new Date(System.currentTimeMillis() + 10_000);
+        when(jwtUtil.extractExpiration(tokenA)).thenReturn(expiry);
+        when(tokenRepository.isTokenBlacklisted(eq(tokenB), any(Instant.class))).thenReturn(false);
 
-    @Test
-    void expiredBlacklistedTokenIsNotReported() {
-        when(jwtUtil.extractExpiration("expired.jwt.token")).thenReturn(new Date(System.currentTimeMillis() - 100));
-        tokenBlacklist.blacklist("expired.jwt.token");
-        assertFalse(tokenBlacklist.isBlacklisted("expired.jwt.token"));
+        tokenBlacklist.blacklist(tokenA);
+
+        assertFalse(tokenBlacklist.isBlacklisted(tokenB));
     }
 }

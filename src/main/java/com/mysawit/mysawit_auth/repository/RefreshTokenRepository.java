@@ -8,10 +8,14 @@ import java.util.UUID;
 
 public interface RefreshTokenRepository {
     RefreshToken save(RefreshToken token);
+
     RefreshToken findByToken(String token);
+
     List<RefreshToken> findByUserId(UUID userId);
-    RefreshToken findValidByUserIdAndToken(UUID userId, String token, Instant now);
-    void revokeByToken(String token);
-    void revokeAllByUserId(UUID userId);
-    void deleteExpired(Instant now);
+
+    RefreshToken findByUserIdAndToken(UUID userId, String token);
+
+    void updateRevokedStatusByUserId(UUID userId, boolean revoked);
+
+    void deleteByExpiryDateBefore(Instant now);
 }

@@ -1,5 +1,6 @@
 package com.mysawit.mysawit_auth.controller;
 
+import com.mysawit.mysawit_auth.dto.request.RefreshRequest;
 import com.mysawit.mysawit_auth.model.AuthProvider;
 import com.mysawit.mysawit_auth.service.AuthService;
 import com.mysawit.mysawit_auth.dto.response.ApiResponse;
@@ -43,11 +44,13 @@ public class AuthController {
         final AuthStrategy<LoginRequest> strategy = strategyFactory.resolve(AuthProvider.PASSWORD);
         final AuthResponse authResponse = strategy.authenticate(request);
 
-        String cookie = cookieUtil.addAuthCookie(authResponse.getToken());
+        String accessCookie = cookieUtil.addAuthCookie(authResponse.getToken());
+        String refreshCookie = cookieUtil.addRefreshCookie(authResponse.getRefreshToken());
 
         return ResponseEntity
                 .ok()
-                .header(HttpHeaders.SET_COOKIE, cookie)
+                .header(HttpHeaders.SET_COOKIE, accessCookie)
+                .header(HttpHeaders.SET_COOKIE, refreshCookie)
                 .body(ApiResponse.successResponse("Login successful", authResponse));
     }
 
@@ -59,35 +62,59 @@ public class AuthController {
         final String token = resolveToken(authHeader, cookieToken);
         final AuthResponse response = authService.getLoggedInUser(token);
 
-        return ResponseEntity.ok(ApiResponse.successResponse("User retrieved", response));
+        return ResponseEntity
+                .ok()
+                .body(ApiResponse.successResponse("User retrieved", response));
     }
 
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<Void>> logout(
             @RequestHeader(value = "Authorization", required = false) final String authHeader,
-            @CookieValue(value = CookieUtil.AUTH_COOKIE_NAME, required = false) final String cookieToken
-    ) {
-        final String token = resolveToken(authHeader, cookieToken);
+            @CookieValue(value = CookieUtil.AUTH_COOKIE_NAME, required = false) final String cookieToken) {
 
+        final String token = resolveAccessToken(authHeader, cookieToken);
         authService.logout(token);
 
-        String clearCookie = cookieUtil.clearAuthCookie();
+        String clearAccessCookie = cookieUtil.clearAuthCookie();
+        String clearRefreshCookie = cookieUtil.clearRefreshCookie();
 
-        return ResponseEntity
-                .ok()
-                .header(HttpHeaders.SET_COOKIE, clearCookie)
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, clearAccessCookie)
+                .header(HttpHeaders.SET_COOKIE, clearRefreshCookie)
                 .body(ApiResponse.successResponse("Logout successful", null));
     }
 
-    private String resolveToken(final String authHeader, final String cookieToken) {
+    @PostMapping("/refresh")
+    public ResponseEntity<ApiResponse<AuthResponse>> refresh(
+            @CookieValue(value = CookieUtil.REFRESH_COOKIE_NAME, required = false) final String cookieRefreshToken,
+            @RequestBody(required = false) final RefreshRequest body) {
+
+        final String rawToken = resolveRefreshToken(cookieRefreshToken, body);
+        final AuthResponse authResponse = authService.refresh(rawToken);
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, cookieUtil.addAuthCookie(authResponse.getToken()))
+                .header(HttpHeaders.SET_COOKIE, cookieUtil.addRefreshCookie(authResponse.getRefreshToken()))
+                .body(ApiResponse.successResponse("Token refreshed successfully", authResponse));
+    }
+
+    private String resolveAccessToken(final String authHeader, final String cookieToken) {
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             return authHeader.substring(7);
         }
-
         if (cookieToken != null && !cookieToken.isBlank()) {
             return cookieToken;
         }
-
         throw new IllegalArgumentException("Invalid Authorization header");
+    }
+
+    private String resolveRefreshToken(final String cookieToken, final RefreshRequest body) {
+        if (cookieToken != null && !cookieToken.isBlank()) {
+            return cookieToken;
+        }
+        if (body != null && body.getRefreshToken() != null && !body.getRefreshToken().isBlank()) {
+            return body.getRefreshToken();
+        }
+        throw new IllegalArgumentException("Refresh token is missing");
     }
 }

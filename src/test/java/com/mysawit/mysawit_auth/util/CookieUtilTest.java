@@ -14,9 +14,13 @@ public class CookieUtilTest {
     void setUp() throws Exception {
         cookieUtil = new CookieUtil();
 
-        Field expirationField = CookieUtil.class.getDeclaredField("jwtExpirationMs");
-        expirationField.setAccessible(true);
-        expirationField.set(cookieUtil, 3600000L);
+        Field accessTokenExpirationField = CookieUtil.class.getDeclaredField("jwtExpirationMs");
+        accessTokenExpirationField.setAccessible(true);
+        accessTokenExpirationField.set(cookieUtil, 3600000L);
+
+        Field refreshTokenExpirationField = CookieUtil.class.getDeclaredField("refreshExpirationDays");
+        refreshTokenExpirationField.setAccessible(true);
+        refreshTokenExpirationField.set(cookieUtil, 7L);
 
         Field secureField = CookieUtil.class.getDeclaredField("secureCookie");
         secureField.setAccessible(true);
@@ -36,6 +40,21 @@ public class CookieUtilTest {
         assertTrue(cookieHeader.contains("Secure"));
         assertTrue(cookieHeader.contains("SameSite=Strict"));
         assertTrue(cookieHeader.contains("Max-Age=3600"));
+    }
+
+    @Test
+    void createRefreshCookieHeaderSuccess() {
+        final String sampleToken = "sample.jwt.token-string";
+
+        final String cookieHeader = cookieUtil.addRefreshCookie(sampleToken);
+
+        assertNotNull(cookieHeader);
+        assertTrue(cookieHeader.contains(CookieUtil.REFRESH_COOKIE_NAME + "=" + sampleToken));
+        assertTrue(cookieHeader.contains("Path=" + CookieUtil.REFRESH_COOKIE_PATH));
+        assertTrue(cookieHeader.contains("HttpOnly"));
+        assertTrue(cookieHeader.contains("Secure"));
+        assertTrue(cookieHeader.contains("SameSite=Strict"));
+        assertTrue(cookieHeader.contains("Max-Age=" + 7 * 24 * 60 * 60));
     }
 
     @Test

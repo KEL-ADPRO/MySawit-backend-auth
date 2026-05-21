@@ -1,10 +1,7 @@
 package com.mysawit.mysawit_auth.handler;
 
 import com.mysawit.mysawit_auth.dto.response.ApiResponse;
-import com.mysawit.mysawit_auth.exception.EmailAlreadyExistsException;
-import com.mysawit.mysawit_auth.exception.InvalidCredentialException;
-import com.mysawit.mysawit_auth.exception.MandorSertifMissingException;
-import com.mysawit.mysawit_auth.exception.WeakPasswordException;
+import com.mysawit.mysawit_auth.exception.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -67,6 +64,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleWeakPassword(final WeakPasswordException exception) {
         return ResponseEntity
                 .status(HttpStatus.UNPROCESSABLE_ENTITY)
+                .body(ApiResponse.errorResponse(exception.getMessage()));
+    }
+
+    @ExceptionHandler(AccountLockedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleAccountLocked(final AccountLockedException exception) {
+        return ResponseEntity
+                .status(HttpStatus.TOO_MANY_REQUESTS)
                 .body(ApiResponse.errorResponse(exception.getMessage()));
     }
 }

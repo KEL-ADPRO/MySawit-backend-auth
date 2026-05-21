@@ -53,7 +53,7 @@ public class RefeshTokenModelTest {
 
     @Test
     void getIsRevoked() {
-        final boolean revoked = refreshToken.getIsRevoked();
+        final boolean revoked = refreshToken.isRevoked();
         assertFalse(revoked);
     }
 

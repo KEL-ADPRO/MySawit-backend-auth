@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
 
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -82,9 +83,10 @@ public class AuthRepositoryIntegrationTest {
         entityManager.flush();
         entityManager.clear();
 
-        final User found = authRepository.findByEmail("burhan@gmail.com");
+        final Optional<User> found = authRepository.findByEmail("burhan@gmail.com");
         assertNotNull(found);
-        assertEquals("CERT-001", found.getNomorSertifMandor());
+        assertTrue(found.isPresent());
+        assertEquals("CERT-001", found.get().getNomorSertifMandor());
     }
 
     @Test
@@ -93,9 +95,10 @@ public class AuthRepositoryIntegrationTest {
         entityManager.flush();
         entityManager.clear();
 
-        final User found = authRepository.findByEmail("usep@gmail.com");
+        final Optional<User> found = authRepository.findByEmail("usep@gmail.com");
         assertNotNull(found);
-        assertNull(found.getNomorSertifMandor());
+        assertTrue(found.isPresent());
+        assertNull(found.get().getNomorSertifMandor());
     }
 
     @Test
@@ -104,9 +107,10 @@ public class AuthRepositoryIntegrationTest {
         entityManager.flush();
         entityManager.clear();
 
-        final User found = authRepository.findByEmail("budi@gmail.com");
+        final Optional<User> found = authRepository.findByEmail("budi@gmail.com");
         assertNotNull(found);
-        assertNull(found.getNomorSertifMandor());
+        assertTrue(found.isPresent());
+        assertNull(found.get().getNomorSertifMandor());
     }
 
     @Test
@@ -115,12 +119,13 @@ public class AuthRepositoryIntegrationTest {
         entityManager.flush();
         entityManager.clear();
 
-        final User found = authRepository.findByEmail("admin@gmail.com");
+        final Optional<User> found = authRepository.findByEmail("admin@gmail.com");
 
         assertNotNull(found);
-        assertEquals("admin@gmail.com", found.getEmail());
-        assertEquals("Admin Sawit", found.getUsername());
-        assertEquals(Role.ADMIN, found.getRole());
+        assertTrue(found.isPresent());
+        assertEquals("admin@gmail.com", found.get().getEmail());
+        assertEquals("Admin Sawit", found.get().getUsername());
+        assertEquals(Role.ADMIN, found.get().getRole());
     }
 
     @Test
@@ -129,17 +134,18 @@ public class AuthRepositoryIntegrationTest {
         entityManager.flush();
         entityManager.clear();
 
-        final User found = authRepository.findByEmail("burhan@gmail.com");
+        final Optional<User> found = authRepository.findByEmail("burhan@gmail.com");
 
         assertNotNull(found);
-        assertEquals(Role.MANDOR, found.getRole());
-        assertEquals("CERT-001", found.getNomorSertifMandor());
+        assertTrue(found.isPresent());
+        assertEquals(Role.MANDOR, found.get().getRole());
+        assertEquals("CERT-001", found.get().getNomorSertifMandor());
     }
 
     @Test
     void findByEmail_NotFound() {
-        final User found = authRepository.findByEmail("ghost@gmail.com");
-        assertNull(found);
+        final Optional<User> found = authRepository.findByEmail("ghost@gmail.com");
+        assertFalse(found.isPresent());
     }
 
     @Test

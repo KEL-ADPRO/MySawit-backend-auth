@@ -12,6 +12,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.util.Optional;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -56,7 +58,7 @@ public class DataSeederTest {
 
     @Test
     void skipsWhenAdminAlreadyExists() {
-        when(authRepository.findByEmail("admin@test.com")).thenReturn(new User());
+        when(authRepository.findByEmail("admin@test.com")).thenReturn(Optional.of(new User()));
 
         dataSeeder.run();
 
@@ -92,7 +94,7 @@ public class DataSeederTest {
 
     @Test
     void multipleRunsDoesntDuplicate() {
-        when(authRepository.findByEmail("admin@test.com")).thenReturn(new User());
+        when(authRepository.findByEmail("admin@test.com")).thenReturn(Optional.of(new User()));
 
         dataSeeder.run();
         dataSeeder.run();

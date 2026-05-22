@@ -18,6 +18,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -58,26 +59,26 @@ public class AuthServiceImpl implements AuthService, AuthStrategy<LoginRequest> 
 
         loginAttemptService.assertNotLocked(request.getEmail());
 
-        final User user = authRepository.findByEmail(request.getEmail());
-        if (user == null) {
+        final Optional<User> user = authRepository.findByEmail(request.getEmail());
+        if (user.isEmpty()) {
             loginAttemptService.recordFailure(request.getEmail());
             throw new InvalidCredentialException();
         }
 
-        if (user.getGoogleId() != null) {
+        if (user.get().getGoogleId() != null) {
             throw new IllegalArgumentException("This account uses Google login. Please sign in with Google.");
         }
 
-        if (!passwordHasher.matches(request.getPassword(), user.getPassword())) {
+        if (!passwordHasher.matches(request.getPassword(), user.get().getPassword())) {
             loginAttemptService.recordFailure(request.getEmail());
             throw new InvalidCredentialException();
         }
 
         loginAttemptService.recordSuccess(request.getEmail());
 
-        final String accessToken = jwtUtil.generateToken(user.getId(), user.getRole());
-        final RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
-        return responseMapper.toResponse(user, accessToken, refreshToken.getToken());
+        final String accessToken = jwtUtil.generateToken(user.get().getId(), user.get().getRole());
+        final RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.get());
+        return responseMapper.toResponse(user.get(), accessToken, refreshToken.getToken());
     }
 
     @Override
@@ -132,6 +133,7 @@ public class AuthServiceImpl implements AuthService, AuthStrategy<LoginRequest> 
     }
 
     @Override
+    @Transactional
     public AuthResponse authenticate(final LoginRequest request) {
         return this.login(request);
     }

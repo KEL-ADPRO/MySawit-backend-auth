@@ -1,5 +1,6 @@
 package com.mysawit.mysawit_auth.repository;
 
+import com.mysawit.mysawit_auth.model.Role;
 import com.mysawit.mysawit_auth.model.User;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -8,6 +9,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
@@ -25,33 +27,36 @@ public class AuthRepositoryImpl implements AuthRepository {
     }
 
     @Override
-    public User findByEmail(final String email) {
-        List<User> results = entityManager.createQuery(
-                        SELECT_USER +
-                                "WHERE u.email = :email"
-                        , User.class)
-                .setParameter("email", email)
-                .getResultList();
-        return results.isEmpty() ? null : results.getFirst();
+    @Transactional
+    public void delete(final UUID userId) {
+        final User user = findById(userId);
+        if (user != null) {
+            entityManager.remove(user);
+        }
     }
 
     @Override
     public User findById(final UUID userId) {
-        List<User> results = entityManager.createQuery(
-                        SELECT_USER +
-                                "WHERE u.id = :userId"
-                        , User.class)
+        final List<User> results = entityManager.createQuery(
+                        SELECT_USER + "WHERE u.id = :userId", User.class)
                 .setParameter("userId", userId)
                 .getResultList();
         return results.isEmpty() ? null : results.getFirst();
     }
 
     @Override
+    public Optional<User> findByEmail(final String email) {
+        final List<User> results = entityManager.createQuery(
+                        SELECT_USER + "WHERE u.email = :email", User.class)
+                .setParameter("email", email)
+                .getResultList();
+        return results.isEmpty() ? Optional.empty() : Optional.of(results.getFirst());
+    }
+
+    @Override
     public User findByGoogleId(final String googleId) {
-        List<User> results = entityManager.createQuery(
-                        SELECT_USER +
-                                "WHERE u.googleId = :googleId"
-                        , User.class)
+        final List<User> results = entityManager.createQuery(
+                        SELECT_USER + "WHERE u.googleId = :googleId", User.class)
                 .setParameter("googleId", googleId)
                 .getResultList();
         return results.isEmpty() ? null : results.getFirst();
@@ -59,12 +64,89 @@ public class AuthRepositoryImpl implements AuthRepository {
 
     @Override
     public User findByUsername(final String username) {
-        List<User> results = entityManager.createQuery(
-                        SELECT_USER +
-                                "WHERE u.username = :username"
-                        , User.class)
+        final List<User> results = entityManager.createQuery(
+                        SELECT_USER + "WHERE u.username = :username", User.class)
                 .setParameter("username", username)
                 .getResultList();
         return results.isEmpty() ? null : results.getFirst();
+    }
+
+    @Override
+    public List<User> findAll() {
+        return entityManager.createQuery(SELECT_USER, User.class).getResultList();
+    }
+
+    @Override
+    public List<User> findByName(final String name) {
+        return entityManager.createQuery(
+                        SELECT_USER + "WHERE LOWER(u.name) LIKE LOWER(:name)", User.class)
+                .setParameter("name", "%" + name + "%")
+                .getResultList();
+    }
+
+    @Override
+    public List<User> findByRole(final Role role) {
+        return entityManager.createQuery(
+                        SELECT_USER + "WHERE u.role = :role", User.class)
+                .setParameter("role", role)
+                .getResultList();
+    }
+
+    @Override
+    public List<User> findByMandorId(final UUID mandorId) {
+        return entityManager.createQuery(
+                        SELECT_USER + "WHERE u.mandorId = :mandorId", User.class)
+                .setParameter("mandorId", mandorId)
+                .getResultList();
+    }
+
+    @Override
+    public List<User> findByNameAndEmail(final String name, final String email) {
+        return entityManager.createQuery(
+                        SELECT_USER +
+                                "WHERE LOWER(u.name) LIKE LOWER(:name) " +
+                                "AND u.email = :email",
+                        User.class)
+                .setParameter("name", "%" + name + "%")
+                .setParameter("email", email)
+                .getResultList();
+    }
+
+    @Override
+    public List<User> findByNameAndRole(final String name, final Role role) {
+        return entityManager.createQuery(
+                        SELECT_USER +
+                                "WHERE LOWER(u.name) LIKE LOWER(:name) " +
+                                "AND u.role = :role",
+                        User.class)
+                .setParameter("name", "%" + name + "%")
+                .setParameter("role", role)
+                .getResultList();
+    }
+
+    @Override
+    public List<User> findByEmailAndRole(final String email, final Role role) {
+        return entityManager.createQuery(
+                        SELECT_USER +
+                                "WHERE u.email = :email " +
+                                "AND u.role = :role",
+                        User.class)
+                .setParameter("email", email)
+                .setParameter("role", role)
+                .getResultList();
+    }
+
+    @Override
+    public List<User> findByNameAndEmailAndRole(final String name, final String email, final Role role) {
+        return entityManager.createQuery(
+                        SELECT_USER +
+                                "WHERE LOWER(u.name) LIKE LOWER(:name) " +
+                                "AND u.email = :email " +
+                                "AND u.role = :role",
+                        User.class)
+                .setParameter("name", "%" + name + "%")
+                .setParameter("email", email)
+                .setParameter("role", role)
+                .getResultList();
     }
 }

@@ -55,7 +55,7 @@ public class RegistrationValidator {
     }
 
     public void assertEmailUnique(final String email) {
-        if (authRepository.findByEmail(email) != null) {
+        if (authRepository.findByEmail(email).isPresent()) {
             throw new EmailAlreadyExistsException(email);
         }
     }

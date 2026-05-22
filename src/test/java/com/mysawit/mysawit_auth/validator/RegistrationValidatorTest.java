@@ -13,6 +13,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Optional;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
 
@@ -126,13 +128,13 @@ public class RegistrationValidatorTest {
 
     @Test
     void assertEmailUniqueSuccess() {
-        when(authRepository.findByEmail("usep@gmail.com")).thenReturn(null);
+        when(authRepository.findByEmail("usep@gmail.com")).thenReturn( Optional.empty());
         assertDoesNotThrow(() -> validator.assertEmailUnique("usep@gmail.com"));
     }
 
     @Test
     void assertEmailUniqueDuplicate() {
-        when(authRepository.findByEmail("admin@gmail.com")).thenReturn(new User());
+        when(authRepository.findByEmail("admin@gmail.com")).thenReturn(Optional.of(new User()));
         assertThrows(EmailAlreadyExistsException.class, () -> validator.assertEmailUnique("admin@gmail.com"));
     }
 

@@ -12,6 +12,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -31,9 +32,8 @@ public class AuthRepositoryTest {
     private AuthRepositoryImpl authRepository;
 
     private User admin;
-    private User mandor;
     private User buruh;
-    private User supir;
+    private final UUID mandorId = UUID.fromString("fc558e9f-1c39-460e-8860-71af6af63bd6");
 
     @BeforeEach
     void setUp() {
@@ -46,118 +46,76 @@ public class AuthRepositoryTest {
                 .role(Role.ADMIN)
                 .build();
 
-        mandor = User.builder()
-                .id(UUID.fromString("fc558e9f-1c39-460e-8860-71af6af63bd6"))
-                .username("Mandor Sawit")
-                .name("Burhan")
-                .email("burhan@gmail.com")
-                .password("mandor123")
-                .role(Role.MANDOR)
-                .nomorSertifMandor("CERT-001")
-                .build();
-
         buruh = User.builder()
-                .id(UUID.fromString("ab558e9f-1c39-460e-8860-71af6af63bd6"))
+                .id(UUID.randomUUID())
                 .username("Buruh Sawit")
-                .name("Usep")
-                .email("usep@gmail.com")
+                .name("Candra")
+                .email("buruh@gmail.com")
                 .password("buruh123")
                 .role(Role.BURUH)
                 .build();
 
-        supir = User.builder()
-                .id(UUID.fromString("cd558e9f-1c39-460e-8860-71af6af63bd6"))
-                .username("Supir Sawit")
-                .name("Budi")
-                .email("budi@gmail.com")
-                .password("supir123")
-                .role(Role.SUPIR)
-                .build();
     }
 
     @Test
-    void saveCheck() {
+    void saveSuccess() {
         when(entityManager.merge(admin)).thenReturn(admin);
 
         final User result = authRepository.save(admin);
 
         assertEquals(admin, result);
-        verify(entityManager, times(1)).merge(admin);
+        verify(entityManager).merge(admin);
     }
 
     @Test
-    void saveMandorReturnsUser() {
-        when(entityManager.merge(mandor)).thenReturn(mandor);
-
-        final User result = authRepository.save(mandor);
-
-        assertEquals(mandor, result);
-    }
-
-    @Test
-    void saveBuruhReturnsUser() {
-        when(entityManager.merge(buruh)).thenReturn(buruh);
-
-        final User result = authRepository.save(buruh);
-
-        assertEquals(buruh, result);
-    }
-
-    @Test
-    void saveSupirReturnsUser() {
-        when(entityManager.merge(supir)).thenReturn(supir);
-
-        final User result = authRepository.save(supir);
-
-        assertEquals(supir, result);
-    }
-
-    @Test
-    void findByEmail_ExistingEmail() {
+    void findByEmailExistingEmail() {
         when(entityManager.createQuery(any(String.class), eq(User.class))).thenReturn(typedQuery);
         when(typedQuery.setParameter("email", "admin@gmail.com")).thenReturn(typedQuery);
         when(typedQuery.getResultList()).thenReturn(List.of(admin));
 
-        final User result = authRepository.findByEmail("admin@gmail.com");
+        final Optional<User> result = authRepository.findByEmail("admin@gmail.com");
 
-        assertEquals(admin, result);
+        assertTrue(result.isPresent());
+        assertEquals(admin, result.get());
     }
 
     @Test
-    void findByEmail_UnknownEmail() {
+    void findByEmailUnknownEmail() {
         when(entityManager.createQuery(any(String.class), eq(User.class))).thenReturn(typedQuery);
         when(typedQuery.setParameter("email", "unknown@gmail.com")).thenReturn(typedQuery);
         when(typedQuery.getResultList()).thenReturn(List.of());
 
-        final User result = authRepository.findByEmail("unknown@gmail.com");
+        final Optional<User> result = authRepository.findByEmail("unknown@gmail.com");
 
-        assertNull(result);
+        assertFalse(result.isPresent());
     }
 
     @Test
-    void findById_ExistingId() {
+    void findByIdExistingId() {
+        UUID id = admin.getId();
         when(entityManager.createQuery(any(String.class), eq(User.class))).thenReturn(typedQuery);
-        when(typedQuery.setParameter("userId", UUID.fromString("eb558e9f-1c39-460e-8860-71af6af63bd6"))).thenReturn(typedQuery);
+        when(typedQuery.setParameter("userId", id)).thenReturn(typedQuery);
         when(typedQuery.getResultList()).thenReturn(List.of(admin));
 
-        final User result = authRepository.findById(UUID.fromString("eb558e9f-1c39-460e-8860-71af6af63bd6"));
+        final User result = authRepository.findById(id);
 
         assertEquals(admin, result);
     }
 
     @Test
-    void findById_UnknownId() {
+    void findByIdUnknownId() {
+        UUID id = UUID.randomUUID();
         when(entityManager.createQuery(any(String.class), eq(User.class))).thenReturn(typedQuery);
-        when(typedQuery.setParameter("userId",  UUID.fromString("eb558e9f-1c39-460e-8860-71af6af63bd6"))).thenReturn(typedQuery);
+        when(typedQuery.setParameter("userId", id)).thenReturn(typedQuery);
         when(typedQuery.getResultList()).thenReturn(List.of());
 
-        final User result = authRepository.findById(UUID.fromString("eb558e9f-1c39-460e-8860-71af6af63bd6"));
+        final User result = authRepository.findById(id);
 
         assertNull(result);
     }
 
     @Test
-    void findByGoogleId_ExistingId() {
+    void findByGoogleIdExistingId() {
         when(entityManager.createQuery(any(String.class), eq(User.class))).thenReturn(typedQuery);
         when(typedQuery.setParameter("googleId", "google-id")).thenReturn(typedQuery);
         when(typedQuery.getResultList()).thenReturn(List.of(admin));
@@ -168,9 +126,9 @@ public class AuthRepositoryTest {
     }
 
     @Test
-    void findByGoogleId_UnknownId() {
+    void findByGoogleIdUnknownId() {
         when(entityManager.createQuery(any(String.class), eq(User.class))).thenReturn(typedQuery);
-        when(typedQuery.setParameter("googleId",  "google-id")).thenReturn(typedQuery);
+        when(typedQuery.setParameter("googleId", "google-id")).thenReturn(typedQuery);
         when(typedQuery.getResultList()).thenReturn(List.of());
 
         final User result = authRepository.findByGoogleId("google-id");
@@ -179,7 +137,7 @@ public class AuthRepositoryTest {
     }
 
     @Test
-    void findByUsername_ExistingUsername() {
+    void findByUsernameExistingUsername() {
         when(entityManager.createQuery(any(String.class), eq(User.class))).thenReturn(typedQuery);
         when(typedQuery.setParameter("username", "Buruh Sawit")).thenReturn(typedQuery);
         when(typedQuery.getResultList()).thenReturn(List.of(buruh));
@@ -190,7 +148,7 @@ public class AuthRepositoryTest {
     }
 
     @Test
-    void findByUsername_UnknownUsername() {
+    void findByUsernameUnknownUsername() {
         when(entityManager.createQuery(any(String.class), eq(User.class))).thenReturn(typedQuery);
         when(typedQuery.setParameter("username", "unknown")).thenReturn(typedQuery);
         when(typedQuery.getResultList()).thenReturn(List.of());
@@ -198,5 +156,95 @@ public class AuthRepositoryTest {
         final User result = authRepository.findByUsername("unknown");
 
         assertNull(result);
+    }
+
+    @Test
+    void findByNameMatch() {
+        when(entityManager.createQuery(any(String.class), eq(User.class))).thenReturn(typedQuery);
+        when(typedQuery.setParameter("name", "%Agus%")).thenReturn(typedQuery);
+        when(typedQuery.getResultList()).thenReturn(List.of(admin));
+
+        final List<User> result = authRepository.findByName("Agus");
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals(admin, result.getFirst());
+        verify(entityManager).createQuery(any(String.class), eq(User.class));
+    }
+
+    @Test
+    void findByNameNoMatch() {
+        when(entityManager.createQuery(any(String.class), eq(User.class))).thenReturn(typedQuery);
+        when(typedQuery.setParameter("name", "%Unknown%")).thenReturn(typedQuery);
+        when(typedQuery.getResultList()).thenReturn(List.of());
+
+        final List<User> result = authRepository.findByName("Unknown");
+
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void findByRoleMatch() {
+        when(entityManager.createQuery(any(String.class), eq(User.class))).thenReturn(typedQuery);
+        when(typedQuery.setParameter("role", Role.ADMIN)).thenReturn(typedQuery);
+        when(typedQuery.getResultList()).thenReturn(List.of(admin));
+
+        final List<User> result = authRepository.findByRole(Role.ADMIN);
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals(admin, result.getFirst());
+    }
+
+    @Test
+    void findByRoleNoMatch() {
+        when(entityManager.createQuery(any(String.class), eq(User.class))).thenReturn(typedQuery);
+        when(typedQuery.setParameter("role", Role.MANDOR)).thenReturn(typedQuery);
+        when(typedQuery.getResultList()).thenReturn(List.of());
+
+        final List<User> result = authRepository.findByRole(Role.MANDOR);
+
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void findByMandorIdExistingMandorId() {
+        when(entityManager.createQuery(any(String.class), eq(User.class))).thenReturn(typedQuery);
+        when(typedQuery.setParameter("mandorId", mandorId)).thenReturn(typedQuery);
+        when(typedQuery.getResultList()).thenReturn(List.of(buruh));
+
+        List<User> result = authRepository.findByMandorId(mandorId);
+
+        assertEquals(1, result.size());
+        assertEquals(buruh, result.getFirst());
+        verify(typedQuery).setParameter("mandorId", mandorId);
+    }
+
+    @Test
+    void deleteUserExists() {
+        final UUID userId = admin.getId();
+
+        when(entityManager.createQuery(any(String.class), eq(User.class))).thenReturn(typedQuery);
+        when(typedQuery.setParameter("userId", userId)).thenReturn(typedQuery);
+        when(typedQuery.getResultList()).thenReturn(List.of(admin));
+
+        authRepository.delete(userId);
+
+        verify(entityManager, times(1)).remove(admin);
+    }
+
+    @Test
+    void deleteUserDoesNotExist() {
+        final UUID userId = UUID.randomUUID();
+
+        when(entityManager.createQuery(any(String.class), eq(User.class))).thenReturn(typedQuery);
+        when(typedQuery.setParameter("userId", userId)).thenReturn(typedQuery);
+        when(typedQuery.getResultList()).thenReturn(List.of());
+
+        authRepository.delete(userId);
+
+        verify(entityManager, never()).remove(any(User.class));
     }
 }

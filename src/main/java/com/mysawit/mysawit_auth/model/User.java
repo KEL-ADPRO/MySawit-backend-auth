@@ -35,6 +35,9 @@ public class User {
     @Column(unique = true)
     private String nomorSertifMandor;
 
+    @Column
+    private UUID mandorId;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;

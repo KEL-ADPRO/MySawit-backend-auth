@@ -18,6 +18,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -214,7 +215,7 @@ public class AuthServiceTest {
 
         final RefreshToken refreshToken = RefreshToken.builder().token("dummy.refresh.token").build();
 
-        when(authRepository.findByEmail("admin@gmail.com")).thenReturn(adminUser);
+        when(authRepository.findByEmail("admin@gmail.com")).thenReturn(Optional.ofNullable(adminUser));
         when(passwordHasher.matches("admin123", "hashed_admin123")).thenReturn(true);
         when(jwtUtil.generateToken(adminUser.getId(), adminUser.getRole())).thenReturn("dummy.jwt.token");
         when(refreshTokenService.createRefreshToken(adminUser)).thenReturn(refreshToken);
@@ -248,7 +249,7 @@ public class AuthServiceTest {
 
     @Test
     void loginUnknownEmail() {
-        when(authRepository.findByEmail("unknownUser@gmail.com")).thenReturn(null);
+        when(authRepository.findByEmail("unknownUser@gmail.com")).thenReturn( Optional.empty());
 
         final LoginRequest request = LoginRequest.builder()
                 .email("unknownUser@gmail.com")
@@ -317,7 +318,7 @@ public class AuthServiceTest {
 
     @Test
     void loginWrongPassword() {
-        when(authRepository.findByEmail("admin@gmail.com")).thenReturn(adminUser);
+        when(authRepository.findByEmail("admin@gmail.com")).thenReturn(Optional.ofNullable(adminUser));
         when(passwordHasher.matches("wrongPassword", "hashed_admin123")).thenReturn(false);
 
         final LoginRequest request = LoginRequest.builder()
@@ -344,7 +345,7 @@ public class AuthServiceTest {
                 .name("Google User")
                 .build();
 
-        when(authRepository.findByEmail("google@gmail.com")).thenReturn(googleOnlyUser);
+        when(authRepository.findByEmail("google@gmail.com")).thenReturn(Optional.ofNullable(googleOnlyUser));
 
         final LoginRequest request = LoginRequest.builder()
                 .email("google@gmail.com")
@@ -368,7 +369,7 @@ public class AuthServiceTest {
                 .name("Broken User")
                 .build();
 
-        when(authRepository.findByEmail("broken@gmail.com")).thenReturn(corruptedUser);
+        when(authRepository.findByEmail("broken@gmail.com")).thenReturn(Optional.ofNullable(corruptedUser));
 
         final LoginRequest request = LoginRequest.builder()
                 .email("broken@gmail.com")

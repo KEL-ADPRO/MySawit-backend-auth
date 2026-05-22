@@ -6,6 +6,7 @@ import com.mysawit.mysawit_auth.dto.response.AuthResponse;
 import com.mysawit.mysawit_auth.exception.EmailAlreadyExistsException;
 import com.mysawit.mysawit_auth.mapper.AuthResponseMapper;
 import com.mysawit.mysawit_auth.model.AuthProvider;
+import com.mysawit.mysawit_auth.model.RefreshToken;
 import com.mysawit.mysawit_auth.model.User;
 import com.mysawit.mysawit_auth.repository.AuthRepository;
 import com.mysawit.mysawit_auth.service.strategy.AuthStrategy;
@@ -24,6 +25,7 @@ public class GoogleAuthServiceImpl implements GoogleAuthService, AuthStrategy<Go
     private final JwtUtil jwtUtil;
     private final RegistrationValidator registrationValidator;
     private final AuthResponseMapper responseMapper;
+    private final RefreshTokenService refreshTokenService;
 
     @Override
     @Transactional
@@ -35,8 +37,9 @@ public class GoogleAuthServiceImpl implements GoogleAuthService, AuthStrategy<Go
             user = resolveByEmailOrCreate(request, userInfo);
         }
 
-        final String token = jwtUtil.generateToken(user.getId(), user.getRole());
-        return responseMapper.toResponse(user, token);
+        final String accessToken = jwtUtil.generateToken(user.getId(), user.getRole());
+        final RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
+        return responseMapper.toResponse(user, accessToken, refreshToken.getToken());
     }
 
     @Override

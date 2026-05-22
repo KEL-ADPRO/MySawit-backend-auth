@@ -2,6 +2,7 @@ package com.mysawit.mysawit_auth.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mysawit.mysawit_auth.dto.request.LoginRequest;
+import com.mysawit.mysawit_auth.dto.request.RefreshRequest;
 import com.mysawit.mysawit_auth.dto.request.RegisterRequest;
 import com.mysawit.mysawit_auth.dto.response.AuthResponse;
 import com.mysawit.mysawit_auth.exception.EmailAlreadyExistsException;
@@ -13,12 +14,14 @@ import com.mysawit.mysawit_auth.model.Role;
 import com.mysawit.mysawit_auth.service.AuthService;
 import com.mysawit.mysawit_auth.service.strategy.AuthStrategy;
 import com.mysawit.mysawit_auth.service.strategy.AuthStrategyFactory;
+import com.mysawit.mysawit_auth.util.CookieUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -28,12 +31,10 @@ import java.util.UUID;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @ExtendWith(MockitoExtension.class)
 public class AuthControllerTest {
-
     @Mock
     private AuthService authService;
 
@@ -42,6 +43,9 @@ public class AuthControllerTest {
 
     @Mock
     private AuthStrategy<LoginRequest> strategy;
+
+    @Mock
+    private CookieUtil cookieUtil;
 
     @InjectMocks
     private AuthController authController;
@@ -135,6 +139,7 @@ public class AuthControllerTest {
 
         loginResponse = AuthResponse.builder()
                 .token("dummy.jwt.token")
+                .refreshToken("dummy.refresh.token")
                 .userId(UUID.fromString("eb558e9f-1c39-460e-8860-71af6af63bd6"))
                 .username("Admin Sawit")
                 .name("Agus")
@@ -215,16 +220,21 @@ public class AuthControllerTest {
         doReturn(strategy).when(strategyFactory).resolve(AuthProvider.PASSWORD);
         when(strategy.authenticate(any(LoginRequest.class))).thenReturn(loginResponse);
 
+        String cookie = "auth_token=dummy.jwt.token; Path=/; HttpOnly; SameSite=Strict";
+        when(cookieUtil.addAuthCookie("dummy.jwt.token")).thenReturn(cookie);
+
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validLoginRequest)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Login successful"))
-                .andExpect(jsonPath("$.data.token").value("dummy.jwt.token"));
+                .andExpect(jsonPath("$.data.token").value("dummy.jwt.token"))
+                .andExpect(header().string(HttpHeaders.SET_COOKIE, cookie));
 
         verify(strategyFactory, times(1)).resolve(AuthProvider.PASSWORD);
         verify(strategy, times(1)).authenticate(any(LoginRequest.class));
+        verify(cookieUtil, times(1)).addAuthCookie("dummy.jwt.token");
     }
 
     @Test
@@ -284,11 +294,15 @@ public class AuthControllerTest {
     void logoutSuccess() throws Exception {
         doNothing().when(authService).logout("valid.jwt.token");
 
+        String clearCookie = "auth_token=; Path=/; Max-Age=0; Expires=Thu, 1 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=Strict";
+        when(cookieUtil.clearAuthCookie()).thenReturn(clearCookie);
+
         mockMvc.perform(post("/api/auth/logout")
                         .header("Authorization", "Bearer valid.jwt.token"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.message").value("Logout successful"));
+                .andExpect(jsonPath("$.message").value("Logout successful"))
+                .andExpect(header().string(HttpHeaders.SET_COOKIE, clearCookie));
 
         verify(authService, times(1)).logout("valid.jwt.token");
     }
@@ -343,5 +357,105 @@ public class AuthControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message").value("Invalid Authorization header"));
+    }
+
+    @Test
+    void refreshSuccessWithCookie() throws Exception {
+        final String oldRefreshToken = "old.refresh.token";
+        final String newAccessToken = "new.jwt.token";
+        final String newRefreshToken = "new.refresh.token";
+
+        final AuthResponse refreshedResponse = AuthResponse.builder()
+                .userId(UUID.fromString("eb558e9f-1c39-460e-8860-71af6af63bd6"))
+                .username("Admin Sawit")
+                .role(Role.ADMIN)
+                .token(newAccessToken)
+                .refreshToken(newRefreshToken)
+                .build();
+
+        when(authService.refresh(oldRefreshToken)).thenReturn(refreshedResponse);
+
+        final String accessCookie = "auth_token=" + newAccessToken + "; Path=/; HttpOnly; SameSite=Strict";
+        final String refreshCookie = "refresh_token=" + newRefreshToken + "; Path=/; HttpOnly; SameSite=Strict";
+
+        when(cookieUtil.addAuthCookie(newAccessToken)).thenReturn(accessCookie);
+        when(cookieUtil.addRefreshCookie(newRefreshToken)).thenReturn(refreshCookie);
+
+        mockMvc.perform(post("/api/auth/refresh")
+                        .cookie(new jakarta.servlet.http.Cookie(CookieUtil.REFRESH_COOKIE_NAME, oldRefreshToken)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("Token refreshed successfully"))
+                .andExpect(jsonPath("$.data.token").value(newAccessToken))
+                .andExpect(header().stringValues(HttpHeaders.SET_COOKIE, accessCookie, refreshCookie));
+
+        verify(authService, times(1)).refresh(oldRefreshToken);
+        verify(cookieUtil, times(1)).addAuthCookie(newAccessToken);
+        verify(cookieUtil, times(1)).addRefreshCookie(newRefreshToken);
+    }
+
+    @Test
+    void refreshSuccessWithRequestBody() throws Exception {
+        final String oldRefreshToken = "old.refresh.token.from.body";
+        final String newAccessToken = "new.jwt.token";
+        final String newRefreshToken = "new.refresh.token";
+
+        final AuthResponse refreshedResponse = AuthResponse.builder()
+                .userId(UUID.fromString("eb558e9f-1c39-460e-8860-71af6af63bd6"))
+                .username("Admin Sawit")
+                .role(Role.ADMIN)
+                .token(newAccessToken)
+                .refreshToken(newRefreshToken)
+                .build();
+
+        when(authService.refresh(oldRefreshToken)).thenReturn(refreshedResponse);
+
+        final String accessCookie = "auth_token=" + newAccessToken + "; Path=/; HttpOnly; SameSite=Strict";
+        final String refreshCookie = "refresh_token=" + newRefreshToken + "; Path=/; HttpOnly; SameSite=Strict";
+
+        when(cookieUtil.addAuthCookie(newAccessToken)).thenReturn(accessCookie);
+        when(cookieUtil.addRefreshCookie(newRefreshToken)).thenReturn(refreshCookie);
+
+        final RefreshRequest requestBody = RefreshRequest.builder()
+                .refreshToken(oldRefreshToken)
+                .build();
+
+        mockMvc.perform(post("/api/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestBody)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("Token refreshed successfully"))
+                .andExpect(jsonPath("$.data.token").value(newAccessToken))
+                .andExpect(header().stringValues(HttpHeaders.SET_COOKIE, accessCookie, refreshCookie));
+
+        verify(authService, times(1)).refresh(oldRefreshToken);
+    }
+
+    @Test
+    void refreshMissingTokenThrows() throws Exception {
+        mockMvc.perform(post("/api/auth/refresh"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Refresh token is missing"));
+
+        verify(authService, never()).refresh(any());
+        verify(cookieUtil, never()).addAuthCookie(any());
+    }
+
+    @Test
+    void refreshInvalidOrExpiredTokenThrows() throws Exception {
+        final String badToken = "expired.or.invalid.refresh.token";
+        when(authService.refresh(badToken)).thenThrow(new InvalidCredentialException());
+
+        mockMvc.perform(post("/api/auth/refresh")
+                        .cookie(new jakarta.servlet.http.Cookie(CookieUtil.REFRESH_COOKIE_NAME, badToken)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Invalid credentials"));
+
+        verify(authService, times(1)).refresh(badToken);
+        verify(cookieUtil, never()).addAuthCookie(any());
+        verify(cookieUtil, never()).addRefreshCookie(any());
     }
 }

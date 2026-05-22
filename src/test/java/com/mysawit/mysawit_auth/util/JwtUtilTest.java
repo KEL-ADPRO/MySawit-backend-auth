@@ -24,6 +24,8 @@ public class JwtUtilTest {
         Field expirationField = JwtUtil.class.getDeclaredField("jwtExpirationMs");
         expirationField.setAccessible(true);
         expirationField.set(jwtUtil, 3600000L);
+
+        jwtUtil.validateSecret();
     }
 
     @Test
@@ -62,5 +64,40 @@ public class JwtUtilTest {
     void extracExpirationFromToken() {
         final String jwt = jwtUtil.generateToken(UUID.fromString("eb558e9f-1c39-460e-8860-71af6af63bd6"), Role.ADMIN);
         assertTrue(jwtUtil.extractExpiration(jwt).after(new Date()));
+    }
+
+    @Test
+    void validateSecretNull() throws Exception {
+        JwtUtil testJwtUtil = new JwtUtil();
+        Field secretField = JwtUtil.class.getDeclaredField("jwtSecret");
+
+        secretField.setAccessible(true);
+        secretField.set(testJwtUtil, null);
+
+        assertThrows(IllegalStateException.class, testJwtUtil::validateSecret);
+    }
+
+    @Test
+    void validateSecretTooShort() throws Exception {
+        JwtUtil testJwtUtil = new JwtUtil();
+        Field secretField = JwtUtil.class.getDeclaredField("jwtSecret");
+
+        secretField.setAccessible(true);
+        secretField.set(testJwtUtil, "too-short-secret");
+
+        IllegalStateException exception = assertThrows(IllegalStateException.class, testJwtUtil::validateSecret);
+
+        assertEquals("JWT secret must be at least 32 characters (256 bits) for HMAC-SHA256. " + "Set a strong value via the JWT_SECRET environment variable.", exception.getMessage());
+    }
+
+    @Test
+    void validateSecretExactlyMinLength() throws Exception {
+        JwtUtil testJwtUtil = new JwtUtil();
+        Field secretField = JwtUtil.class.getDeclaredField("jwtSecret");
+
+        secretField.setAccessible(true);
+        secretField.set(testJwtUtil, "12345678901234567890123456789012");
+
+        assertDoesNotThrow(testJwtUtil::validateSecret);
     }
 }

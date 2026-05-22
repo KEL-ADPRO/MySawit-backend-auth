@@ -33,3 +33,13 @@ app:
       password: Admin123!
       name: admin sawit
       username: admin
+  rate-limit:
+    max-requests: 100
+    window-seconds: 60
+  refresh-token:
+    expiration-days: 7
+  cookie:
+    secure: false
+  login:
+    max-attempts: 5
+    lock-duration-minutes: 15

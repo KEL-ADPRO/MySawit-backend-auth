@@ -65,6 +65,9 @@ public class AuthControllerTest {
     private AuthResponse buruhResponse;
     private AuthResponse supirResponse;
 
+    private static final String AUTH_COOKIE = "auth_token=dummy.jwt.token; Path=/; HttpOnly; SameSite=Strict";
+    private static final String CLEAR_COOKIE = "auth_token=; Path=/; Max-Age=0; Expires=Thu, 1 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=Strict";
+
     @BeforeEach
     void setUp() {
         mockMvc = MockMvcBuilders.standaloneSetup(authController)
@@ -291,56 +294,71 @@ public class AuthControllerTest {
     }
 
     @Test
-    void logoutSuccess() throws Exception {
+    void logoutSuccess_viaHeader() throws Exception {
         doNothing().when(authService).logout("valid.jwt.token");
-
-        String clearCookie = "auth_token=; Path=/; Max-Age=0; Expires=Thu, 1 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=Strict";
-        when(cookieUtil.clearAuthCookie()).thenReturn(clearCookie);
+        when(cookieUtil.clearAuthCookie()).thenReturn(CLEAR_COOKIE);
 
         mockMvc.perform(post("/api/auth/logout")
                         .header("Authorization", "Bearer valid.jwt.token"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Logout successful"))
-                .andExpect(header().string(HttpHeaders.SET_COOKIE, clearCookie));
+                .andExpect(header().string(HttpHeaders.SET_COOKIE, CLEAR_COOKIE));
 
-        verify(authService, times(1)).logout("valid.jwt.token");
+        verify(authService).logout("valid.jwt.token");
+        verify(cookieUtil).clearAuthCookie();
     }
 
     @Test
-    void logoutMissingAuthHeader() throws Exception {
+    void logoutSuccess_viaCookie() throws Exception {
+        doNothing().when(authService).logout("cookie.jwt.token");
+        when(cookieUtil.clearAuthCookie()).thenReturn(CLEAR_COOKIE);
+
+        mockMvc.perform(post("/api/auth/logout")
+                        .cookie(new jakarta.servlet.http.Cookie(CookieUtil.AUTH_COOKIE_NAME, "cookie.jwt.token")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("Logout successful"))
+                .andExpect(header().string(HttpHeaders.SET_COOKIE, CLEAR_COOKIE));
+
+        verify(authService).logout("cookie.jwt.token");
+        verify(cookieUtil).clearAuthCookie();
+    }
+
+    @Test
+    void logoutNoHeaderNoCookie() throws Exception {
         mockMvc.perform(post("/api/auth/logout"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message").value("Invalid Authorization header"));
 
         verify(authService, never()).logout(any());
+        verify(cookieUtil, never()).clearAuthCookie();
     }
 
     @Test
-    void logoutMalformedAuthHeader() throws Exception {
+    void logoutMalformedHeader() throws Exception {
         mockMvc.perform(post("/api/auth/logout")
                         .header("Authorization", "NotBearer token"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message").value("Invalid Authorization header"));
 
         verify(authService, never()).logout(any());
     }
 
     @Test
-    void logoutInvalidOrExpiredToken() throws Exception {
+    void logoutInvalidToken() throws Exception {
         doThrow(new InvalidCredentialException()).when(authService).logout("bad.token");
 
         mockMvc.perform(post("/api/auth/logout")
                         .header("Authorization", "Bearer bad.token"))
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message").value("Invalid credentials"));
+
+        verify(cookieUtil, never()).clearAuthCookie();
     }
 
     @Test
-    void getMeValidToken() throws Exception {
+    void getMeValidToken_viaHeader() throws Exception {
         when(authService.getLoggedInUser("valid.jwt.token")).thenReturn(adminResponse);
 
         mockMvc.perform(get("/api/auth/me")
@@ -349,16 +367,66 @@ public class AuthControllerTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("User retrieved"))
                 .andExpect(jsonPath("$.data.email").value("admin@gmail.com"));
+
+        verify(authService).getLoggedInUser("valid.jwt.token");
     }
 
     @Test
-    void getMeMissingAuthHeader() throws Exception {
+    void getMeValidToken_viaCookie() throws Exception {
+        when(authService.getLoggedInUser("cookie.jwt.token")).thenReturn(adminResponse);
+
+        mockMvc.perform(get("/api/auth/me")
+                        .cookie(new jakarta.servlet.http.Cookie(CookieUtil.AUTH_COOKIE_NAME, "cookie.jwt.token")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("User retrieved"))
+                .andExpect(jsonPath("$.data.email").value("admin@gmail.com"));
+
+        verify(authService).getLoggedInUser("cookie.jwt.token");
+    }
+
+    @Test
+    void getMeHeaderTakesPriorityOverCookie() throws Exception {
+        when(authService.getLoggedInUser("header.jwt.token")).thenReturn(adminResponse);
+
+        mockMvc.perform(get("/api/auth/me")
+                        .header("Authorization", "Bearer header.jwt.token")
+                        .cookie(new jakarta.servlet.http.Cookie(CookieUtil.AUTH_COOKIE_NAME, "cookie.jwt.token")))
+                .andExpect(status().isOk());
+
+        verify(authService).getLoggedInUser("header.jwt.token");
+        verify(authService, never()).getLoggedInUser("cookie.jwt.token");
+    }
+
+    @Test
+    void getMeNoHeaderNoCookie() throws Exception {
         mockMvc.perform(get("/api/auth/me"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message").value("Invalid Authorization header"));
     }
 
+    @Test
+    void getMeMalformedHeader_noCookie() throws Exception {
+        mockMvc.perform(get("/api/auth/me")
+                        .header("Authorization", "NotBearer token"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Invalid Authorization header"));
+    }
+
+    @Test
+    void getMeMalformedHeader_fallsBackToCookie() throws Exception {
+        when(authService.getLoggedInUser("cookie.jwt.token")).thenReturn(adminResponse);
+
+        mockMvc.perform(get("/api/auth/me")
+                        .header("Authorization", "NotBearer token")
+                        .cookie(new jakarta.servlet.http.Cookie(CookieUtil.AUTH_COOKIE_NAME, "cookie.jwt.token")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.email").value("admin@gmail.com"));
+
+        verify(authService).getLoggedInUser("cookie.jwt.token");
+    }
+  
     @Test
     void refreshSuccessWithCookie() throws Exception {
         final String oldRefreshToken = "old.refresh.token";

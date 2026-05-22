@@ -57,8 +57,8 @@ public class AuthController {
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<AuthResponse>> getMe(
             @RequestHeader(value = "Authorization", required = false) final String authHeader,
-            @CookieValue(value = CookieUtil.AUTH_COOKIE_NAME, required = false) final String cookieToken) {
-
+            @CookieValue(value = CookieUtil.AUTH_COOKIE_NAME, required = false) final String cookieToken
+    ) {
         final String token = resolveAccessToken(authHeader, cookieToken);
         final AuthResponse response = authService.getLoggedInUser(token);
 

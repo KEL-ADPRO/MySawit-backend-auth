@@ -70,6 +70,11 @@ public class AuthRepositoryImpl implements AuthRepository {
     }
 
     @Override
+    public List<User> findAll() {
+        return entityManager.createQuery(SELECT_USER, User.class).getResultList();
+    }
+
+    @Override
     public List<User> findByName(final String name) {
         return entityManager.createQuery(
                         SELECT_USER +
@@ -86,6 +91,16 @@ public class AuthRepositoryImpl implements AuthRepository {
                                 "WHERE u.role = :role"
                         , User.class)
                 .setParameter("role", role)
+                .getResultList();
+    }
+
+    @Override
+    public List<User> findByMandorId(UUID mandorId) {
+        return entityManager.createQuery(
+                SELECT_USER +
+                        "WHERE u.mandorId = :mandorid",
+                User.class)
+                .setParameter("mandorid", mandorId)
                 .getResultList();
     }
 

@@ -12,7 +12,9 @@ public interface AuthRepository {
     User findById(UUID userId);
     User findByGoogleId(String googleId);
     User findByUsername(String username);
+    List<User> findAll();
     List<User> findByName(String name);
     List<User> findByRole(Role role);
+    List<User> findByMandorId(UUID mandorId);
     void delete(UUID userId);
 }

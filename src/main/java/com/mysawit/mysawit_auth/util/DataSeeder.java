@@ -32,7 +32,7 @@ public class DataSeeder implements CommandLineRunner {
     @Override
     @Transactional
     public void run(final String... args) {
-        if (authRepository.findByEmail(adminEmail) == null) {
+        if (authRepository.findByEmail(adminEmail).isEmpty()) {
             User admin = new User();
             admin.setName(adminName);
             admin.setUsername(adminUsername);

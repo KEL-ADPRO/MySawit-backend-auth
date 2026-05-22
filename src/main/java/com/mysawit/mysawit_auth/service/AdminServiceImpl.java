@@ -37,7 +37,7 @@ public class AdminServiceImpl implements AdminService {
         buruh.setMandorId(mandor.getId());
         final User savedUser = authRepository.save(buruh);
 
-        return responseMapper.toResponse(savedUser, null);
+        return responseMapper.toResponse(savedUser, null, null);
     }
 
     @Override
@@ -49,7 +49,7 @@ public class AdminServiceImpl implements AdminService {
         buruh.setMandorId(null);
         final User savedUser = authRepository.save(buruh);
 
-        return responseMapper.toResponse(savedUser, null);
+        return responseMapper.toResponse(savedUser, null, null);
     }
 
     @Override
@@ -110,7 +110,7 @@ public class AdminServiceImpl implements AdminService {
         final String roleString;
         try {
             callerId = UUID.fromString(jwtUtil.extractUserId(adminToken));
-            roleString = jwtUtil.ex(adminToken);
+            roleString = jwtUtil.extractRole(adminToken);
         } catch (Exception e) {
             final InvalidCredentialException ex = new InvalidCredentialException();
             ex.initCause(e);

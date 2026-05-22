@@ -70,7 +70,7 @@ public class AuthRepositoryImpl implements AuthRepository {
     }
 
     @Override
-    public List<User> findByName(String name) {
+    public List<User> findByName(final String name) {
         return entityManager.createQuery(
                         SELECT_USER +
                                 "WHERE LOWER(u.name) LIKE LOWER(:name)"
@@ -80,7 +80,7 @@ public class AuthRepositoryImpl implements AuthRepository {
     }
 
     @Override
-    public List<User> findByRole(Role role) {
+    public List<User> findByRole(final Role role) {
         return entityManager.createQuery(
                         SELECT_USER +
                                 "WHERE u.role = :role"
@@ -90,8 +90,8 @@ public class AuthRepositoryImpl implements AuthRepository {
     }
 
     @Override
-    public void delete(UUID userId) {
-        User user = findById(userId);
+    public void delete(final UUID userId) {
+        final User user = findById(userId);
         if (user != null) {
             entityManager.remove(user);
         }

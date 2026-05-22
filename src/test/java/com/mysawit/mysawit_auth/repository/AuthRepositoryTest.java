@@ -161,7 +161,7 @@ public class AuthRepositoryTest {
         when(typedQuery.setParameter("name", "%Agus%")).thenReturn(typedQuery);
         when(typedQuery.getResultList()).thenReturn(List.of(admin));
 
-        List<User> result = authRepository.findByName("Agus");
+        final List<User> result = authRepository.findByName("Agus");
 
         assertNotNull(result);
         assertEquals(1, result.size());
@@ -175,7 +175,7 @@ public class AuthRepositoryTest {
         when(typedQuery.setParameter("name", "%Unknown%")).thenReturn(typedQuery);
         when(typedQuery.getResultList()).thenReturn(List.of());
 
-        List<User> result = authRepository.findByName("Unknown");
+        final List<User> result = authRepository.findByName("Unknown");
 
         assertNotNull(result);
         assertTrue(result.isEmpty());
@@ -187,7 +187,7 @@ public class AuthRepositoryTest {
         when(typedQuery.setParameter("role", Role.ADMIN)).thenReturn(typedQuery);
         when(typedQuery.getResultList()).thenReturn(List.of(admin));
 
-        List<User> result = authRepository.findByRole(Role.ADMIN);
+        final List<User> result = authRepository.findByRole(Role.ADMIN);
 
         assertNotNull(result);
         assertEquals(1, result.size());
@@ -200,7 +200,7 @@ public class AuthRepositoryTest {
         when(typedQuery.setParameter("role", Role.MANDOR)).thenReturn(typedQuery);
         when(typedQuery.getResultList()).thenReturn(List.of());
 
-        List<User> result = authRepository.findByRole(Role.MANDOR);
+        final List<User> result = authRepository.findByRole(Role.MANDOR);
 
         assertNotNull(result);
         assertTrue(result.isEmpty());
@@ -208,7 +208,7 @@ public class AuthRepositoryTest {
 
     @Test
     void delete_UserExists_ShouldRemoveUser() {
-        UUID userId = admin.getId();
+        final UUID userId = admin.getId();
 
         when(entityManager.createQuery(any(String.class), eq(User.class))).thenReturn(typedQuery);
         when(typedQuery.setParameter("userId", userId)).thenReturn(typedQuery);
@@ -221,7 +221,7 @@ public class AuthRepositoryTest {
 
     @Test
     void delete_UserDoesNotExist_ShouldNotRemoveUser() {
-        UUID userId = UUID.randomUUID();
+        final UUID userId = UUID.randomUUID();
 
         when(entityManager.createQuery(any(String.class), eq(User.class))).thenReturn(typedQuery);
         when(typedQuery.setParameter("userId", userId)).thenReturn(typedQuery);

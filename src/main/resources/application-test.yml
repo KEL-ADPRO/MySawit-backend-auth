@@ -33,3 +33,15 @@ app:
       password: Admin123!
       name: admin sawit
       username: admin
+  cors:
+    allowed-origins: http://localhost:3000
+  cookie:
+    secure: false
+  rate-limit:
+    max-requests: 100
+    window-seconds: 60
+  refresh-token:
+    expiration-days: 7
+  login:
+    max-attempts: 5
+    lock-duration-minutes: 15

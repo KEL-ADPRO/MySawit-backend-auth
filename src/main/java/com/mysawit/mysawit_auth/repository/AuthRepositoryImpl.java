@@ -1,5 +1,6 @@
 package com.mysawit.mysawit_auth.repository;
 
+import com.mysawit.mysawit_auth.model.Role;
 import com.mysawit.mysawit_auth.model.User;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -66,5 +67,33 @@ public class AuthRepositoryImpl implements AuthRepository {
                 .setParameter("username", username)
                 .getResultList();
         return results.isEmpty() ? null : results.getFirst();
+    }
+
+    @Override
+    public List<User> findByName(String name) {
+        return entityManager.createQuery(
+                        SELECT_USER +
+                                "WHERE LOWER(u.name) LIKE LOWER(:name)"
+                        , User.class)
+                .setParameter("name", "%" + name + "%")
+                .getResultList();
+    }
+
+    @Override
+    public List<User> findByRole(Role role) {
+        return entityManager.createQuery(
+                        SELECT_USER +
+                                "WHERE u.role = :role"
+                        , User.class)
+                .setParameter("role", role)
+                .getResultList();
+    }
+
+    @Override
+    public void delete(UUID userId) {
+        User user = findById(userId);
+        if (user != null) {
+            entityManager.remove(user);
+        }
     }
 }

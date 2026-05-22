@@ -83,17 +83,29 @@ public class AuthServiceImpl implements AuthService, AuthStrategy<LoginRequest> 
 
     @Override
     public AuthResponse getLoggedInUser(final String token) {
-        if (tokenBlacklist.isBlacklisted(token)) {
+        if (token == null || token.isBlank()) {
             throw new InvalidCredentialException();
         }
 
-        final String userId = jwtUtil.extractUserId(token);
-        final User user = authRepository.findById(UUID.fromString(userId));
+        try {
+            if (tokenBlacklist.isBlacklisted(token)) {
+                throw new InvalidCredentialException();
+            }
 
-        if (user == null) {
+            final String userId = jwtUtil.extractUserId(token);
+            final User user = authRepository.findById(UUID.fromString(userId));
+
+            if (user == null) {
+                throw new InvalidCredentialException();
+            }
+
+            return responseMapper.toResponse(user, token, null);
+
+        } catch (InvalidCredentialException e) {
+            throw e;
+        } catch (Exception e) {
             throw new InvalidCredentialException();
         }
-        return responseMapper.toResponse(user, token, null);
     }
 
     @Override

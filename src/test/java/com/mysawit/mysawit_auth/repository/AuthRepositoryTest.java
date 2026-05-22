@@ -87,7 +87,7 @@ public class AuthRepositoryTest {
 
         final Optional<User> result = authRepository.findByEmail("unknown@gmail.com");
 
-        assertNull(result);
+        assertFalse(result.isPresent());
     }
 
     @Test
@@ -212,14 +212,14 @@ public class AuthRepositoryTest {
     @Test
     void findByMandorIdExistingMandorId() {
         when(entityManager.createQuery(any(String.class), eq(User.class))).thenReturn(typedQuery);
-        when(typedQuery.setParameter("mandorid", mandorId)).thenReturn(typedQuery);
+        when(typedQuery.setParameter("mandorId", mandorId)).thenReturn(typedQuery);
         when(typedQuery.getResultList()).thenReturn(List.of(buruh));
 
         List<User> result = authRepository.findByMandorId(mandorId);
 
         assertEquals(1, result.size());
         assertEquals(buruh, result.getFirst());
-        verify(typedQuery).setParameter("mandorid", mandorId);
+        verify(typedQuery).setParameter("mandorId", mandorId);
     }
 
     @Test

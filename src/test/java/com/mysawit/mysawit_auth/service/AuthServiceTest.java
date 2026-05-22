@@ -249,7 +249,7 @@ public class AuthServiceTest {
 
     @Test
     void loginUnknownEmail() {
-        when(authRepository.findByEmail("unknownUser@gmail.com")).thenReturn(null);
+        when(authRepository.findByEmail("unknownUser@gmail.com")).thenReturn( Optional.empty());
 
         final LoginRequest request = LoginRequest.builder()
                 .email("unknownUser@gmail.com")

@@ -48,7 +48,7 @@ class AdminControllerTest {
 
     @Test
     void assignBuruhSuccess() throws Exception {
-        AssignRequest request = AssignRequest.builder().mandorId(mandorId).build();
+        AssignRequest request = AssignRequest.builder().buruhId(UUID.randomUUID()).mandorId(mandorId).build();
 
         AuthResponse authResponse = new AuthResponse();
         when(adminService.assignBuruhToMandor(eq(token), eq(buruhId), eq(mandorId))).thenReturn(authResponse);
@@ -58,7 +58,7 @@ class AdminControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message").value("Buruh assigned successfully"));
+                .andExpect(jsonPath("$.message").value("Buruh assigned/reassigned successfully"));
 
         verify(adminService).assignBuruhToMandor(token, buruhId, mandorId);
     }

@@ -145,7 +145,7 @@ public class AuthRepositoryIntegrationTest {
     @Test
     void findByEmail_NotFound() {
         final Optional<User> found = authRepository.findByEmail("ghost@gmail.com");
-        assertNull(found);
+        assertFalse(found.isPresent());
     }
 
     @Test

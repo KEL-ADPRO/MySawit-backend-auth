@@ -128,7 +128,7 @@ public class RegistrationValidatorTest {
 
     @Test
     void assertEmailUniqueSuccess() {
-        when(authRepository.findByEmail("usep@gmail.com")).thenReturn(null);
+        when(authRepository.findByEmail("usep@gmail.com")).thenReturn( Optional.empty());
         assertDoesNotThrow(() -> validator.assertEmailUnique("usep@gmail.com"));
     }
 

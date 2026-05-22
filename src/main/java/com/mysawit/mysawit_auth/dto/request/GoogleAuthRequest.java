@@ -2,7 +2,6 @@ package com.mysawit.mysawit_auth.dto.request;
 
 import com.mysawit.mysawit_auth.model.Role;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -15,8 +14,12 @@ import lombok.NoArgsConstructor;
 public class GoogleAuthRequest {
     @NotBlank(message = "Google ID token is required")
     private String idToken;
+
+    /**
+     * Opsional — hanya diperlukan saat mendaftarkan akun Google baru.
+     * Untuk user yang sudah terdaftar, role diabaikan (diambil dari database).
+     */
     private String username;
-    @NotNull(message = "Role is required")
     private Role role;
     private String nomorSertifMandor;
 }

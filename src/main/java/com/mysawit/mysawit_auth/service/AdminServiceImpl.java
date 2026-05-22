@@ -110,7 +110,7 @@ public class AdminServiceImpl implements AdminService {
         final String roleString;
         try {
             callerId = UUID.fromString(jwtUtil.extractUserId(adminToken));
-            roleString = jwtUtil.extractRole(adminToken);
+            roleString = jwtUtil.ex(adminToken);
         } catch (Exception e) {
             final InvalidCredentialException ex = new InvalidCredentialException();
             ex.initCause(e);

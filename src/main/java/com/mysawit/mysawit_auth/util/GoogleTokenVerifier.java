@@ -9,6 +9,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 @Component
@@ -69,7 +71,16 @@ public class GoogleTokenVerifier {
 
     private void validateAudience(final Map<String, String> payload) {
         final String aud = payload.get("aud");
-        if (!expectedClientId.equals(aud)) {
+
+        if (aud == null || aud.isBlank()) {
+            throw new IllegalArgumentException("Google token audience is missing");
+        }
+
+        final List<String> expectedIds = Arrays.asList(expectedClientId.split("\\s*,\\s*"));
+        final List<String> tokenAudiences = Arrays.asList(aud.split("\\s*,\\s*"));
+        final boolean isMatch = tokenAudiences.stream().anyMatch(expectedIds::contains);
+
+        if (!isMatch) {
             throw new IllegalArgumentException("Google token audience does not match this application");
         }
     }

@@ -59,7 +59,7 @@ public class AuthController {
             @RequestHeader(value = "Authorization", required = false) final String authHeader,
             @CookieValue(value = CookieUtil.AUTH_COOKIE_NAME, required = false) final String cookieToken
     ) {
-        final String token = resolveToken(authHeader, cookieToken);
+        final String token = resolveAccessToken(authHeader, cookieToken);
         final AuthResponse response = authService.getLoggedInUser(token);
 
         return ResponseEntity

@@ -17,6 +17,8 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+
 @Service
 @RequiredArgsConstructor
 public class GoogleAuthServiceImpl implements GoogleAuthService, AuthStrategy<GoogleAuthRequest> {
@@ -54,8 +56,8 @@ public class GoogleAuthServiceImpl implements GoogleAuthService, AuthStrategy<Go
     }
 
     private User resolveByEmailOrCreate(final GoogleAuthRequest request, final GoogleUserInfo userInfo) {
-        final User existingByEmail = authRepository.findByEmail(userInfo.getEmail());
-        if (existingByEmail != null) {
+        final Optional<User> existingByEmail = authRepository.findByEmail(userInfo.getEmail());
+        if (existingByEmail.isPresent()) {
             throw new EmailAlreadyExistsException(userInfo.getEmail());
         }
         return createNewUser(request, userInfo);

@@ -10,9 +10,7 @@ import java.util.UUID;
 public interface AdminService {
     AuthResponse assignBuruhToMandor(String adminToken, UUID buruhId, UUID mandorId);
     AuthResponse unassignBuruh(String adminToken, UUID buruhId);
-    List<User> getAllUsers();
-    List<User> getUsersByName(String name);
-    List<User> getUserByRole(Role role);
-    User getUsersByEmail(String email);
     void deleteUser(String adminToken, UUID targetUserId);
+    List<User> getUsersWithFilters(String adminToken, String name, String email, Role role);
+    User getUserById(String adminToken, UUID userId);
 }

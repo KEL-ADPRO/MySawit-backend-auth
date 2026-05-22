@@ -3,12 +3,15 @@ package com.mysawit.mysawit_auth.controller;
 import com.mysawit.mysawit_auth.dto.request.AssignRequest;
 import com.mysawit.mysawit_auth.dto.response.ApiResponse;
 import com.mysawit.mysawit_auth.dto.response.AuthResponse;
+import com.mysawit.mysawit_auth.model.Role;
+import com.mysawit.mysawit_auth.model.User;
 import com.mysawit.mysawit_auth.service.AdminService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -22,17 +25,15 @@ public class AdminController {
             @RequestHeader(value = "Authorization", required = false) final String authHeader,
             @PathVariable final UUID buruhId,
             @Valid @RequestBody final AssignRequest request) {
-
         final String token = extractBearer(authHeader);
         final AuthResponse response = adminService.assignBuruhToMandor(token, buruhId, request.getMandorId());
-        return ResponseEntity.ok(ApiResponse.successResponse("Buruh assigned successfully", response));
+        return ResponseEntity.ok(ApiResponse.successResponse("Buruh assigned/reassigned successfully", response));
     }
 
     @DeleteMapping("/buruh/{buruhId}/assign")
     public ResponseEntity<ApiResponse<AuthResponse>> unassignBuruh(
             @RequestHeader(value = "Authorization", required = false) final String authHeader,
             @PathVariable final UUID buruhId) {
-
         final String token = extractBearer(authHeader);
         final AuthResponse response = adminService.unassignBuruh(token, buruhId);
         return ResponseEntity.ok(ApiResponse.successResponse("Buruh unassigned successfully", response));
@@ -42,7 +43,6 @@ public class AdminController {
     public ResponseEntity<ApiResponse<Void>> deleteUser(
             @RequestHeader(value = "Authorization", required = false) final String authHeader,
             @PathVariable final UUID userId) {
-
         final String token = extractBearer(authHeader);
         adminService.deleteUser(token, userId);
         return ResponseEntity.ok(ApiResponse.successResponse("User deleted successfully", null));

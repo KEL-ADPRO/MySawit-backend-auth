@@ -53,26 +53,6 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
-    public List<User> getAllUsers() {
-        return authRepository.findAll();
-    }
-
-    @Override
-    public List<User> getUsersByName(final String name) {
-        return authRepository.findByName(name);
-    }
-
-    @Override
-    public List<User> getUserByRole(final Role role) {
-        return authRepository.findByRole(role);
-    }
-
-    @Override
-    public User getUsersByEmail(final String email) {
-        return authRepository.findByEmail(email);
-    }
-
-    @Override
     @Transactional
     public void deleteUser(final String adminToken, final UUID targetUserId) {
         final UUID adminId = resolveAdminId(adminToken);
@@ -97,6 +77,54 @@ public class AdminServiceImpl implements AdminService {
         authRepository.delete(targetUserId);
     }
 
+    @Override
+    public List<User> getUsersWithFilters(final String adminToken, final String name, final String email, final Role role) {
+        resolveAdminId(adminToken);
+
+        final boolean hasName  = name  != null && !name.isBlank();
+        final boolean hasEmail = email != null && !email.isBlank();
+        final boolean hasRole  = role  != null;
+
+        if (hasName && hasEmail && hasRole) {
+            return authRepository.findByNameAndEmailAndRole(name, email, role);
+        }
+
+        if (hasName && hasEmail) {
+            return authRepository.findByNameAndEmail(name, email);
+        }
+        if (hasName && hasRole) {
+            return authRepository.findByNameAndRole(name, role);
+        }
+        if (hasEmail && hasRole) {
+            return authRepository.findByEmailAndRole(email, role);
+        }
+
+        if (hasName) {
+            return authRepository.findByName(name);
+        }
+        if (hasEmail) {
+            return authRepository.findByEmail(email)
+                    .map(List::of)
+                    .orElse(List.of());
+        }
+        if (hasRole) {
+            return authRepository.findByRole(role);
+        }
+
+        return authRepository.findAll();
+    }
+
+    @Override
+    public User getUserById(final String adminToken, final UUID userId) {
+        resolveAdminId(adminToken);
+
+        final User user = authRepository.findById(userId);
+        if (user == null) {
+            throw new IllegalArgumentException("User not found: " + userId);
+        }
+        return user;
+    }
+
     private UUID resolveAdminId(final String adminToken) {
         if (adminToken == null || adminToken.isBlank()) {
             throw new InvalidCredentialException();
@@ -112,9 +140,9 @@ public class AdminServiceImpl implements AdminService {
             callerId = UUID.fromString(jwtUtil.extractUserId(adminToken));
             roleString = jwtUtil.extractRole(adminToken);
         } catch (Exception e) {
-            final InvalidCredentialException ex = new InvalidCredentialException();
-            ex.initCause(e);
-            throw ex;
+            final InvalidCredentialException exception = new InvalidCredentialException();
+            exception.initCause(e);
+            throw exception;
         }
 
         if (!Role.ADMIN.name().equals(roleString)) {

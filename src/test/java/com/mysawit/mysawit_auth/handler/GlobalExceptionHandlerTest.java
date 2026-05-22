@@ -1,14 +1,13 @@
 package com.mysawit.mysawit_auth.handler;
 
-import com.mysawit.mysawit_auth.exception.EmailAlreadyExistsException;
-import com.mysawit.mysawit_auth.exception.InvalidCredentialException;
-import com.mysawit.mysawit_auth.exception.MandorSertifMissingException;
-import com.mysawit.mysawit_auth.exception.WeakPasswordException;
+import com.mysawit.mysawit_auth.exception.*;
 import com.mysawit.mysawit_auth.dto.response.ApiResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+
+import java.time.Instant;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -78,6 +77,16 @@ public class GlobalExceptionHandlerTest {
             assertEquals(message, response.getBody().getMessage());
             assertEquals(HttpStatus.UNPROCESSABLE_ENTITY, response.getStatusCode());
         }
+    }
+
+    @Test
+    void handleAccountLocked_returns429() {
+        final ResponseEntity<ApiResponse<Void>> response = handler.handleAccountLocked(new AccountLockedException(Instant.MAX));
+
+        assertEquals(HttpStatus.TOO_MANY_REQUESTS, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertFalse(response.getBody().isSuccess());
+        assertEquals("Account is temporarily locked due to too many failed login attempts. Try again later.", response.getBody().getMessage());
     }
 
     @Test

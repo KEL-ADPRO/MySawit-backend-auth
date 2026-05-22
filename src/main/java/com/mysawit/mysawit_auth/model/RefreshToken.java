@@ -8,9 +8,9 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "refresh_tokens", indexes = {
-        @Index(name = "idx_token", columnList = "token"),
-        @Index(name = "idx_user_id", columnList = "user_id"),
-        @Index(name = "idx_expires_at", columnList = "expires_at")
+        @Index(name = "idx_token",      columnList = "token"),
+        @Index(name = "idx_user_id",    columnList = "userId"),
+        @Index(name = "idx_expires_at", columnList = "expiresAt")
 })
 @Getter
 @Setter

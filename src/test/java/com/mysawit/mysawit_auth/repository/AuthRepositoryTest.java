@@ -12,6 +12,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -72,9 +73,10 @@ public class AuthRepositoryTest {
         when(typedQuery.setParameter("email", "admin@gmail.com")).thenReturn(typedQuery);
         when(typedQuery.getResultList()).thenReturn(List.of(admin));
 
-        final User result = authRepository.findByEmail("admin@gmail.com");
+        final Optional<User> result = authRepository.findByEmail("admin@gmail.com");
 
-        assertEquals(admin, result);
+        assertTrue(result.isPresent());
+        assertEquals(admin, result.get());
     }
 
     @Test
@@ -83,7 +85,7 @@ public class AuthRepositoryTest {
         when(typedQuery.setParameter("email", "unknown@gmail.com")).thenReturn(typedQuery);
         when(typedQuery.getResultList()).thenReturn(List.of());
 
-        final User result = authRepository.findByEmail("unknown@gmail.com");
+        final Optional<User> result = authRepository.findByEmail("unknown@gmail.com");
 
         assertNull(result);
     }

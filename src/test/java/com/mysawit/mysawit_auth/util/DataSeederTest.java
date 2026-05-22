@@ -40,7 +40,7 @@ public class DataSeederTest {
 
     @Test
     void createsAdminWhenNotExists() {
-        when(authRepository.findByEmail("admin@test.com")).thenReturn(null);
+        when(authRepository.findByEmail("admin@test.com")).thenReturn(Optional.empty());
         when(passwordHasher.hash("testPassword")).thenReturn("hashed_testPassword");
 
         dataSeeder.run();
@@ -68,7 +68,7 @@ public class DataSeederTest {
 
     @Test
     void hashesPasswordBeforeSaving() {
-        when(authRepository.findByEmail("admin@test.com")).thenReturn(null);
+        when(authRepository.findByEmail("admin@test.com")).thenReturn(Optional.empty());
         when(passwordHasher.hash("testPassword")).thenReturn("hashed_testPassword");
 
         dataSeeder.run();
@@ -82,7 +82,7 @@ public class DataSeederTest {
 
     @Test
     void savedUserIsAdmin() {
-        when(authRepository.findByEmail("admin@test.com")).thenReturn(null);
+        when(authRepository.findByEmail("admin@test.com")).thenReturn(Optional.empty());
         when(passwordHasher.hash(any())).thenReturn("hashed");
 
         dataSeeder.run();

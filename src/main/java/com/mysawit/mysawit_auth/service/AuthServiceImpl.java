@@ -41,7 +41,8 @@ public class AuthServiceImpl implements AuthService, AuthStrategy<LoginRequest> 
             throw new InvalidCredentialException();
         }
 
-        registrationValidator.validateRequiredFields(request.getUsername(), request.getName(), request.getEmail(), request.getRole());
+        registrationValidator.validateRequiredFields(request.getUsername(), request.getName(), request.getEmail(),
+                request.getRole());
         registrationValidator.validatePassword(request.getPassword());
         registrationValidator.assertEmailUnique(request.getEmail());
         registrationValidator.assertMandorCertPresent(request.getRole(), request.getNomorSertifMandor());
@@ -83,17 +84,31 @@ public class AuthServiceImpl implements AuthService, AuthStrategy<LoginRequest> 
 
     @Override
     public AuthResponse getLoggedInUser(final String token) {
-        if (tokenBlacklist.isBlacklisted(token)) {
+        if (token == null || token.isBlank()) {
             throw new InvalidCredentialException();
         }
 
-        final String userId = jwtUtil.extractUserId(token);
-        final User user = authRepository.findById(UUID.fromString(userId));
+        try {
+            if (tokenBlacklist.isBlacklisted(token)) {
+                throw new InvalidCredentialException();
+            }
 
-        if (user == null) {
-            throw new InvalidCredentialException();
+            final String userId = jwtUtil.extractUserId(token);
+            final User user = authRepository.findById(UUID.fromString(userId));
+
+            if (user == null) {
+                throw new InvalidCredentialException();
+            }
+
+            return responseMapper.toResponse(user, token, null);
+
+        } catch (InvalidCredentialException e) {
+            throw e;
+        } catch (Exception exception) {
+            final InvalidCredentialException thrownException = new InvalidCredentialException();
+            thrownException.initCause(exception);
+            throw thrownException;
         }
-        return responseMapper.toResponse(user, token, null);
     }
 
     @Override

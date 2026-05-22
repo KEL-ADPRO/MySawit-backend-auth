@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 @RestController
@@ -21,15 +22,11 @@ import java.util.UUID;
 public class AdminController {
     private final AdminService adminService;
     private final AuthResponseMapper responseMapper;
+    private final String HEADER_AUTHORIZATION = "Authorization";
 
-    /**
-     * GET /api/admin/users
-     * Query params: name, email, role (semua opsional)
-     * Mengembalikan daftar semua user, dengan filter opsional.
-     */
     @GetMapping("/users")
     public ResponseEntity<ApiResponse<List<AuthResponse>>> getUsers(
-            @RequestHeader(value = "Authorization", required = false) final String authHeader,
+            @RequestHeader(value = HEADER_AUTHORIZATION, required = false) final String authHeader,
             @RequestParam(required = false) final String name,
             @RequestParam(required = false) final String email,
             @RequestParam(required = false) final String role) {
@@ -45,13 +42,9 @@ public class AdminController {
         return ResponseEntity.ok(ApiResponse.successResponse("Users fetched successfully", responseList));
     }
 
-    /**
-     * GET /api/admin/users/{userId}
-     * Mengembalikan detail satu user berdasarkan ID.
-     */
     @GetMapping("/users/{userId}")
     public ResponseEntity<ApiResponse<AuthResponse>> getUserById(
-            @RequestHeader(value = "Authorization", required = false) final String authHeader,
+            @RequestHeader(value = HEADER_AUTHORIZATION, required = false) final String authHeader,
             @PathVariable final UUID userId) {
 
         final String token = extractBearer(authHeader);
@@ -59,13 +52,9 @@ public class AdminController {
         return ResponseEntity.ok(ApiResponse.successResponse("User fetched successfully", responseMapper.toResponse(user, null, null)));
     }
 
-    /**
-     * PUT /api/admin/buruh/{buruhId}/assign
-     * Assign buruh ke mandor.
-     */
     @PutMapping("/buruh/{buruhId}/assign")
     public ResponseEntity<ApiResponse<AuthResponse>> assignBuruh(
-            @RequestHeader(value = "Authorization", required = false) final String authHeader,
+            @RequestHeader(value = HEADER_AUTHORIZATION, required = false) final String authHeader,
             @PathVariable final UUID buruhId,
             @Valid @RequestBody final AssignRequest request) {
         final String token = extractBearer(authHeader);
@@ -73,26 +62,18 @@ public class AdminController {
         return ResponseEntity.ok(ApiResponse.successResponse("Buruh assigned/reassigned successfully", response));
     }
 
-    /**
-     * DELETE /api/admin/buruh/{buruhId}/assign
-     * Unassign buruh dari mandor.
-     */
     @DeleteMapping("/buruh/{buruhId}/assign")
     public ResponseEntity<ApiResponse<AuthResponse>> unassignBuruh(
-            @RequestHeader(value = "Authorization", required = false) final String authHeader,
+            @RequestHeader(value = HEADER_AUTHORIZATION, required = false) final String authHeader,
             @PathVariable final UUID buruhId) {
         final String token = extractBearer(authHeader);
         final AuthResponse response = adminService.unassignBuruh(token, buruhId);
         return ResponseEntity.ok(ApiResponse.successResponse("Buruh unassigned successfully", response));
     }
 
-    /**
-     * DELETE /api/admin/users/{userId}
-     * Hapus user dari sistem.
-     */
     @DeleteMapping("/users/{userId}")
     public ResponseEntity<ApiResponse<Void>> deleteUser(
-            @RequestHeader(value = "Authorization", required = false) final String authHeader,
+            @RequestHeader(value = HEADER_AUTHORIZATION, required = false) final String authHeader,
             @PathVariable final UUID userId) {
         final String token = extractBearer(authHeader);
         adminService.deleteUser(token, userId);
@@ -109,9 +90,9 @@ public class AdminController {
     private Role parseRole(final String role) {
         if (role == null || role.isBlank()) return null;
         try {
-            return Role.valueOf(role.toUpperCase());
+            return Role.valueOf(role.toUpperCase(Locale.ENGLISH));
         } catch (IllegalArgumentException e) {
-            return null; // role tidak valid → abaikan filter
+            return null;
         }
     }
 }

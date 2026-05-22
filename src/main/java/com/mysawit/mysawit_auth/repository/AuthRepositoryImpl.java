@@ -16,6 +16,9 @@ import java.util.UUID;
 @NoArgsConstructor
 public class AuthRepositoryImpl implements AuthRepository {
     private static final String SELECT_USER = "SELECT u FROM User u ";
+    private static final String PARAM_EMAIL = "email";
+    private static final String PARAM_NAME = "name";
+    private static final String PARAM_ROLE = "role";
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -48,7 +51,7 @@ public class AuthRepositoryImpl implements AuthRepository {
     public Optional<User> findByEmail(final String email) {
         final List<User> results = entityManager.createQuery(
                         SELECT_USER + "WHERE u.email = :email", User.class)
-                .setParameter("email", email)
+                .setParameter(PARAM_EMAIL, email)
                 .getResultList();
         return results.isEmpty() ? Optional.empty() : Optional.of(results.getFirst());
     }
@@ -80,7 +83,7 @@ public class AuthRepositoryImpl implements AuthRepository {
     public List<User> findByName(final String name) {
         return entityManager.createQuery(
                         SELECT_USER + "WHERE LOWER(u.name) LIKE LOWER(:name)", User.class)
-                .setParameter("name", "%" + name + "%")
+                .setParameter(PARAM_NAME, "%" + name + "%")
                 .getResultList();
     }
 
@@ -88,7 +91,7 @@ public class AuthRepositoryImpl implements AuthRepository {
     public List<User> findByRole(final Role role) {
         return entityManager.createQuery(
                         SELECT_USER + "WHERE u.role = :role", User.class)
-                .setParameter("role", role)
+                .setParameter(PARAM_ROLE, role)
                 .getResultList();
     }
 
@@ -107,8 +110,8 @@ public class AuthRepositoryImpl implements AuthRepository {
                                 "WHERE LOWER(u.name) LIKE LOWER(:name) " +
                                 "AND u.email = :email",
                         User.class)
-                .setParameter("name", "%" + name + "%")
-                .setParameter("email", email)
+                .setParameter(PARAM_NAME, "%" + name + "%")
+                .setParameter(PARAM_EMAIL, email)
                 .getResultList();
     }
 
@@ -119,8 +122,8 @@ public class AuthRepositoryImpl implements AuthRepository {
                                 "WHERE LOWER(u.name) LIKE LOWER(:name) " +
                                 "AND u.role = :role",
                         User.class)
-                .setParameter("name", "%" + name + "%")
-                .setParameter("role", role)
+                .setParameter(PARAM_NAME, "%" + name + "%")
+                .setParameter(PARAM_ROLE, role)
                 .getResultList();
     }
 
@@ -131,8 +134,8 @@ public class AuthRepositoryImpl implements AuthRepository {
                                 "WHERE u.email = :email " +
                                 "AND u.role = :role",
                         User.class)
-                .setParameter("email", email)
-                .setParameter("role", role)
+                .setParameter(PARAM_EMAIL, email)
+                .setParameter(PARAM_ROLE, role)
                 .getResultList();
     }
 
@@ -144,9 +147,9 @@ public class AuthRepositoryImpl implements AuthRepository {
                                 "AND u.email = :email " +
                                 "AND u.role = :role",
                         User.class)
-                .setParameter("name", "%" + name + "%")
-                .setParameter("email", email)
-                .setParameter("role", role)
+                .setParameter(PARAM_NAME, "%" + name + "%")
+                .setParameter(PARAM_EMAIL, email)
+                .setParameter(PARAM_ROLE, role)
                 .getResultList();
     }
 }

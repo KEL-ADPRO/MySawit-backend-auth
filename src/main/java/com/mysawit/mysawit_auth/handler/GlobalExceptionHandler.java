@@ -4,6 +4,7 @@ import com.mysawit.mysawit_auth.dto.response.ApiResponse;
 import com.mysawit.mysawit_auth.exception.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -51,6 +52,18 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .badRequest()
                 .body(ApiResponse.errorResponse(exception.getMessage()));
+    }
+
+    /**
+     * Handles JSON parse errors — e.g. invalid enum value like 'SUPIR_TRUK' before @JsonCreator fix.
+     * Returns 400 Bad Request instead of 500.
+     */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMessageNotReadable(final HttpMessageNotReadableException exception) {
+        final String msg = exception.getMostSpecificCause().getMessage();
+        return ResponseEntity
+                .badRequest()
+                .body(ApiResponse.errorResponse("Request tidak valid: " + msg));
     }
 
     @ExceptionHandler(Exception.class)

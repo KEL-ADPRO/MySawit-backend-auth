@@ -33,15 +33,13 @@ public class SlidingWindowRateLimiter implements RateLimiter {
         synchronized (timestamps) {
             evictOldTimestamps(timestamps, windowStart);
 
-            if (timestamps.isEmpty()) {
-                requestLog.remove(key);
-            }
-
             if (timestamps.size() >= maxRequests) {
                 return false;
             }
 
             timestamps.addLast(now);
+            requestLog.put(key, timestamps);
+
             return true;
         }
     }

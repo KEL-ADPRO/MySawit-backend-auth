@@ -10,7 +10,6 @@ import com.mysawit.mysawit_auth.dto.request.RegisterRequest;
 import com.mysawit.mysawit_auth.service.strategy.AuthStrategy;
 import com.mysawit.mysawit_auth.service.strategy.AuthStrategyFactory;
 import com.mysawit.mysawit_auth.util.CookieUtil;
-import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -28,8 +27,7 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<AuthResponse>> register(
-            @Valid @RequestBody final RegisterRequest request
-    ) {
+            @Valid @RequestBody final RegisterRequest request) {
         final AuthResponse response = authService.register(request);
 
         return ResponseEntity
@@ -39,8 +37,7 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<AuthResponse>> login(
-            @Valid @RequestBody final LoginRequest request
-    ) {
+            @Valid @RequestBody final LoginRequest request) {
         final AuthStrategy<LoginRequest> strategy = strategyFactory.resolve(AuthProvider.PASSWORD);
         final AuthResponse authResponse = strategy.authenticate(request);
 
@@ -57,8 +54,7 @@ public class AuthController {
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<AuthResponse>> getMe(
             @RequestHeader(value = "Authorization", required = false) final String authHeader,
-            @CookieValue(value = CookieUtil.AUTH_COOKIE_NAME, required = false) final String cookieToken
-    ) {
+            @CookieValue(value = CookieUtil.AUTH_COOKIE_NAME, required = false) final String cookieToken) {
         final String token = resolveAccessToken(authHeader, cookieToken);
         final AuthResponse response = authService.getLoggedInUser(token);
 
@@ -69,8 +65,7 @@ public class AuthController {
 
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<Void>> logout(
-            @RequestHeader(value = "Authorization", required = false) final String authHeader
-    ) {
+            @RequestHeader(value = "Authorization", required = false) final String authHeader) {
         final String token = extractBearer(authHeader);
         authService.logout(token);
 

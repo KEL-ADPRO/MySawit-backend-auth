@@ -8,8 +8,6 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "refresh_tokens", indexes = {
-        @Index(name = "idx_token",      columnList = "token"),
-        @Index(name = "idx_user_id",    columnList = "userId"),
         @Index(name = "idx_expires_at", columnList = "expiresAt")
 })
 @Getter
@@ -26,7 +24,7 @@ public class RefreshToken {
     @Column(nullable = false, unique = true, length = 512)
     private String token;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private UUID userId;
 
     @Column(nullable = false)

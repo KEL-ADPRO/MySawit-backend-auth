@@ -7,9 +7,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "refresh_tokens", indexes = {
-        @Index(name = "idx_expires_at", columnList = "expiresAt")
-})
+@Table(name = "refresh_tokens")
 @Getter
 @Setter
 @Builder

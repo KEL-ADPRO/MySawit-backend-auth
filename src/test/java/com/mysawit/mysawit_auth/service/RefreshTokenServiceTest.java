@@ -51,6 +51,7 @@ public class RefreshTokenServiceTest {
     void createRefreshTokenSuccess() {
         when(refreshTokenRepository.save(any(RefreshToken.class))).thenAnswer(i -> i.getArguments()[0]);
 
+
         final RefreshToken result = refreshTokenService.createRefreshToken(user);
 
         assertNotNull(result);
@@ -104,12 +105,5 @@ public class RefreshTokenServiceTest {
         assertThrows(InvalidCredentialException.class, () -> refreshTokenService.validateAndGet(VALID_RAW_TOKEN));
 
         verify(refreshTokenRepository, times(1)).findByToken(VALID_RAW_TOKEN);
-    }
-
-    @Test
-    void revokeAllSuccess() {
-        refreshTokenService.revokeAll(user);
-
-        verify(refreshTokenRepository, times(1)).deleteByUserId(USER_ID);
     }
 }

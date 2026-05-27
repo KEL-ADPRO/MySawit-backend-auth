@@ -9,6 +9,7 @@ import com.mysawit.mysawit_auth.model.AuthProvider;
 import com.mysawit.mysawit_auth.model.RefreshToken;
 import com.mysawit.mysawit_auth.model.User;
 import com.mysawit.mysawit_auth.repository.AuthRepository;
+import com.mysawit.mysawit_auth.repository.RefreshTokenRepository;
 import com.mysawit.mysawit_auth.service.strategy.AuthStrategy;
 import com.mysawit.mysawit_auth.util.JwtUtil;
 import com.mysawit.mysawit_auth.util.PasswordHasher;
@@ -26,6 +27,7 @@ import java.util.UUID;
 public class AuthServiceImpl implements AuthService, AuthStrategy<LoginRequest> {
 
     private final AuthRepository authRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordHasher passwordHasher;
     private final JwtUtil jwtUtil;
     private final TokenBlacklist tokenBlacklist;
@@ -122,7 +124,7 @@ public class AuthServiceImpl implements AuthService, AuthStrategy<LoginRequest> 
             final String userId = jwtUtil.extractUserId(token);
             final User user = authRepository.findById(UUID.fromString(userId));
             if (user != null) {
-                refreshTokenService.revokeAll(user);
+                refreshTokenRepository.deleteByUserId(user.getId());
             }
         } catch (Exception exception) {
             final InvalidCredentialException thrownException = new InvalidCredentialException();
@@ -140,7 +142,7 @@ public class AuthServiceImpl implements AuthService, AuthStrategy<LoginRequest> 
         final UUID userId = refreshToken.getUserId();
         final User user = authRepository.findById(userId);
 
-        refreshTokenService.revokeAll(user);
+        refreshTokenRepository.deleteByUserId(user.getId());
         final RefreshToken newRefreshToken = refreshTokenService.createRefreshToken(user);
         final String newAccessToken = jwtUtil.generateToken(user.getId(), user.getRole());
 

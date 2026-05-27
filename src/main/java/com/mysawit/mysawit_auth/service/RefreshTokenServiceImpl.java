@@ -52,12 +52,6 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         return token;
     }
 
-    @Override
-    @Transactional
-    public void revokeAll(final User user) {
-        refreshTokenRepository.deleteByUserId(user.getId());
-    }
-
     private String generateToken() {
         final byte[] bytes = new byte[TOKEN_BYTES];
         secureRandom.nextBytes(bytes);

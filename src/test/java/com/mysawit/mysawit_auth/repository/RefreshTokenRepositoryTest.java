@@ -103,12 +103,10 @@ public class RefreshTokenRepositoryTest {
     void deleteByUserIdUnknown() {
         UUID unknownId = UUID.fromString("fc558e9f-1c39-460e-8860-71af6af63bd6");
         when(entityManager.createQuery(any(String.class))).thenReturn(typedQuery);
-        when(typedQuery.setParameter("userId", unknownId)).thenReturn(null);
+        when(typedQuery.setParameter("userId", unknownId)).thenReturn(typedQuery);
+        when(typedQuery.executeUpdate()).thenReturn(0);
 
-        assertThrows(NullPointerException.class, () -> refreshTokenRepository.deleteByUserId(unknownId));
-
-        verify(entityManager, times(1)).createQuery(any(String.class));
-        verify(typedQuery, times(1)).setParameter("userId", unknownId);
-        verify(typedQuery, times(0)).executeUpdate();
+        assertDoesNotThrow(() -> refreshTokenRepository.deleteByUserId(unknownId));
+        verify(typedQuery).executeUpdate();
     }
 }

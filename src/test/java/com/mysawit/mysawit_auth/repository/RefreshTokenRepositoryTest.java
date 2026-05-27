@@ -111,18 +111,4 @@ public class RefreshTokenRepositoryTest {
         verify(typedQuery, times(1)).setParameter("userId", unknownId);
         verify(typedQuery, times(0)).executeUpdate();
     }
-
-    @Test
-    void deleteExpiredSuccess() {
-        final Instant now = Instant.now();
-        when(entityManager.createQuery(any(String.class))).thenReturn(typedQuery);
-        when(typedQuery.setParameter("now", now)).thenReturn(typedQuery);
-        when(typedQuery.executeUpdate()).thenReturn(5);
-
-        refreshTokenRepository.deleteExpired(now);
-
-        verify(entityManager, times(1)).createQuery(any(String.class));
-        verify(typedQuery, times(1)).setParameter("now", now);
-        verify(typedQuery, times(1)).executeUpdate();
-    }
 }

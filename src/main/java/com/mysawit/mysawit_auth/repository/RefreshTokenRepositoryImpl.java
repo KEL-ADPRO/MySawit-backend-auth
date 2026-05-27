@@ -7,7 +7,6 @@ import jakarta.transaction.Transactional;
 import lombok.NoArgsConstructor;
 import org.springframework.stereotype.Repository;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -41,16 +40,6 @@ public class RefreshTokenRepositoryImpl implements RefreshTokenRepository {
                 "DELETE FROM RefreshToken r " +
                         "WHERE r.userId = :userId")
                 .setParameter("userId", userId)
-                .executeUpdate();
-    }
-
-    @Override
-    @Transactional
-    public void deleteExpired(final Instant now) {
-        entityManager.createQuery(
-                "DELETE FROM RefreshToken r " +
-                        "WHERE r.expiresAt < :now")
-                .setParameter("now", now)
                 .executeUpdate();
     }
 }

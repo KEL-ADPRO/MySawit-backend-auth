@@ -142,7 +142,6 @@ public class AuthServiceImpl implements AuthService, AuthStrategy<LoginRequest> 
         final UUID userId = refreshToken.getUserId();
         final User user = authRepository.findById(userId);
 
-        refreshTokenRepository.deleteByUserId(user.getId());
         final RefreshToken newRefreshToken = refreshTokenService.createRefreshToken(user);
         final String newAccessToken = jwtUtil.generateToken(user.getId(), user.getRole());
 

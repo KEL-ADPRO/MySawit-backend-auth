@@ -23,15 +23,14 @@ import java.util.UUID;
 public class AdminServiceImpl implements AdminService {
     private final AuthRepository authRepository;
     private final RefreshTokenRepository refreshTokenRepository;
-    private final JwtUtil jwtUtil;
-    private final TokenBlacklist tokenBlacklist;
+    private final TokenAuthorizationService tokenAuthService;
     private final AuthResponseMapper responseMapper;
     private final AdminValidator adminValidator;
 
     @Override
     @Transactional
     public AuthResponse assignBuruhToMandor(final String adminToken, final UUID buruhId, final UUID mandorId) {
-        resolveAdminId(adminToken);
+        tokenAuthService.requireRole(adminToken, Role.ADMIN);
 
         final User buruh = adminValidator.requireBuruh(buruhId);
         final User mandor = adminValidator.requireMandor(mandorId);
@@ -45,7 +44,7 @@ public class AdminServiceImpl implements AdminService {
     @Override
     @Transactional
     public AuthResponse unassignBuruh(final String adminToken, final UUID buruhId) {
-        resolveAdminId(adminToken);
+        tokenAuthService.requireRole(adminToken, Role.ADMIN);
 
         final User buruh = adminValidator.requireBuruh(buruhId);
         buruh.setMandorId(null);
@@ -57,7 +56,7 @@ public class AdminServiceImpl implements AdminService {
     @Override
     @Transactional
     public void deleteUser(final String adminToken, final UUID targetUserId) {
-        final UUID adminId = resolveAdminId(adminToken);
+        final UUID adminId = tokenAuthService.requireRole(adminToken, Role.ADMIN);
 
         if (adminId.equals(targetUserId)) {
             throw new SelfDeletionException();
@@ -82,7 +81,7 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     public List<User> getUsersWithFilters(final String adminToken, final String name, final String email, final Role role) {
-        resolveAdminId(adminToken);
+        tokenAuthService.requireRole(adminToken, Role.ADMIN);
 
         final boolean hasName  = name  != null && !name.isBlank();
         final boolean hasEmail = email != null && !email.isBlank();
@@ -119,7 +118,7 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     public User getUserById(final String adminToken, final UUID userId) {
-        resolveAdminId(adminToken);
+        tokenAuthService.requireRole(adminToken, Role.ADMIN);
 
         final User user = authRepository.findById(userId);
         if (user == null) {
@@ -128,30 +127,4 @@ public class AdminServiceImpl implements AdminService {
         return user;
     }
 
-    private UUID resolveAdminId(final String adminToken) {
-        if (adminToken == null || adminToken.isBlank()) {
-            throw new InvalidCredentialException();
-        }
-
-        if (tokenBlacklist.isBlacklisted(adminToken)) {
-            throw new InvalidCredentialException();
-        }
-
-        final UUID callerId;
-        final String roleString;
-        try {
-            callerId = UUID.fromString(jwtUtil.extractUserId(adminToken));
-            roleString = jwtUtil.extractRole(adminToken);
-        } catch (Exception e) {
-            final InvalidCredentialException exception = new InvalidCredentialException();
-            exception.initCause(e);
-            throw exception;
-        }
-
-        if (!Role.ADMIN.name().equals(roleString)) {
-            throw new IllegalArgumentException("Access denied: ADMIN role required");
-        }
-
-        return callerId;
-    }
 }

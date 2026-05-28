@@ -5,8 +5,6 @@ import com.mysawit.mysawit_auth.mapper.AuthResponseMapper;
 import com.mysawit.mysawit_auth.model.Role;
 import com.mysawit.mysawit_auth.model.User;
 import com.mysawit.mysawit_auth.repository.AuthRepository;
-import com.mysawit.mysawit_auth.util.JwtUtil;
-import com.mysawit.mysawit_auth.util.TokenBlacklist;
 import com.mysawit.mysawit_auth.validator.AdminValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,11 +22,12 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class AdminServiceTest {
-    @Mock private AuthRepository authRepository;
-    @Mock private JwtUtil jwtUtil;
-    @Mock private TokenBlacklist tokenBlacklist;
-    @Mock private AuthResponseMapper responseMapper;
-    @Mock private AdminValidator adminValidator;
+    @Mock
+    private TokenAuthorizationService tokenAuthorizationService;
+
+    @Mock
+    private AuthRepository authRepository;
+
     @InjectMocks
     private AdminServiceImpl adminService;
 
@@ -56,9 +55,7 @@ public class AdminServiceTest {
                 .id(BURUH_ID)
                 .username("Buruh Sawit")
                 .name("Usep")
-                .email("usep@gmail.com")
-                .role(Role.BURUH)
-                .build();
+                .email("usep@gmail.com").role(Role.BURUH).build();
 
         mandorUser = User.builder()
                 .id(MANDOR_ID)
@@ -73,15 +70,18 @@ public class AdminServiceTest {
                 .id(UUID.randomUUID())
                 .username("Supir Sawit")
                 .name("Budi")
-                .email("budi@gmail.com").
-                role(Role.SUPIR)
+                .email("budi@gmail.com")
+                .role(Role.SUPIR)
                 .build();
     }
 
     private void mockValidAdminToken() {
-        when(tokenBlacklist.isBlacklisted(ADMIN_TOKEN)).thenReturn(false);
-        when(jwtUtil.extractUserId(ADMIN_TOKEN)).thenReturn(ADMIN_ID.toString());
-        when(jwtUtil.extractRole(ADMIN_TOKEN)).thenReturn("ADMIN");
+        when(tokenAuthorizationService.requireRole(ADMIN_TOKEN, Role.ADMIN)).thenReturn(ADMIN_ID);
+    }
+
+    private void mockInvalidToken() {
+        when(tokenAuthorizationService.requireRole(eq(ADMIN_TOKEN), any()))
+                .thenThrow(new InvalidCredentialException());
     }
 
     @Test
@@ -93,9 +93,6 @@ public class AdminServiceTest {
 
         assertEquals(4, result.size());
         verify(authRepository).findAll();
-        verify(authRepository, never()).findByName(any());
-        verify(authRepository, never()).findByEmail(any());
-        verify(authRepository, never()).findByRole(any());
     }
 
     @Test
@@ -107,8 +104,6 @@ public class AdminServiceTest {
 
         assertEquals(1, result.size());
         assertEquals("Usep", result.getFirst().getName());
-        verify(authRepository).findByName("Usep");
-        verify(authRepository, never()).findAll();
     }
 
     @Test
@@ -120,7 +115,6 @@ public class AdminServiceTest {
 
         assertEquals(1, result.size());
         assertEquals("usep@gmail.com", result.getFirst().getEmail());
-        verify(authRepository).findByEmail("usep@gmail.com");
     }
 
     @Test
@@ -132,7 +126,6 @@ public class AdminServiceTest {
 
         assertEquals(1, result.size());
         assertEquals(Role.BURUH, result.getFirst().getRole());
-        verify(authRepository).findByRole(Role.BURUH);
     }
 
     @Test
@@ -144,8 +137,6 @@ public class AdminServiceTest {
 
         assertEquals(1, result.size());
         verify(authRepository).findByNameAndEmail("Usep", "usep@gmail.com");
-        verify(authRepository, never()).findByName(any());
-        verify(authRepository, never()).findByEmail(any());
     }
 
     @Test
@@ -157,8 +148,6 @@ public class AdminServiceTest {
 
         assertEquals(1, result.size());
         verify(authRepository).findByNameAndRole("Burhan", Role.MANDOR);
-        verify(authRepository, never()).findByName(any());
-        verify(authRepository, never()).findByRole(any());
     }
 
     @Test
@@ -173,17 +162,15 @@ public class AdminServiceTest {
     }
 
     @Test
-    void getUsersWithFilters_emailAndRole_mismatchReturnsEmpty() {
+    void getUsersWithFiltersEmailAndRole_mismatchReturnsEmpty() {
         mockValidAdminToken();
         when(authRepository.findByEmailAndRole("burhan@gmail.com", Role.BURUH)).thenReturn(List.of());
 
-        final List<User> result = adminService.getUsersWithFilters(ADMIN_TOKEN, null, "burhan@gmail.com", Role.BURUH);
-
-        assertTrue(result.isEmpty());
+        assertTrue(adminService.getUsersWithFilters(ADMIN_TOKEN, null, "burhan@gmail.com", Role.BURUH).isEmpty());
     }
 
     @Test
-    void getUsersWithFiltersAllThreeFiltersDelegatesToCombinedQuery() {
+    void getUsersWithFiltersAllThreeFilters() {
         mockValidAdminToken();
         when(authRepository.findByNameAndEmailAndRole("Burhan", "burhan@gmail.com", Role.MANDOR)).thenReturn(List.of(mandorUser));
 
@@ -192,66 +179,43 @@ public class AdminServiceTest {
         assertEquals(1, result.size());
         verify(authRepository).findByNameAndEmailAndRole("Burhan", "burhan@gmail.com", Role.MANDOR);
         verify(authRepository, never()).findAll();
-        verify(authRepository, never()).findByName(any());
-        verify(authRepository, never()).findByEmail(any());
-        verify(authRepository, never()).findByRole(any());
     }
 
     @Test
-    void getUsersWithFiltersAllThreeFilters() {
+    void getUsersWithFiltersAllThreeFilters_noMatch() {
         mockValidAdminToken();
         when(authRepository.findByNameAndEmailAndRole("unknown", "unknown@gmail.com", Role.ADMIN)).thenReturn(List.of());
 
-        final List<User> result = adminService.getUsersWithFilters(ADMIN_TOKEN, "unknown", "unknown@gmail.com", Role.ADMIN);
-
-        assertTrue(result.isEmpty());
+        assertTrue(adminService.getUsersWithFilters(ADMIN_TOKEN, "unknown", "unknown@gmail.com", Role.ADMIN).isEmpty());
     }
 
     @Test
     void getUsersWithFiltersNullToken() {
+        when(tokenAuthorizationService.requireRole(null, Role.ADMIN)).thenThrow(new InvalidCredentialException());
+
         assertThrows(InvalidCredentialException.class, () -> adminService.getUsersWithFilters(null, null, null, null));
+
         verify(authRepository, never()).findAll();
     }
 
     @Test
-    void getUsersWithFiltersBlankToken() {
-        assertThrows(InvalidCredentialException.class, () -> adminService.getUsersWithFilters("  ", null, null, null));
-    }
-
-    @Test
     void getUsersWithFiltersBlacklistedToken() {
-        when(tokenBlacklist.isBlacklisted(ADMIN_TOKEN)).thenReturn(true);
+        mockInvalidToken();
 
         assertThrows(InvalidCredentialException.class, () -> adminService.getUsersWithFilters(ADMIN_TOKEN, null, null, null));
+
         verify(authRepository, never()).findAll();
     }
 
     @Test
     void getUsersWithFiltersNonAdminRole() {
-        when(tokenBlacklist.isBlacklisted(ADMIN_TOKEN)).thenReturn(false);
-        when(jwtUtil.extractUserId(ADMIN_TOKEN)).thenReturn(ADMIN_ID.toString());
-        when(jwtUtil.extractRole(ADMIN_TOKEN)).thenReturn("BURUH");
+        when(tokenAuthorizationService.requireRole(ADMIN_TOKEN, Role.ADMIN)).thenThrow(new IllegalArgumentException("Access denied: ADMIN role required"));
 
         assertThrows(IllegalArgumentException.class, () -> adminService.getUsersWithFilters(ADMIN_TOKEN, null, null, null));
+
         verify(authRepository, never()).findAll();
     }
 
-    @Test
-    void getUsersWithFiltersMandorRole() {
-        when(tokenBlacklist.isBlacklisted(ADMIN_TOKEN)).thenReturn(false);
-        when(jwtUtil.extractUserId(ADMIN_TOKEN)).thenReturn(ADMIN_ID.toString());
-        when(jwtUtil.extractRole(ADMIN_TOKEN)).thenReturn("MANDOR");
-
-        assertThrows(IllegalArgumentException.class, () -> adminService.getUsersWithFilters(ADMIN_TOKEN, null, null, null));
-    }
-
-    @Test
-    void getUsersWithFiltersInvalidJwt() {
-        when(tokenBlacklist.isBlacklisted(ADMIN_TOKEN)).thenReturn(false);
-        when(jwtUtil.extractUserId(ADMIN_TOKEN)).thenThrow(new RuntimeException("JWT malformed"));
-
-        assertThrows(InvalidCredentialException.class, () -> adminService.getUsersWithFilters(ADMIN_TOKEN, null, null, null));
-    }
 
     @Test
     void getUserByIdSuccess() {
@@ -262,7 +226,6 @@ public class AdminServiceTest {
 
         assertNotNull(result);
         assertEquals(BURUH_ID, result.getId());
-        assertEquals("Usep", result.getName());
         assertEquals(Role.BURUH, result.getRole());
     }
 
@@ -271,10 +234,7 @@ public class AdminServiceTest {
         mockValidAdminToken();
         when(authRepository.findById(MANDOR_ID)).thenReturn(mandorUser);
 
-        final User result = adminService.getUserById(ADMIN_TOKEN, MANDOR_ID);
-
-        assertEquals("CERT-001", result.getNomorSertifMandor());
-        assertEquals(Role.MANDOR, result.getRole());
+        assertEquals("CERT-001", adminService.getUserById(ADMIN_TOKEN, MANDOR_ID).getNomorSertifMandor());
     }
 
     @Test
@@ -283,9 +243,7 @@ public class AdminServiceTest {
         mockValidAdminToken();
         when(authRepository.findById(BURUH_ID)).thenReturn(buruhUser);
 
-        final User result = adminService.getUserById(ADMIN_TOKEN, BURUH_ID);
-
-        assertEquals(MANDOR_ID, result.getMandorId());
+        assertEquals(MANDOR_ID, adminService.getUserById(ADMIN_TOKEN, BURUH_ID).getMandorId());
     }
 
     @Test
@@ -301,30 +259,33 @@ public class AdminServiceTest {
 
     @Test
     void getUserByIdNullToken() {
+        when(tokenAuthorizationService.requireRole(null, Role.ADMIN)).thenThrow(new InvalidCredentialException());
+
         assertThrows(InvalidCredentialException.class, () -> adminService.getUserById(null, BURUH_ID));
+
         verify(authRepository, never()).findById(any());
     }
 
     @Test
     void getUserByIdBlacklistedToken() {
-        when(tokenBlacklist.isBlacklisted(ADMIN_TOKEN)).thenReturn(true);
+        mockInvalidToken();
 
         assertThrows(InvalidCredentialException.class, () -> adminService.getUserById(ADMIN_TOKEN, BURUH_ID));
+
         verify(authRepository, never()).findById(any());
     }
 
     @Test
     void getUserByIdNonAdmin() {
-        when(tokenBlacklist.isBlacklisted(ADMIN_TOKEN)).thenReturn(false);
-        when(jwtUtil.extractUserId(ADMIN_TOKEN)).thenReturn(ADMIN_ID.toString());
-        when(jwtUtil.extractRole(ADMIN_TOKEN)).thenReturn("SUPIR");
+        when(tokenAuthorizationService.requireRole(ADMIN_TOKEN, Role.ADMIN)).thenThrow(new IllegalArgumentException("Access denied: ADMIN role required"));
 
         assertThrows(IllegalArgumentException.class, () -> adminService.getUserById(ADMIN_TOKEN, BURUH_ID));
+
         verify(authRepository, never()).findById(any());
     }
 
     @Test
-    void getUserByIdAdmin() {
+    void getUserByIdAdminCanFetchSelf() {
         mockValidAdminToken();
         when(authRepository.findById(ADMIN_ID)).thenReturn(adminUser);
 

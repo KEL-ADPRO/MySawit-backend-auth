@@ -28,6 +28,12 @@ public class AdminServiceTest {
     @Mock
     private AuthRepository authRepository;
 
+    @Mock
+    private AuthResponseMapper authResponseMapper;
+
+    @Mock
+    private AdminValidator adminValidator;
+
     @InjectMocks
     private AdminServiceImpl adminService;
 

@@ -18,10 +18,15 @@ public class AuthStrategyFactory {
     }
 
     public AuthStrategy resolve(final AuthProvider provider) {
+        if (provider == null) {
+            throw new IllegalArgumentException("Provider cannot be null");
+        }
+
         final AuthStrategy strategy = strategies.get(provider);
         if (strategy == null) {
             throw new IllegalArgumentException("No strategy registered for provider: " + provider);
         }
+
         return strategy;
     }
 }

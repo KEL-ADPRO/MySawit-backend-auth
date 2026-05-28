@@ -11,4 +11,10 @@ public interface RefreshTokenRepository {
     RefreshToken findByToken(String token);
 
     void deleteByUserId(UUID userId);
+
+    void deleteByToken(String token);
+
+    void deleteExpired(Instant now);
+
+    void delete(RefreshToken token);
 }

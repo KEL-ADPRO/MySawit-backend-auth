@@ -26,8 +26,6 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     @Override
     @Transactional
     public RefreshToken createRefreshToken(final User user) {
-        refreshTokenRepository.deleteByUserId(user.getId());
-
         final String rawToken = generateToken();
         final Instant now = Instant.now();
 
@@ -45,11 +43,22 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     public RefreshToken validateAndGet(final String rawToken) {
         final RefreshToken token = refreshTokenRepository.findByToken(rawToken);
 
-        if (token == null || token.getExpiresAt().isBefore(Instant.now())) {
+        if (token == null) {
+            throw new InvalidCredentialException();
+        }
+
+        if (token.getExpiresAt().isBefore(Instant.now())) {
+            refreshTokenRepository.delete(token);
             throw new InvalidCredentialException();
         }
 
         return token;
+    }
+
+    @Override
+    @Transactional
+    public void deleteByToken(final String token) {
+        refreshTokenRepository.deleteByToken(token);
     }
 
     private String generateToken() {

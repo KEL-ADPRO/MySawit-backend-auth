@@ -109,4 +109,51 @@ public class RefreshTokenRepositoryTest {
         assertDoesNotThrow(() -> refreshTokenRepository.deleteByUserId(unknownId));
         verify(typedQuery).executeUpdate();
     }
+
+    @Test
+    void deleteByTokenSuccess() {
+        when(entityManager.createQuery(any(String.class))).thenReturn(typedQuery);
+        when(typedQuery.setParameter("token", TOKEN_VALUE)).thenReturn(typedQuery);
+        when(typedQuery.executeUpdate()).thenReturn(1);
+
+        refreshTokenRepository.deleteByToken(TOKEN_VALUE);
+
+        verify(entityManager, times(1)).createQuery(any(String.class));
+        verify(typedQuery, times(1)).setParameter("token", TOKEN_VALUE);
+        verify(typedQuery, times(1)).executeUpdate();
+    }
+
+    @Test
+    void deleteExpiredSuccess() {
+        Instant now = Instant.now();
+        when(entityManager.createQuery(any(String.class))).thenReturn(typedQuery);
+        when(typedQuery.setParameter("now", now)).thenReturn(typedQuery);
+        when(typedQuery.executeUpdate()).thenReturn(5);
+
+        refreshTokenRepository.deleteExpired(now);
+
+        verify(entityManager, times(1)).createQuery(any(String.class));
+        verify(typedQuery, times(1)).setParameter("now", now);
+        verify(typedQuery, times(1)).executeUpdate();
+    }
+
+    @Test
+    void deleteSuccessWhenContains() {
+        when(entityManager.contains(refreshToken)).thenReturn(true);
+
+        refreshTokenRepository.delete(refreshToken);
+
+        verify(entityManager, times(1)).remove(refreshToken);
+    }
+
+    @Test
+    void deleteSuccessWhenNotContains() {
+        when(entityManager.contains(refreshToken)).thenReturn(false);
+        when(entityManager.merge(refreshToken)).thenReturn(refreshToken);
+
+        refreshTokenRepository.delete(refreshToken);
+
+        verify(entityManager, times(1)).merge(refreshToken);
+        verify(entityManager, times(1)).remove(refreshToken);
+    }
 }

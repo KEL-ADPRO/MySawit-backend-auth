@@ -7,7 +7,9 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "refresh_tokens")
+@Table(name = "refresh_tokens", indexes = {
+        @Index(name = "idx_userId", columnList = "userId")
+})
 @Getter
 @Setter
 @Builder
@@ -22,7 +24,7 @@ public class RefreshToken {
     @Column(nullable = false, unique = true, length = 512)
     private String token;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private UUID userId;
 
     @Column(nullable = false)

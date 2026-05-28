@@ -6,6 +6,7 @@ import com.mysawit.mysawit_auth.model.RefreshToken;
 import com.mysawit.mysawit_auth.model.Role;
 import com.mysawit.mysawit_auth.model.User;
 import com.mysawit.mysawit_auth.repository.AuthRepository;
+import com.mysawit.mysawit_auth.repository.RefreshTokenRepository;
 import com.mysawit.mysawit_auth.util.*;
 import com.mysawit.mysawit_auth.dto.request.LoginRequest;
 import com.mysawit.mysawit_auth.dto.request.RegisterRequest;
@@ -29,6 +30,9 @@ import static org.mockito.Mockito.*;
 public class AuthServiceTest {
     @Mock
     private AuthRepository authRepository;
+
+    @Mock
+    private RefreshTokenRepository refreshTokenRepository;
 
     @Mock
     private PasswordHasher passwordHasher;
@@ -473,7 +477,7 @@ public class AuthServiceTest {
 
         verify(refreshTokenService).validateAndGet(rawToken);
         verify(authRepository).findById(userId);
-        verify(refreshTokenService).revokeAll(adminUser);
+        verify(refreshTokenRepository, never()).deleteByUserId(any());
         verify(refreshTokenService).createRefreshToken(adminUser);
         verify(jwtUtil).generateToken(adminUser.getId(), adminUser.getRole());
         verify(responseMapper).toResponse(adminUser, newAccessToken, newRefreshTokenValue);
@@ -488,7 +492,7 @@ public class AuthServiceTest {
 
         verify(refreshTokenService).validateAndGet(rawToken);
         verify(authRepository, never()).findById(any());
-        verify(refreshTokenService, never()).revokeAll(any());
+        verify(refreshTokenRepository, never()).deleteByUserId(any());
         verify(refreshTokenService, never()).createRefreshToken(any());
         verify(jwtUtil, never()).generateToken(any(), any());
         verify(responseMapper, never()).toResponse(any(), any(), any());

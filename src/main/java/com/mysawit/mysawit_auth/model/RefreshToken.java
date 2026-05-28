@@ -8,12 +8,9 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "refresh_tokens", indexes = {
-        @Index(name = "idx_token",      columnList = "token"),
-        @Index(name = "idx_user_id",    columnList = "userId"),
-        @Index(name = "idx_expires_at", columnList = "expiresAt")
+        @Index(name = "idx_userId", columnList = "userId")
 })
 @Getter
-@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -34,4 +31,8 @@ public class RefreshToken {
 
     @Column(nullable = false)
     private Instant createdAt;
+
+    public void setExpiresAt(Instant expiresAt) {
+        this.expiresAt = expiresAt;
+    }
 }

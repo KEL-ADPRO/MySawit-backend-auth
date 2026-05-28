@@ -7,6 +7,7 @@ import com.mysawit.mysawit_auth.mapper.AuthResponseMapper;
 import com.mysawit.mysawit_auth.model.Role;
 import com.mysawit.mysawit_auth.model.User;
 import com.mysawit.mysawit_auth.repository.AuthRepository;
+import com.mysawit.mysawit_auth.repository.RefreshTokenRepository;
 import com.mysawit.mysawit_auth.util.JwtUtil;
 import com.mysawit.mysawit_auth.util.TokenBlacklist;
 import com.mysawit.mysawit_auth.validator.AdminValidator;
@@ -21,6 +22,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class AdminServiceImpl implements AdminService {
     private final AuthRepository authRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
     private final JwtUtil jwtUtil;
     private final TokenBlacklist tokenBlacklist;
     private final AuthResponseMapper responseMapper;
@@ -74,6 +76,7 @@ public class AdminServiceImpl implements AdminService {
                     });
         }
 
+        refreshTokenRepository.deleteByUserId(targetUserId);
         authRepository.delete(targetUserId);
     }
 

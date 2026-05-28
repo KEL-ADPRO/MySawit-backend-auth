@@ -26,9 +26,9 @@ public class RefreshTokenRepositoryImpl implements RefreshTokenRepository {
     @Override
     public RefreshToken findByToken(final String token) {
         final List<RefreshToken> results = entityManager.createQuery(
-                        "SELECT r FROM RefreshToken r " +
-                                "WHERE r.token = :token",
-                        RefreshToken.class)
+                "SELECT r FROM RefreshToken r " +
+                        "WHERE r.token = :token",
+                RefreshToken.class)
                 .setParameter("token", token)
                 .getResultList();
         return results.isEmpty() ? null : results.getFirst();
@@ -42,6 +42,26 @@ public class RefreshTokenRepositoryImpl implements RefreshTokenRepository {
                         "WHERE r.userId = :userId")
                 .setParameter("userId", userId)
                 .executeUpdate();
+    }
+
+    @Override
+    @Transactional
+    public void deleteByToken(final String token) {
+        entityManager.createQuery(
+                "DELETE FROM RefreshToken r " +
+                        "WHERE r.token = :token")
+                .setParameter("token", token)
+                .executeUpdate();
+    }
+
+    @Override
+    @Transactional
+    public void delete(final RefreshToken token) {
+        if (entityManager.contains(token)) {
+            entityManager.remove(token);
+        } else {
+            entityManager.remove(entityManager.merge(token));
+        }
     }
 
     @Override

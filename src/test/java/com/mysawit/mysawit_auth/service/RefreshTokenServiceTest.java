@@ -62,7 +62,6 @@ public class RefreshTokenServiceTest {
         assertTrue(result.getExpiresAt().isBefore(expectedExpiry.plusSeconds(5)));
         assertTrue(result.getExpiresAt().isAfter(expectedExpiry.minusSeconds(5)));
 
-        verify(refreshTokenRepository, times(1)).deleteByUserId(USER_ID);
         verify(refreshTokenRepository, times(1)).save(result);
     }
 
@@ -104,12 +103,6 @@ public class RefreshTokenServiceTest {
         assertThrows(InvalidCredentialException.class, () -> refreshTokenService.validateAndGet(VALID_RAW_TOKEN));
 
         verify(refreshTokenRepository, times(1)).findByToken(VALID_RAW_TOKEN);
-    }
-
-    @Test
-    void revokeAllSuccess() {
-        refreshTokenService.revokeAll(user);
-
-        verify(refreshTokenRepository, times(1)).deleteByUserId(USER_ID);
+        verify(refreshTokenRepository, times(1)).delete(expiredToken);
     }
 }

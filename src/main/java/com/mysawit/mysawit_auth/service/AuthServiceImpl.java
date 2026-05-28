@@ -1,6 +1,6 @@
 package com.mysawit.mysawit_auth.service;
 
-import com.mysawit.mysawit_auth.dto.request.LoginRequest;
+import com.mysawit.mysawit_auth.dto.request.AuthRequest;
 import com.mysawit.mysawit_auth.dto.request.RegisterRequest;
 import com.mysawit.mysawit_auth.dto.response.AuthResponse;
 import com.mysawit.mysawit_auth.exception.InvalidCredentialException;
@@ -24,7 +24,6 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
-
     private final AuthRepository authRepository;
     private final PasswordHasher passwordHasher;
     private final JwtUtil jwtUtil;
@@ -53,8 +52,8 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     @Transactional
-    public AuthResponse login(final LoginRequest request) {
-        final AuthStrategy<LoginRequest> strategy = strategyFactory.resolve(AuthProvider.PASSWORD);
+    public AuthResponse login(final AuthRequest request) {
+        final AuthStrategy strategy = strategyFactory.resolve(AuthProvider.PASSWORD);
         return strategy.authenticate(request);
     }
 

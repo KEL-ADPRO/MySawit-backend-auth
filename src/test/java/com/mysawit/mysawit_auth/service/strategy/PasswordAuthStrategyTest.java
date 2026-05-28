@@ -1,7 +1,6 @@
 package com.mysawit.mysawit_auth.service.strategy;
 
-import com.mysawit.mysawit_auth.dto.request.LoginRequest;
-import com.mysawit.mysawit_auth.dto.request.RegisterRequest;
+import com.mysawit.mysawit_auth.dto.request.AuthRequest;
 import com.mysawit.mysawit_auth.dto.response.AuthResponse;
 import com.mysawit.mysawit_auth.exception.InvalidCredentialException;
 import com.mysawit.mysawit_auth.mapper.AuthResponseMapper;
@@ -51,15 +50,7 @@ public class PasswordAuthStrategyTest {
     @InjectMocks
     private PasswordAuthStrategy passwordAuthStrategy;
 
-    private RegisterRequest adminRequest;
-    private RegisterRequest mandorRequest;
-    private RegisterRequest buruhRequest;
-    private RegisterRequest supirRequest;
     private User adminUser;
-    private AuthResponse adminResponse;
-    private AuthResponse mandorResponse;
-    private AuthResponse buruhResponse;
-    private AuthResponse supirResponse;
 
     @BeforeEach
     void setUp() {
@@ -69,68 +60,6 @@ public class PasswordAuthStrategyTest {
                 .email("admin@gmail.com")
                 .password("hashed_admin123")
                 .role(Role.ADMIN)
-                .build();
-
-        adminRequest = RegisterRequest.builder()
-                .username("Admin Sawit")
-                .name("Agus")
-                .email("admin@gmail.com")
-                .password("admin123")
-                .role(Role.ADMIN)
-                .build();
-
-        mandorRequest = RegisterRequest.builder()
-                .username("Mandor Sawit")
-                .name("Burhan")
-                .email("burhan@gmail.com")
-                .password("mandor123")
-                .role(Role.MANDOR)
-                .nomorSertifMandor("CERT-001")
-                .build();
-
-        buruhRequest = RegisterRequest.builder()
-                .username("Buruh Sawit")
-                .name("Usep")
-                .email("usep@gmail.com")
-                .password("buruh123")
-                .role(Role.BURUH)
-                .build();
-
-        supirRequest = RegisterRequest.builder()
-                .username("Supir Sawit")
-                .name("Budi")
-                .email("budi@gmail.com")
-                .password("supir123")
-                .role(Role.SUPIR)
-                .build();
-
-        adminResponse = AuthResponse.builder()
-                .username("Admin Sawit")
-                .name("Agus")
-                .email("admin@gmail.com")
-                .role(Role.ADMIN)
-                .build();
-
-        mandorResponse = AuthResponse.builder()
-                .username("Mandor Sawit")
-                .name("Burhan")
-                .email("burhan@gmail.com")
-                .role(Role.MANDOR)
-                .nomorSertifMandor("CERT-001")
-                .build();
-
-        buruhResponse = AuthResponse.builder()
-                .username("Buruh Sawit")
-                .name("Usep")
-                .email("usep@gmail.com")
-                .role(Role.BURUH)
-                .build();
-
-        supirResponse = AuthResponse.builder()
-                .username("Supir Sawit")
-                .name("Budi")
-                .email("budi@gmail.com")
-                .role(Role.SUPIR)
                 .build();
     }
 
@@ -153,7 +82,7 @@ public class PasswordAuthStrategyTest {
         when(refreshTokenService.createRefreshToken(adminUser)).thenReturn(refreshToken);
         when(responseMapper.toResponse(any(User.class), any(), any())).thenReturn(loginResponse);
 
-        final LoginRequest request = LoginRequest.builder()
+        final AuthRequest request = AuthRequest.builder()
                 .email("admin@gmail.com")
                 .password("admin123")
                 .build();
@@ -183,7 +112,7 @@ public class PasswordAuthStrategyTest {
     void authenticateUnknownEmail() {
         when(authRepository.findByEmail("unknownUser@gmail.com")).thenReturn( Optional.empty());
 
-        final LoginRequest request = LoginRequest.builder()
+        final AuthRequest request = AuthRequest.builder()
                 .email("unknownUser@gmail.com")
                 .password("unknownPassword")
                 .build();
@@ -198,7 +127,7 @@ public class PasswordAuthStrategyTest {
 
     @Test
     void authenticateBlankEmail() {
-        final LoginRequest request = LoginRequest.builder()
+        final AuthRequest request = AuthRequest.builder()
                 .email("  ")
                 .password("admin123")
                 .build();
@@ -211,7 +140,7 @@ public class PasswordAuthStrategyTest {
 
     @Test
     void authenticateNullEmail() {
-        final LoginRequest request = LoginRequest.builder()
+        final AuthRequest request = AuthRequest.builder()
                 .email(null)
                 .password("admin123")
                 .build();
@@ -224,7 +153,7 @@ public class PasswordAuthStrategyTest {
 
     @Test
     void authenticateBlankPassword() {
-        final LoginRequest request = LoginRequest.builder()
+        final AuthRequest request = AuthRequest.builder()
                 .email("admin@gmail.com")
                 .password("")
                 .build();
@@ -237,7 +166,7 @@ public class PasswordAuthStrategyTest {
 
     @Test
     void authenticateNullPassword() {
-        final LoginRequest request = LoginRequest.builder()
+        final AuthRequest request = AuthRequest.builder()
                 .email("admin@gmail.com")
                 .password(null)
                 .build();
@@ -253,7 +182,7 @@ public class PasswordAuthStrategyTest {
         when(authRepository.findByEmail("admin@gmail.com")).thenReturn(Optional.ofNullable(adminUser));
         when(passwordHasher.matches("wrongPassword", "hashed_admin123")).thenReturn(false);
 
-        final LoginRequest request = LoginRequest.builder()
+        final AuthRequest request = AuthRequest.builder()
                 .email("admin@gmail.com")
                 .password("wrongPassword")
                 .build();
@@ -279,7 +208,7 @@ public class PasswordAuthStrategyTest {
 
         when(authRepository.findByEmail("google@gmail.com")).thenReturn(Optional.ofNullable(googleOnlyUser));
 
-        final LoginRequest request = LoginRequest.builder()
+        final AuthRequest request = AuthRequest.builder()
                 .email("google@gmail.com")
                 .password("somepassword")
                 .build();
@@ -303,7 +232,7 @@ public class PasswordAuthStrategyTest {
 
         when(authRepository.findByEmail("broken@gmail.com")).thenReturn(Optional.ofNullable(corruptedUser));
 
-        final LoginRequest request = LoginRequest.builder()
+        final AuthRequest request = AuthRequest.builder()
                 .email("broken@gmail.com")
                 .password("anything")
                 .build();

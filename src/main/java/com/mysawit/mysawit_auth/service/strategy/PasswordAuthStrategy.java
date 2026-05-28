@@ -1,6 +1,6 @@
 package com.mysawit.mysawit_auth.service.strategy;
 
-import com.mysawit.mysawit_auth.dto.request.LoginRequest;
+import com.mysawit.mysawit_auth.dto.request.AuthRequest;
 import com.mysawit.mysawit_auth.dto.response.AuthResponse;
 import com.mysawit.mysawit_auth.exception.InvalidCredentialException;
 import com.mysawit.mysawit_auth.mapper.AuthResponseMapper;
@@ -12,15 +12,15 @@ import com.mysawit.mysawit_auth.service.LoginAttemptService;
 import com.mysawit.mysawit_auth.service.RefreshTokenService;
 import com.mysawit.mysawit_auth.util.JwtUtil;
 import com.mysawit.mysawit_auth.util.PasswordHasher;
-import jakarta.transaction.Transactional;
-import lombok.RequiredArgsConstructor;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
+import lombok.RequiredArgsConstructor;
 
 import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
-public class PasswordAuthStrategy implements AuthStrategy<LoginRequest> {
+public class PasswordAuthStrategy implements AuthStrategy {
     private final AuthRepository authRepository;
     private final PasswordHasher passwordHasher;
     private final JwtUtil jwtUtil;
@@ -30,7 +30,7 @@ public class PasswordAuthStrategy implements AuthStrategy<LoginRequest> {
 
     @Override
     @Transactional
-    public AuthResponse authenticate(final LoginRequest request) {
+    public AuthResponse authenticate(final AuthRequest request) {
         if (request == null
                 || request.getEmail() == null || request.getEmail().isBlank()
                 || request.getPassword() == null || request.getPassword().isBlank()) {

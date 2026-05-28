@@ -1,5 +1,6 @@
 package com.mysawit.mysawit_auth.service;
 
+import com.mysawit.mysawit_auth.dto.request.AuthRequest;
 import com.mysawit.mysawit_auth.exception.InvalidCredentialException;
 import com.mysawit.mysawit_auth.mapper.AuthResponseMapper;
 import com.mysawit.mysawit_auth.model.AuthProvider;
@@ -10,7 +11,6 @@ import com.mysawit.mysawit_auth.repository.AuthRepository;
 import com.mysawit.mysawit_auth.service.strategy.AuthStrategy;
 import com.mysawit.mysawit_auth.service.strategy.AuthStrategyFactory;
 import com.mysawit.mysawit_auth.util.*;
-import com.mysawit.mysawit_auth.dto.request.LoginRequest;
 import com.mysawit.mysawit_auth.dto.request.RegisterRequest;
 import com.mysawit.mysawit_auth.dto.response.AuthResponse;
 import com.mysawit.mysawit_auth.validator.RegistrationValidator;
@@ -21,7 +21,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -49,16 +48,13 @@ public class AuthServiceTest {
     private AuthResponseMapper responseMapper;
 
     @Mock
-    private LoginAttemptService loginAttemptService;
-
-    @Mock
     private RefreshTokenService refreshTokenService;
 
     @Mock
     private AuthStrategyFactory strategyFactory;
 
     @Mock
-    private AuthStrategy<LoginRequest> passwordStrategy;
+    private AuthStrategy passwordStrategy;
 
     @InjectMocks
     private AuthServiceImpl authService;
@@ -222,13 +218,13 @@ public class AuthServiceTest {
                 .role(Role.ADMIN)
                 .build();
 
-        final LoginRequest request = LoginRequest.builder()
+        final AuthRequest request = AuthRequest.builder()
                 .email("admin@gmail.com")
                 .password("admin123")
                 .build();
 
         doReturn(passwordStrategy).when(strategyFactory).resolve(AuthProvider.PASSWORD);
-        when(passwordStrategy.authenticate(any(LoginRequest.class))).thenReturn(loginResponse);
+        when(passwordStrategy.authenticate(any(AuthRequest.class))).thenReturn(loginResponse);
 
         final AuthResponse response = authService.login(request);
 
@@ -240,7 +236,7 @@ public class AuthServiceTest {
         assertEquals(Role.ADMIN, response.getRole());
 
         verify(strategyFactory).resolve(AuthProvider.PASSWORD);
-        verify(passwordStrategy).authenticate(any(LoginRequest.class));
+        verify(passwordStrategy).authenticate(any(AuthRequest.class));
     }
 
     @Test

@@ -17,30 +17,28 @@ import java.util.Map;
 public class GoogleTokenVerifier {
     private static final String GOOGLE_TOKENINFO_URL = "https://oauth2.googleapis.com/tokeninfo?id_token=";
 
-    @Value("${google.client-id}")
-    private String expectedClientId;
-
+    private final String expectedClientId;
     private final RestTemplate restTemplate;
 
-    public GoogleTokenVerifier() {
-        this.restTemplate = new RestTemplate();
-    }
-
-    public GoogleTokenVerifier(final RestTemplate restTemplate, final String expectedClientId) {
+    public GoogleTokenVerifier(
+            final RestTemplate restTemplate,
+            @Value("${google.client-id}") final String expectedClientId) {
         this.restTemplate = restTemplate;
         this.expectedClientId = expectedClientId;
     }
 
     public GoogleUserInfo verify(final String idToken) {
-        final Map<String, String> payload = fetchPayload(idToken);
+        final Map<String, Object> payload = fetchPayload(idToken);
         validateAudience(payload);
 
-        final String googleId = payload.get("sub");
-        final String email = payload.get("email");
-        final String name = payload.getOrDefault("name", email);
+        final String googleId = ObjectUtils.toString(payload.get("sub"));
+        final String email = ObjectUtils.toString(payload.get("email"));
 
-        if (googleId == null || googleId.isBlank() || email == null || email.isBlank()) {
-            throw new IllegalArgumentException("Google token is missing required fields");
+        Object nameObj = payload.get("name");
+        final String name = (nameObj != null) ? nameObj.toString() : email;
+
+        if (googleId.isBlank() || email.isBlank()) {
+            throw new IllegalArgumentException("Google token is missing required fields (sub or email)");
         }
 
         return GoogleUserInfo.builder()
@@ -50,30 +48,31 @@ public class GoogleTokenVerifier {
                 .build();
     }
 
-    private Map<String, String> fetchPayload(final String idToken) {
+    private Map<String, Object> fetchPayload(final String idToken) {
         try {
-            final ResponseEntity<Map<String, String>> response = restTemplate.exchange(
+            final ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
                     GOOGLE_TOKENINFO_URL + idToken,
                     HttpMethod.GET,
                     null,
-                    new ParameterizedTypeReference<>() {}
+                    new ParameterizedTypeReference<>() {
+                    }
             );
 
             if (response.getBody() == null) {
-                throw new IllegalArgumentException("Empty response");
+                throw new IllegalArgumentException("Empty response body from Google API");
             }
 
             return response.getBody();
         } catch (RestClientException e) {
-            throw new IllegalArgumentException("Invalid Google ID token", e);
+            throw new IllegalArgumentException("Invalid Google ID token connection error", e);
         }
     }
 
-    private void validateAudience(final Map<String, String> payload) {
-        final String aud = payload.get("aud");
+    private void validateAudience(final Map<String, Object> payload) {
+        final String aud = ObjectUtils.toString(payload.get("aud"));
 
-        if (aud == null || aud.isBlank()) {
-            throw new IllegalArgumentException("Google token audience is missing");
+        if (aud.isBlank()) {
+            throw new IllegalArgumentException("Google token audience (aud) is missing");
         }
 
         final List<String> expectedIds = Arrays.asList(expectedClientId.split("\\s*,\\s*"));
@@ -82,6 +81,12 @@ public class GoogleTokenVerifier {
 
         if (!isMatch) {
             throw new IllegalArgumentException("Google token audience does not match this application");
+        }
+    }
+
+    private static class ObjectUtils {
+        public static String toString(Object obj) {
+            return (obj == null) ? "" : obj.toString().trim();
         }
     }
 }

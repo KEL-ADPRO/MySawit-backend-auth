@@ -1,84 +1,23 @@
 package com.mysawit.mysawit_auth.service;
 
-import com.mysawit.mysawit_auth.dto.request.GoogleAuthRequest;
-import com.mysawit.mysawit_auth.dto.GoogleUserInfo;
+import com.mysawit.mysawit_auth.dto.request.AuthRequest;
 import com.mysawit.mysawit_auth.dto.response.AuthResponse;
-import com.mysawit.mysawit_auth.exception.EmailAlreadyExistsException;
-import com.mysawit.mysawit_auth.mapper.AuthResponseMapper;
 import com.mysawit.mysawit_auth.model.AuthProvider;
-import com.mysawit.mysawit_auth.model.RefreshToken;
-import com.mysawit.mysawit_auth.model.User;
-import com.mysawit.mysawit_auth.repository.AuthRepository;
 import com.mysawit.mysawit_auth.service.strategy.AuthStrategy;
-import com.mysawit.mysawit_auth.util.GoogleTokenVerifier;
-import com.mysawit.mysawit_auth.util.JwtUtil;
-import com.mysawit.mysawit_auth.validator.RegistrationValidator;
-import jakarta.transaction.Transactional;
-import lombok.RequiredArgsConstructor;
+import com.mysawit.mysawit_auth.service.strategy.AuthStrategyFactory;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
-
-import java.util.Optional;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-public class GoogleAuthServiceImpl implements GoogleAuthService, AuthStrategy<GoogleAuthRequest> {
-    private final AuthRepository authRepository;
-    private final GoogleTokenVerifier googleTokenVerifier;
-    private final JwtUtil jwtUtil;
-    private final RegistrationValidator registrationValidator;
-    private final AuthResponseMapper responseMapper;
-    private final RefreshTokenService refreshTokenService;
+public class GoogleAuthServiceImpl implements GoogleAuthService {
+    private final AuthStrategyFactory strategyFactory;
 
     @Override
     @Transactional
-    public AuthResponse loginOrRegister(final GoogleAuthRequest request) {
-        final GoogleUserInfo userInfo = googleTokenVerifier.verify(request.getIdToken());
-        User user = authRepository.findByGoogleId(userInfo.getGoogleId());
-
-        if (user == null) {
-            user = resolveByEmailOrCreate(request, userInfo);
-        }
-
-        final String accessToken = jwtUtil.generateToken(user.getId(), user.getRole());
-        final RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
-        return responseMapper.toResponse(user, accessToken, refreshToken.getToken());
+    public AuthResponse loginOrRegister(final AuthRequest request) {
+        final AuthStrategy strategy = strategyFactory.resolve(AuthProvider.GOOGLE);
+        return strategy.authenticate(request);
     }
-
-    @Override
-    @Transactional
-    public AuthResponse authenticate(GoogleAuthRequest request) {
-        return this.loginOrRegister(request);
-    }
-
-    @Override
-    public AuthProvider getProviderType() {
-        return AuthProvider.GOOGLE;
-    }
-
-    private User resolveByEmailOrCreate(final GoogleAuthRequest request, final GoogleUserInfo userInfo) {
-        final Optional<User> existingByEmail = authRepository.findByEmail(userInfo.getEmail());
-        if (existingByEmail.isPresent()) {
-            throw new EmailAlreadyExistsException(userInfo.getEmail());
-        }
-        return createNewUser(request, userInfo);
-    }
-
-    private User createNewUser(final GoogleAuthRequest request, final GoogleUserInfo userInfo) {
-        registrationValidator.validateRequiredFields(request.getUsername(), userInfo.getName(), userInfo.getEmail(), request.getRole());
-        registrationValidator.assertEmailUnique(userInfo.getEmail());
-        registrationValidator.assertMandorCertPresent(request.getRole(), request.getNomorSertifMandor());
-
-        final User newUser = User.builder()
-                .googleId(userInfo.getGoogleId())
-                .email(userInfo.getEmail())
-                .password(null)
-                .name(userInfo.getName())
-                .username(request.getUsername())
-                .role(request.getRole())
-                .nomorSertifMandor(request.getNomorSertifMandor())
-                .build();
-
-        return authRepository.save(newUser);
-    }
-
 }

@@ -38,16 +38,11 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<AuthResponse>> login(
             @Valid @RequestBody final LoginRequest request) {
-        final AuthStrategy<LoginRequest> strategy = strategyFactory.resolve(AuthProvider.PASSWORD);
-        final AuthResponse authResponse = strategy.authenticate(request);
+        final AuthResponse authResponse = authService.login(request);
 
-        String accessCookie = cookieUtil.addAuthCookie(authResponse.getToken());
-        String refreshCookie = cookieUtil.addRefreshCookie(authResponse.getRefreshToken());
-
-        return ResponseEntity
-                .ok()
-                .header(HttpHeaders.SET_COOKIE, accessCookie)
-                .header(HttpHeaders.SET_COOKIE, refreshCookie)
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, cookieUtil.addAuthCookie(authResponse.getToken()))
+                .header(HttpHeaders.SET_COOKIE, cookieUtil.addRefreshCookie(authResponse.getRefreshToken()))
                 .body(ApiResponse.successResponse("Login successful", authResponse));
     }
 

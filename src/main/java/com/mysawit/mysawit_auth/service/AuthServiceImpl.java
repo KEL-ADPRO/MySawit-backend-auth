@@ -10,6 +10,7 @@ import com.mysawit.mysawit_auth.model.RefreshToken;
 import com.mysawit.mysawit_auth.model.User;
 import com.mysawit.mysawit_auth.repository.AuthRepository;
 import com.mysawit.mysawit_auth.service.strategy.AuthStrategy;
+import com.mysawit.mysawit_auth.service.strategy.AuthStrategyFactory;
 import com.mysawit.mysawit_auth.util.JwtUtil;
 import com.mysawit.mysawit_auth.util.PasswordHasher;
 import com.mysawit.mysawit_auth.util.TokenBlacklist;
@@ -18,12 +19,11 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-public class AuthServiceImpl implements AuthService, AuthStrategy<LoginRequest> {
+public class AuthServiceImpl implements AuthService {
 
     private final AuthRepository authRepository;
     private final PasswordHasher passwordHasher;
@@ -31,8 +31,8 @@ public class AuthServiceImpl implements AuthService, AuthStrategy<LoginRequest> 
     private final TokenBlacklist tokenBlacklist;
     private final RegistrationValidator registrationValidator;
     private final AuthResponseMapper responseMapper;
-    private final LoginAttemptService loginAttemptService;
     private final RefreshTokenService refreshTokenService;
+    private final AuthStrategyFactory strategyFactory;
 
     @Override
     @Transactional
@@ -54,32 +54,8 @@ public class AuthServiceImpl implements AuthService, AuthStrategy<LoginRequest> 
     @Override
     @Transactional
     public AuthResponse login(final LoginRequest request) {
-        if (request == null || isBlank(request.getEmail()) || isBlank(request.getPassword())) {
-            throw new InvalidCredentialException();
-        }
-
-        loginAttemptService.assertNotLocked(request.getEmail());
-
-        final Optional<User> user = authRepository.findByEmail(request.getEmail());
-        if (user.isEmpty()) {
-            loginAttemptService.recordFailure(request.getEmail());
-            throw new InvalidCredentialException();
-        }
-
-        if (user.get().getGoogleId() != null) {
-            throw new IllegalArgumentException("This account uses Google login. Please sign in with Google.");
-        }
-
-        if (!passwordHasher.matches(request.getPassword(), user.get().getPassword())) {
-            loginAttemptService.recordFailure(request.getEmail());
-            throw new InvalidCredentialException();
-        }
-
-        loginAttemptService.recordSuccess(request.getEmail());
-
-        final String accessToken = jwtUtil.generateToken(user.get().getId(), user.get().getRole());
-        final RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.get());
-        return responseMapper.toResponse(user.get(), accessToken, refreshToken.getToken());
+        final AuthStrategy<LoginRequest> strategy = strategyFactory.resolve(AuthProvider.PASSWORD);
+        return strategy.authenticate(request);
     }
 
     @Override
@@ -125,9 +101,7 @@ public class AuthServiceImpl implements AuthService, AuthStrategy<LoginRequest> 
                 refreshTokenService.revokeAll(user);
             }
         } catch (Exception exception) {
-            final InvalidCredentialException thrownException = new InvalidCredentialException();
-            thrownException.initCause(exception);
-            throw thrownException;
+            throw (InvalidCredentialException) new InvalidCredentialException().initCause(exception);
         }
 
         tokenBlacklist.blacklist(token);
@@ -147,17 +121,6 @@ public class AuthServiceImpl implements AuthService, AuthStrategy<LoginRequest> 
         return responseMapper.toResponse(user, newAccessToken, newRefreshToken.getToken());
     }
 
-    @Override
-    @Transactional
-    public AuthResponse authenticate(final LoginRequest request) {
-        return this.login(request);
-    }
-
-    @Override
-    public AuthProvider getProviderType() {
-        return AuthProvider.PASSWORD;
-    }
-
     private User buildUser(final RegisterRequest request) {
         return User.builder()
                 .username(request.getUsername())
@@ -167,9 +130,5 @@ public class AuthServiceImpl implements AuthService, AuthStrategy<LoginRequest> 
                 .role(request.getRole())
                 .nomorSertifMandor(request.getNomorSertifMandor())
                 .build();
-    }
-
-    private boolean isBlank(final String value) {
-        return value == null || value.isBlank();
     }
 }

@@ -9,6 +9,7 @@ import com.mysawit.mysawit_auth.model.User;
 import com.mysawit.mysawit_auth.service.AdminService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,11 +23,10 @@ import java.util.UUID;
 public class AdminController {
     private final AdminService adminService;
     private final AuthResponseMapper responseMapper;
-    private final String HEADER_AUTHORIZATION = "Authorization";
 
     @GetMapping("/users")
     public ResponseEntity<ApiResponse<List<AuthResponse>>> getUsers(
-            @RequestHeader(value = HEADER_AUTHORIZATION, required = false) final String authHeader,
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) final String authHeader,
             @RequestParam(required = false) final String name,
             @RequestParam(required = false) final String email,
             @RequestParam(required = false) final String role) {
@@ -44,7 +44,7 @@ public class AdminController {
 
     @GetMapping("/users/{userId}")
     public ResponseEntity<ApiResponse<AuthResponse>> getUserById(
-            @RequestHeader(value = HEADER_AUTHORIZATION, required = false) final String authHeader,
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) final String authHeader,
             @PathVariable final UUID userId) {
 
         final String token = extractBearer(authHeader);
@@ -54,7 +54,7 @@ public class AdminController {
 
     @PutMapping("/buruh/{buruhId}/assign")
     public ResponseEntity<ApiResponse<AuthResponse>> assignBuruh(
-            @RequestHeader(value = HEADER_AUTHORIZATION, required = false) final String authHeader,
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) final String authHeader,
             @PathVariable final UUID buruhId,
             @Valid @RequestBody final AssignRequest request) {
         final String token = extractBearer(authHeader);
@@ -64,7 +64,7 @@ public class AdminController {
 
     @DeleteMapping("/buruh/{buruhId}/assign")
     public ResponseEntity<ApiResponse<AuthResponse>> unassignBuruh(
-            @RequestHeader(value = HEADER_AUTHORIZATION, required = false) final String authHeader,
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) final String authHeader,
             @PathVariable final UUID buruhId) {
         final String token = extractBearer(authHeader);
         final AuthResponse response = adminService.unassignBuruh(token, buruhId);
@@ -73,7 +73,7 @@ public class AdminController {
 
     @DeleteMapping("/users/{userId}")
     public ResponseEntity<ApiResponse<Void>> deleteUser(
-            @RequestHeader(value = HEADER_AUTHORIZATION, required = false) final String authHeader,
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) final String authHeader,
             @PathVariable final UUID userId) {
         final String token = extractBearer(authHeader);
         adminService.deleteUser(token, userId);

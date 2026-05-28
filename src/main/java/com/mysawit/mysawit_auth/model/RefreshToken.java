@@ -11,7 +11,6 @@ import java.util.UUID;
         @Index(name = "idx_userId", columnList = "userId")
 })
 @Getter
-@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -32,4 +31,8 @@ public class RefreshToken {
 
     @Column(nullable = false)
     private Instant createdAt;
+
+    public void setExpiresAt(Instant expiresAt) {
+        this.expiresAt = expiresAt;
+    }
 }

@@ -7,6 +7,7 @@ import com.mysawit.mysawit_auth.dto.response.ApiResponse;
 import com.mysawit.mysawit_auth.dto.response.AuthResponse;
 import com.mysawit.mysawit_auth.dto.request.RegisterRequest;
 
+import com.mysawit.mysawit_auth.util.BearerTokenExtractor;
 import com.mysawit.mysawit_auth.util.CookieUtil;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -45,7 +46,7 @@ public class AuthController {
 
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<AuthResponse>> getMe(
-            @RequestHeader(value = "Authorization", required = false) final String authHeader,
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) final String authHeader,
             @CookieValue(value = CookieUtil.AUTH_COOKIE_NAME, required = false) final String cookieToken) {
         final String token = resolveAccessToken(authHeader, cookieToken);
         final AuthResponse response = authService.getLoggedInUser(token);
@@ -57,8 +58,8 @@ public class AuthController {
 
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<Void>> logout(
-            @RequestHeader(value = "Authorization", required = false) final String authHeader) {
-        final String token = extractBearer(authHeader);
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) final String authHeader) {
+        final String token = BearerTokenExtractor.extract(authHeader);
         authService.logout(token);
 
         String clearAccessCookie = cookieUtil.clearAuthCookie();
@@ -102,12 +103,5 @@ public class AuthController {
             return body.getRefreshToken();
         }
         throw new IllegalArgumentException("Refresh token is missing");
-    }
-
-    private String extractBearer(final String authHeader) {
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            throw new IllegalArgumentException("Invalid Authorization header");
-        }
-        return authHeader.substring(7);
     }
 }

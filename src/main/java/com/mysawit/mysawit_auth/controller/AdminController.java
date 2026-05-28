@@ -7,6 +7,7 @@ import com.mysawit.mysawit_auth.mapper.AuthResponseMapper;
 import com.mysawit.mysawit_auth.model.Role;
 import com.mysawit.mysawit_auth.model.User;
 import com.mysawit.mysawit_auth.service.AdminService;
+import com.mysawit.mysawit_auth.util.BearerTokenExtractor;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -31,7 +32,7 @@ public class AdminController {
             @RequestParam(required = false) final String email,
             @RequestParam(required = false) final String role) {
 
-        final String token = extractBearer(authHeader);
+        final String token = BearerTokenExtractor.extract(authHeader);
         final Role roleEnum = parseRole(role);
         final List<User> users = adminService.getUsersWithFilters(token, name, email, roleEnum);
 
@@ -47,7 +48,7 @@ public class AdminController {
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) final String authHeader,
             @PathVariable final UUID userId) {
 
-        final String token = extractBearer(authHeader);
+        final String token = BearerTokenExtractor.extract(authHeader);
         final User user = adminService.getUserById(token, userId);
         return ResponseEntity.ok(ApiResponse.successResponse("User fetched successfully", responseMapper.toResponse(user, null, null)));
     }
@@ -57,7 +58,7 @@ public class AdminController {
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) final String authHeader,
             @PathVariable final UUID buruhId,
             @Valid @RequestBody final AssignRequest request) {
-        final String token = extractBearer(authHeader);
+        final String token = BearerTokenExtractor.extract(authHeader);
         final AuthResponse response = adminService.assignBuruhToMandor(token, buruhId, request.getMandorId());
         return ResponseEntity.ok(ApiResponse.successResponse("Buruh assigned/reassigned successfully", response));
     }
@@ -66,7 +67,7 @@ public class AdminController {
     public ResponseEntity<ApiResponse<AuthResponse>> unassignBuruh(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) final String authHeader,
             @PathVariable final UUID buruhId) {
-        final String token = extractBearer(authHeader);
+        final String token = BearerTokenExtractor.extract(authHeader);
         final AuthResponse response = adminService.unassignBuruh(token, buruhId);
         return ResponseEntity.ok(ApiResponse.successResponse("Buruh unassigned successfully", response));
     }
@@ -75,16 +76,9 @@ public class AdminController {
     public ResponseEntity<ApiResponse<Void>> deleteUser(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) final String authHeader,
             @PathVariable final UUID userId) {
-        final String token = extractBearer(authHeader);
+        final String token = BearerTokenExtractor.extract(authHeader);
         adminService.deleteUser(token, userId);
         return ResponseEntity.ok(ApiResponse.successResponse("User deleted successfully", null));
-    }
-
-    private String extractBearer(final String authHeader) {
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            throw new IllegalArgumentException("Invalid Authorization header");
-        }
-        return authHeader.substring(7);
     }
 
     private Role parseRole(final String role) {

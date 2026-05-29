@@ -1,6 +1,8 @@
 package com.mysawit.mysawit_auth.service;
 
+import com.mysawit.mysawit_auth.dto.UserSummary;
 import com.mysawit.mysawit_auth.dto.response.AuthResponse;
+import com.mysawit.mysawit_auth.dto.response.UserDetailResponse;
 import com.mysawit.mysawit_auth.exception.InvalidCredentialException;
 import com.mysawit.mysawit_auth.exception.SelfDeletionException;
 import com.mysawit.mysawit_auth.mapper.AuthResponseMapper;
@@ -80,51 +82,57 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
-    public List<User> getUsersWithFilters(final String adminToken, final String name, final String email, final Role role) {
+    public List<UserSummary> getUsersWithFilters(final String adminToken, final String name, final String email, final Role role) {
         tokenAuthService.requireRole(adminToken, Role.ADMIN);
 
-        final boolean hasName  = name  != null && !name.isBlank();
+        final boolean hasName = name != null && !name.isBlank();
         final boolean hasEmail = email != null && !email.isBlank();
-        final boolean hasRole  = role  != null;
+        final boolean hasRole = role != null;
+
+        final List<User> users;
 
         if (hasName && hasEmail && hasRole) {
-            return authRepository.findByNameAndEmailAndRole(name, email, role);
+            users = authRepository.findByNameAndEmailAndRole(name, email, role);
+        } else if (hasName && hasEmail) {
+            users = authRepository.findByNameAndEmail(name, email);
+        } else if (hasName && hasRole) {
+            users = authRepository.findByNameAndRole(name, role);
+        } else if (hasEmail && hasRole) {
+            users = authRepository.findByEmailAndRole(email, role);
+        } else if (hasName) {
+            users = authRepository.findByName(name);
+        } else if (hasEmail) {
+            users = authRepository.findByEmail(email).map(List::of).orElse(List.of());
+        } else if (hasRole) {
+            users = authRepository.findByRole(role);
+        } else {
+            users = authRepository.findAll();
         }
 
-        if (hasName && hasEmail) {
-            return authRepository.findByNameAndEmail(name, email);
-        }
-        if (hasName && hasRole) {
-            return authRepository.findByNameAndRole(name, role);
-        }
-        if (hasEmail && hasRole) {
-            return authRepository.findByEmailAndRole(email, role);
-        }
-
-        if (hasName) {
-            return authRepository.findByName(name);
-        }
-        if (hasEmail) {
-            return authRepository.findByEmail(email)
-                    .map(List::of)
-                    .orElse(List.of());
-        }
-        if (hasRole) {
-            return authRepository.findByRole(role);
-        }
-
-        return authRepository.findAll();
+        return users.stream().map(responseMapper::toSummary).toList();
     }
 
     @Override
-    public User getUserById(final String adminToken, final UUID userId) {
+    public UserDetailResponse getUserById(final String adminToken, final UUID userId) {
         tokenAuthService.requireRole(adminToken, Role.ADMIN);
 
         final User user = authRepository.findById(userId);
         if (user == null) {
             throw new IllegalArgumentException("User not found: " + userId);
         }
-        return user;
-    }
 
+        return switch (user.getRole()) {
+            case MANDOR -> {
+                final List<User> buruhList = authRepository.findByMandorId(userId);
+                yield responseMapper.toDetailResponse(user, buruhList, null);
+            }
+            case BURUH -> {
+                final User mandor = (user.getMandorId() != null)
+                        ? authRepository.findById(user.getMandorId())
+                        : null;
+                yield responseMapper.toDetailResponse(user, null, mandor);
+            }
+            default -> responseMapper.toDetailResponse(user, null, null);
+        };
+    }
 }

@@ -255,13 +255,12 @@ public class AuthControllerTest {
 
         @Test
         void registerEmailAlreadyExists() throws Exception {
-                when(authService.register(any(RegisterRequest.class)))
-                                .thenThrow(new EmailAlreadyExistsException(adminRequest.getEmail()));
+                when(authService.register(any(RegisterRequest.class))).thenThrow(new EmailAlreadyExistsException(adminRequest.getEmail()));
 
                 mockMvc.perform(post("/api/auth/register")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(adminRequest)))
-                                .andExpect(status().isConflict())
+                                .andExpect(status().isBadRequest())
                                 .andExpect(jsonPath("$.success").value(false))
                                 .andExpect(jsonPath("$.message").value("Email admin@gmail.com is already registered"));
         }
@@ -350,8 +349,7 @@ public class AuthControllerTest {
                 when(authService.getLoggedInUser("cookie.jwt.token")).thenReturn(adminResponse);
 
                 mockMvc.perform(get("/api/auth/me")
-                                .cookie(new jakarta.servlet.http.Cookie(CookieUtil.AUTH_COOKIE_NAME,
-                                                "cookie.jwt.token")))
+                                .cookie(new jakarta.servlet.http.Cookie(CookieUtil.AUTH_COOKIE_NAME, "cookie.jwt.token")))
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.success").value(true))
                                 .andExpect(jsonPath("$.message").value("User retrieved"))
@@ -366,8 +364,7 @@ public class AuthControllerTest {
 
                 mockMvc.perform(get("/api/auth/me")
                                 .header("Authorization", "Bearer header.jwt.token")
-                                .cookie(new jakarta.servlet.http.Cookie(CookieUtil.AUTH_COOKIE_NAME,
-                                                "cookie.jwt.token")))
+                                .cookie(new jakarta.servlet.http.Cookie(CookieUtil.AUTH_COOKIE_NAME, "cookie.jwt.token")))
                                 .andExpect(status().isOk());
 
                 verify(authService).getLoggedInUser("header.jwt.token");

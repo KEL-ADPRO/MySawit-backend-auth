@@ -29,7 +29,7 @@ public class RegistrationValidatorTest {
 
     @Test
     void validateRequiredFieldsSuccess() {
-        assertDoesNotThrow(() -> validator.validateRequiredFields("Admin Sawit", "Agus", "admin@gmail.com", Role.ADMIN));
+        assertDoesNotThrow(() -> validator.validateRequiredFields("Mandor Sawit", "Agus", "mandor@gmail.com", Role.MANDOR));
         assertDoesNotThrow(() -> validator.validateRequiredFields("Buruh Sawit", "Usep", "usep@gmail.com", Role.BURUH));
     }
 

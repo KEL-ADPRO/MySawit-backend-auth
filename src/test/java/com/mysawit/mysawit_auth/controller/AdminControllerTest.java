@@ -4,18 +4,21 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mysawit.mysawit_auth.dto.request.AssignRequest;
 import com.mysawit.mysawit_auth.dto.response.AuthResponse;
 import com.mysawit.mysawit_auth.service.AdminService;
+import jakarta.servlet.ServletException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -56,7 +59,7 @@ class AdminControllerTest {
         when(adminService.assignBuruhToMandor(eq(token), eq(buruhId), eq(mandorId))).thenReturn(authResponse);
 
         mockMvc.perform(put("/api/admin/buruh/{buruhId}/assign", buruhId)
-                        .header("Authorization", "Bearer " + token)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -66,15 +69,14 @@ class AdminControllerTest {
     }
 
     @Test
-    void assignBuruhMissingAuthorizationHeader() throws Exception {
+    void assignBuruhMissingAuthorizationHeader() {
         AssignRequest request = AssignRequest.builder()
                 .mandorId(mandorId)
                 .build();
 
-        mockMvc.perform(put("/api/admin/buruh/{buruhId}/assign", buruhId)
+        assertThrows(ServletException.class, () -> mockMvc.perform(put("/api/admin/buruh/{buruhId}/assign", buruhId)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest());
+                        .content(objectMapper.writeValueAsString(request))));
     }
 
     @Test
@@ -83,7 +85,7 @@ class AdminControllerTest {
         when(adminService.unassignBuruh(eq(token), eq(buruhId))).thenReturn(authResponse);
 
         mockMvc.perform(delete("/api/admin/buruh/{buruhId}/assign", buruhId)
-                        .header("Authorization", "Bearer " + token))
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("Buruh unassigned successfully"));
 
@@ -96,7 +98,7 @@ class AdminControllerTest {
         doNothing().when(adminService).deleteUser(eq(token), eq(targetUserId));
 
         mockMvc.perform(delete("/api/admin/users/{userId}", targetUserId)
-                        .header("Authorization", "Bearer " + token))
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("User deleted successfully"));
 

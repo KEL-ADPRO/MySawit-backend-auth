@@ -26,6 +26,7 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<AuthResponse>> register(
             @Valid @RequestBody final RegisterRequest request) {
+
         final AuthResponse response = authService.register(request);
 
         return ResponseEntity
@@ -36,6 +37,7 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<AuthResponse>> login(
             @Valid @RequestBody final AuthRequest request) {
+
         final AuthResponse response = authService.login(request);
 
         return ResponseEntity.ok()
@@ -48,7 +50,8 @@ public class AuthController {
     public ResponseEntity<ApiResponse<AuthResponse>> getMe(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) final String authHeader,
             @CookieValue(value = CookieUtil.AUTH_COOKIE_NAME, required = false) final String cookieToken) {
-        final String token = resolveAccessToken(authHeader, cookieToken);
+
+        final String token = BearerTokenExtractor.resolve(authHeader, cookieToken);
         final AuthResponse response = authService.getLoggedInUser(token);
 
         return ResponseEntity
@@ -59,6 +62,7 @@ public class AuthController {
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<Void>> logout(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) final String authHeader) {
+
         final String token = BearerTokenExtractor.extract(authHeader);
         authService.logout(token);
 
@@ -73,35 +77,15 @@ public class AuthController {
 
     @PostMapping("/refresh")
     public ResponseEntity<ApiResponse<AuthResponse>> refresh(
-            @CookieValue(value = CookieUtil.REFRESH_COOKIE_NAME, required = false) final String cookieRefreshToken,
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) final String authHeader,
             @RequestBody(required = false) final RefreshRequest body) {
 
-        final String rawToken = resolveRefreshToken(cookieRefreshToken, body);
-        final AuthResponse authResponse = authService.refresh(rawToken);
+        final String token = BearerTokenExtractor.resolve(authHeader, body.getRefreshToken());
+        final AuthResponse authResponse = authService.refresh(token);
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookieUtil.addAuthCookie(authResponse.getToken()))
                 .header(HttpHeaders.SET_COOKIE, cookieUtil.addRefreshCookie(authResponse.getRefreshToken()))
                 .body(ApiResponse.successResponse("Token refreshed successfully", authResponse));
-    }
-
-    private String resolveAccessToken(final String authHeader, final String cookieToken) {
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            return authHeader.substring(7);
-        }
-        if (cookieToken != null && !cookieToken.isBlank()) {
-            return cookieToken;
-        }
-        throw new IllegalArgumentException("Invalid Authorization header");
-    }
-
-    private String resolveRefreshToken(final String cookieToken, final RefreshRequest body) {
-        if (cookieToken != null && !cookieToken.isBlank()) {
-            return cookieToken;
-        }
-        if (body != null && body.getRefreshToken() != null && !body.getRefreshToken().isBlank()) {
-            return body.getRefreshToken();
-        }
-        throw new IllegalArgumentException("Refresh token is missing");
     }
 }

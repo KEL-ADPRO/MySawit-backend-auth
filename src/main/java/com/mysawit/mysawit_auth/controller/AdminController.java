@@ -33,7 +33,7 @@ public class AdminController {
             @RequestParam(required = false) final String email,
             @RequestParam(required = false) final String role) {
 
-        final String token = resolveAccessToken(authHeader, cookieToken);
+        final String token = BearerTokenExtractor.resolve(authHeader, cookieToken);
         final Role roleEnum = parseRole(role);
         final List<UserSummary> users = adminService.getUsersWithFilters(token, name, email, roleEnum);
         return ResponseEntity.ok(ApiResponse.successResponse("Users fetched successfully", users));
@@ -45,7 +45,7 @@ public class AdminController {
             @CookieValue(value = CookieUtil.AUTH_COOKIE_NAME, required = false) final String cookieToken,
             @PathVariable final UUID userId) {
 
-        final String token = resolveAccessToken(authHeader, cookieToken);
+        final String token = BearerTokenExtractor.resolve(authHeader, cookieToken);
         final UserDetailResponse detail = adminService.getUserById(token, userId);
         return ResponseEntity.ok(ApiResponse.successResponse("User fetched successfully", detail));
     }
@@ -56,7 +56,8 @@ public class AdminController {
             @CookieValue(value = CookieUtil.AUTH_COOKIE_NAME, required = false) final String cookieToken,
             @PathVariable final UUID buruhId,
             @Valid @RequestBody final AssignRequest request) {
-        final String token = resolveAccessToken(authHeader, cookieToken);
+
+        final String token = BearerTokenExtractor.resolve(authHeader, cookieToken);
         final AuthResponse response = adminService.assignBuruhToMandor(token, buruhId, request.getMandorId());
         return ResponseEntity.ok(ApiResponse.successResponse("Buruh assigned/reassigned successfully", response));
     }
@@ -66,7 +67,8 @@ public class AdminController {
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) final String authHeader,
             @CookieValue(value = CookieUtil.AUTH_COOKIE_NAME, required = false) final String cookieToken,
             @PathVariable final UUID buruhId) {
-        final String token = resolveAccessToken(authHeader, cookieToken);
+
+        final String token = BearerTokenExtractor.resolve(authHeader, cookieToken);
         final AuthResponse response = adminService.unassignBuruh(token, buruhId);
         return ResponseEntity.ok(ApiResponse.successResponse("Buruh unassigned successfully", response));
     }
@@ -76,7 +78,8 @@ public class AdminController {
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) final String authHeader,
             @CookieValue(value = CookieUtil.AUTH_COOKIE_NAME, required = false) final String cookieToken,
             @PathVariable final UUID userId) {
-        final String token = resolveAccessToken(authHeader, cookieToken);
+
+        final String token = BearerTokenExtractor.resolve(authHeader, cookieToken);
         adminService.deleteUser(token, userId);
         return ResponseEntity.ok(ApiResponse.successResponse("User deleted successfully", null));
     }
@@ -88,15 +91,5 @@ public class AdminController {
         } catch (IllegalArgumentException e) {
             return null;
         }
-    }
-
-    private String resolveAccessToken(final String authHeader, final String cookieToken) {
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            return authHeader.substring(7);
-        }
-        if (cookieToken != null && !cookieToken.isBlank()) {
-            return cookieToken;
-        }
-        throw new IllegalArgumentException("Invalid Authorization header");
     }
 }

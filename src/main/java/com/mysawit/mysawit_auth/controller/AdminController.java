@@ -88,7 +88,7 @@ public class AdminController {
         try {
             return Role.valueOf(role.toUpperCase(Locale.ENGLISH));
         } catch (IllegalArgumentException e) {
-            return null;
+            throw new IllegalArgumentException("Invalid role: " + role);
         }
     }
 }

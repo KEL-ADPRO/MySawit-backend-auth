@@ -72,10 +72,12 @@ public class AuthServiceTest {
     private AuthResponse mandorResponse;
     private AuthResponse buruhResponse;
     private AuthResponse supirResponse;
+    private final UUID adminId =  UUID.randomUUID();
 
     @BeforeEach
     void setUp() {
         adminUser = User.builder()
+                .id(adminId)
                 .username("Admin Sawit")
                 .name("Agus")
                 .email("admin@gmail.com")
@@ -298,17 +300,14 @@ public class AuthServiceTest {
         final String rawToken = "old.refresh.token";
         final String newAccessToken = "new.jwt.token";
         final String newRefreshTokenValue = "new.refresh.token";
-        final UUID userId = UUID.randomUUID();
-
-        adminUser.setId(userId);
 
         final RefreshToken oldRefreshToken = RefreshToken.builder()
-                .userId(userId)
+                .userId(adminId)
                 .token(rawToken)
                 .build();
 
         final RefreshToken newRefreshToken = RefreshToken.builder()
-                .userId(userId)
+                .userId(adminId)
                 .token(newRefreshTokenValue)
                 .build();
 
@@ -320,7 +319,7 @@ public class AuthServiceTest {
                 .build();
 
         when(refreshTokenService.validateAndGet(rawToken)).thenReturn(oldRefreshToken);
-        when(authRepository.findById(userId)).thenReturn(adminUser);
+        when(authRepository.findById(adminId)).thenReturn(adminUser);
         when(refreshTokenService.createRefreshToken(adminUser)).thenReturn(newRefreshToken);
         when(jwtUtil.generateToken(adminUser.getId(), adminUser.getRole())).thenReturn(newAccessToken);
 
@@ -333,7 +332,7 @@ public class AuthServiceTest {
         assertEquals(newRefreshTokenValue, response.getRefreshToken());
 
         verify(refreshTokenService).validateAndGet(rawToken);
-        verify(authRepository).findById(userId);
+        verify(authRepository).findById(adminId);
         verify(refreshTokenRepository, never()).deleteByUserId(any());
         verify(refreshTokenService).createRefreshToken(adminUser);
         verify(jwtUtil).generateToken(adminUser.getId(), adminUser.getRole());

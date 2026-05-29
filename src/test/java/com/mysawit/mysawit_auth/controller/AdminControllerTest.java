@@ -48,7 +48,9 @@ class AdminControllerTest {
 
     @Test
     void assignBuruhSuccess() throws Exception {
-        AssignRequest request = AssignRequest.builder().buruhId(UUID.randomUUID()).mandorId(mandorId).build();
+        AssignRequest request = AssignRequest.builder()
+                .mandorId(mandorId)
+                .build();
 
         AuthResponse authResponse = new AuthResponse();
         when(adminService.assignBuruhToMandor(eq(token), eq(buruhId), eq(mandorId))).thenReturn(authResponse);
@@ -65,7 +67,9 @@ class AdminControllerTest {
 
     @Test
     void assignBuruhMissingAuthorizationHeader() throws Exception {
-        AssignRequest request = AssignRequest.builder().mandorId(mandorId).build();
+        AssignRequest request = AssignRequest.builder()
+                .mandorId(mandorId)
+                .build();
 
         mockMvc.perform(put("/api/admin/buruh/{buruhId}/assign", buruhId)
                         .contentType(MediaType.APPLICATION_JSON)

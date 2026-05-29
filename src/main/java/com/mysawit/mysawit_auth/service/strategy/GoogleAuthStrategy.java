@@ -58,9 +58,9 @@ public class GoogleAuthStrategy implements AuthStrategy {
     }
 
     private User createNewUser(final AuthRequest request, final GoogleUserInfo userInfo) {
-        registrationValidator.validateRequiredFields(request.getUsername(), userInfo.getName(),
-                userInfo.getEmail(), request.getRole());
+        registrationValidator.validateRequiredFields(request.getUsername(), userInfo.getName(), userInfo.getEmail(), request.getRole());
         registrationValidator.assertEmailUnique(userInfo.getEmail());
+        registrationValidator.assertUsernameUnique(request.getUsername());
         registrationValidator.assertMandorCertPresent(request.getRole(), request.getNomorSertifMandor());
 
         final User newUser = User.builder()

@@ -8,7 +8,6 @@ import java.io.Serial;
 import java.time.Instant;
 
 @Getter
-@ResponseStatus(HttpStatus.TOO_MANY_REQUESTS)
 public class AccountLockedException extends RuntimeException {
     @Serial
     private static final long serialVersionUID = 1L;

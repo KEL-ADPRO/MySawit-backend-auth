@@ -16,7 +16,7 @@ import com.mysawit.mysawit_auth.util.JwtUtil;
 import com.mysawit.mysawit_auth.util.PasswordHasher;
 import com.mysawit.mysawit_auth.util.TokenBlacklist;
 import com.mysawit.mysawit_auth.validator.RegistrationValidator;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

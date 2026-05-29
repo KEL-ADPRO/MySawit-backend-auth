@@ -3,17 +3,14 @@ package com.mysawit.mysawit_auth.service;
 import com.mysawit.mysawit_auth.dto.UserSummary;
 import com.mysawit.mysawit_auth.dto.response.AuthResponse;
 import com.mysawit.mysawit_auth.dto.response.UserDetailResponse;
-import com.mysawit.mysawit_auth.exception.InvalidCredentialException;
 import com.mysawit.mysawit_auth.exception.SelfDeletionException;
 import com.mysawit.mysawit_auth.mapper.AuthResponseMapper;
 import com.mysawit.mysawit_auth.model.Role;
 import com.mysawit.mysawit_auth.model.User;
 import com.mysawit.mysawit_auth.repository.AuthRepository;
 import com.mysawit.mysawit_auth.repository.RefreshTokenRepository;
-import com.mysawit.mysawit_auth.util.JwtUtil;
-import com.mysawit.mysawit_auth.util.TokenBlacklist;
 import com.mysawit.mysawit_auth.validator.AdminValidator;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

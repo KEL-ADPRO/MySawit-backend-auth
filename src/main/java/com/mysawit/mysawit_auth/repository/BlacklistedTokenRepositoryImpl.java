@@ -3,7 +3,7 @@ package com.mysawit.mysawit_auth.repository;
 import com.mysawit.mysawit_auth.model.BlacklistedToken;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.NoArgsConstructor;
 import org.springframework.stereotype.Repository;
 

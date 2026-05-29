@@ -2,8 +2,10 @@ package com.mysawit.mysawit_auth.repository;
 
 import com.mysawit.mysawit_auth.model.Role;
 import com.mysawit.mysawit_auth.model.User;
+import com.mysawit.mysawit_auth.util.UserFilter;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.TypedQuery;
+import jakarta.persistence.criteria.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,6 +29,24 @@ public class AuthRepositoryTest {
 
     @Mock
     private TypedQuery<User> typedQuery;
+
+    @Mock
+    private CriteriaBuilder criteriaBuilder;
+
+    @Mock
+    private CriteriaQuery<User> criteriaQuery;
+
+    @Mock
+    private Root<User> root;
+
+    @Mock
+    private Path<Object> path;
+
+    @Mock
+    private Expression<String> lowerExpression;
+
+    @Mock
+    private Predicate predicate;
 
     @InjectMocks
     private AuthRepositoryImpl authRepository;
@@ -246,5 +266,79 @@ public class AuthRepositoryTest {
         authRepository.delete(userId);
 
         verify(entityManager, never()).remove(any(User.class));
+    }
+
+    private void setupBaseCriteriaMocks() {
+        when(entityManager.getCriteriaBuilder()).thenReturn(criteriaBuilder);
+        when(criteriaBuilder.createQuery(User.class)).thenReturn(criteriaQuery);
+        when(criteriaQuery.from(User.class)).thenReturn(root);
+        when(entityManager.createQuery(criteriaQuery)).thenReturn(typedQuery);
+    }
+
+    @Test
+    void findWithFilters_ByNameOnly() {
+        setupBaseCriteriaMocks();
+        final UserFilter filter = new UserFilter("Agus", null, null);
+        final List<User> expectedUsers = List.of(admin);
+
+        when(root.get("name")).thenReturn(path);
+        when(criteriaBuilder.lower(any())).thenReturn(lowerExpression);
+        when(criteriaBuilder.like(eq(lowerExpression), eq("%agus%"))).thenReturn(predicate);
+        when(typedQuery.getResultList()).thenReturn(expectedUsers);
+
+        final List<User> result = authRepository.findWithFilters(filter);
+
+        assertEquals(expectedUsers, result);
+        verify(criteriaQuery, times(1)).where(any(jakarta.persistence.criteria.Predicate[].class));
+    }
+
+    @Test
+    void findWithFilters_ByEmailOnly() {
+        setupBaseCriteriaMocks();
+        final UserFilter filter = new UserFilter(null, "admin@gmail.com", null);
+        final List<User> expectedUsers = List.of(admin);
+
+        when(root.get("email")).thenReturn(path);
+        when(criteriaBuilder.equal(path, "admin@gmail.com")).thenReturn(predicate);
+        when(typedQuery.getResultList()).thenReturn(expectedUsers);
+
+        final List<User> result = authRepository.findWithFilters(filter);
+
+        assertEquals(expectedUsers, result);
+
+        verify(criteriaQuery, times(1)).where(any(jakarta.persistence.criteria.Predicate[].class));
+    }
+
+    @Test
+    void findWithFilters_ByRoleOnly() {
+        setupBaseCriteriaMocks();
+        final UserFilter filter = new UserFilter(null, null, Role.ADMIN);
+        final List<User> expectedUsers = List.of(admin);
+
+        when(root.get("role")).thenReturn(path);
+        when(criteriaBuilder.equal(path, Role.ADMIN)).thenReturn(predicate);
+        when(typedQuery.getResultList()).thenReturn(expectedUsers);
+
+        final List<User> result = authRepository.findWithFilters(filter);
+
+        assertEquals(expectedUsers, result);
+
+        verify(criteriaQuery, times(1)).where(any(jakarta.persistence.criteria.Predicate[].class));
+    }
+
+    @Test
+    void findWithFilters_EmptyFilterReturnsAll() {
+        setupBaseCriteriaMocks();
+        final UserFilter filter = new UserFilter(null, null, null);
+        final List<User> expectedUsers = List.of(admin, buruh);
+        when(typedQuery.getResultList()).thenReturn(expectedUsers);
+
+        final List<User> result = authRepository.findWithFilters(filter);
+
+        assertEquals(expectedUsers, result);
+
+        verify(criteriaQuery, times(1)).where(any(jakarta.persistence.criteria.Predicate[].class));
+        verify(criteriaBuilder, never()).like(any(), any(String.class));
+        verify(criteriaBuilder, never()).equal(any(), any());
     }
 }

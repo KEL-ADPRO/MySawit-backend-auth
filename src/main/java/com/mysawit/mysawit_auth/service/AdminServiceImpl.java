@@ -10,6 +10,7 @@ import com.mysawit.mysawit_auth.model.Role;
 import com.mysawit.mysawit_auth.model.User;
 import com.mysawit.mysawit_auth.repository.AuthRepository;
 import com.mysawit.mysawit_auth.repository.RefreshTokenRepository;
+import com.mysawit.mysawit_auth.util.UserFilter;
 import com.mysawit.mysawit_auth.validator.AdminValidator;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -80,34 +81,12 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
-    public List<UserSummary> getUsersWithFilters(final String adminToken, final String name, final String email, final Role role) {
+    @Transactional(readOnly = true)
+    public List<UserSummary> getUsersWithFilters(final String adminToken, final UserFilter filter) {
         tokenAuthService.requireRole(adminToken, Role.ADMIN);
-
-        final boolean hasName = name != null && !name.isBlank();
-        final boolean hasEmail = email != null && !email.isBlank();
-        final boolean hasRole = role != null;
-
-        final List<User> users;
-
-        if (hasName && hasEmail && hasRole) {
-            users = authRepository.findByNameAndEmailAndRole(name, email, role);
-        } else if (hasName && hasEmail) {
-            users = authRepository.findByNameAndEmail(name, email);
-        } else if (hasName && hasRole) {
-            users = authRepository.findByNameAndRole(name, role);
-        } else if (hasEmail && hasRole) {
-            users = authRepository.findByEmailAndRole(email, role);
-        } else if (hasName) {
-            users = authRepository.findByName(name);
-        } else if (hasEmail) {
-            users = authRepository.findByEmail(email).map(List::of).orElse(List.of());
-        } else if (hasRole) {
-            users = authRepository.findByRole(role);
-        } else {
-            users = authRepository.findAll();
-        }
-
-        return users.stream().map(responseMapper::toSummary).toList();
+        return authRepository.findWithFilters(filter).stream()
+                .map(responseMapper::toSummary)
+                .toList();
     }
 
     @Override

@@ -8,6 +8,7 @@ import com.mysawit.mysawit_auth.model.Role;
 import com.mysawit.mysawit_auth.service.AdminService;
 import com.mysawit.mysawit_auth.util.BearerTokenExtractor;
 import com.mysawit.mysawit_auth.util.CookieUtil;
+import com.mysawit.mysawit_auth.util.UserFilter;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -15,7 +16,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Locale;
 import java.util.UUID;
 
 @RestController
@@ -33,8 +33,8 @@ public class AdminController {
             @RequestParam(required = false) final String role) {
 
         final String token = BearerTokenExtractor.resolve(authHeader, cookieToken);
-        final Role roleEnum = parseRole(role);
-        final List<UserSummary> users = adminService.getUsersWithFilters(token, name, email, roleEnum);
+        final UserFilter filter = new UserFilter(name, email, parseRole(role));
+        final List<UserSummary> users = adminService.getUsersWithFilters(token, filter);
         return ResponseEntity.ok(ApiResponse.successResponse("Users fetched successfully", users));
     }
 

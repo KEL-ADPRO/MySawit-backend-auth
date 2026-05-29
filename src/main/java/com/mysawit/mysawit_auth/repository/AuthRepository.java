@@ -2,6 +2,7 @@ package com.mysawit.mysawit_auth.repository;
 
 import com.mysawit.mysawit_auth.model.Role;
 import com.mysawit.mysawit_auth.model.User;
+import com.mysawit.mysawit_auth.util.UserFilter;
 
 import java.util.List;
 import java.util.Optional;
@@ -18,8 +19,5 @@ public interface AuthRepository {
     List<User> findByName(String name);
     List<User> findByRole(Role role);
     List<User> findByMandorId(UUID mandorId);
-    List<User> findByNameAndEmail(String name, String email);
-    List<User> findByNameAndRole(String name, Role role);
-    List<User> findByEmailAndRole(String email, Role role);
-    List<User> findByNameAndEmailAndRole(String name, String email, Role role);
+    List<User> findWithFilters(UserFilter filter);
 }

@@ -13,10 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.NoArgsConstructor;
 import org.springframework.stereotype.Repository;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Repository
 @NoArgsConstructor
@@ -120,7 +117,7 @@ public class AuthRepositoryImpl implements AuthRepository {
         if (filter.hasName()) {
             predicates.add(criteriaBuilder.like(
                     criteriaBuilder.lower(root.get("name")),
-                    "%" + filter.name().toLowerCase() + "%"
+                    "%" + filter.name().toLowerCase(Locale.ROOT) + "%"
             ));
         }
         if (filter.hasEmail()) {

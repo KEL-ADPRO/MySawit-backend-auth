@@ -3,6 +3,7 @@ package com.mysawit.mysawit_auth.service;
 import com.mysawit.mysawit_auth.dto.UserSummary;
 import com.mysawit.mysawit_auth.dto.response.UserDetailResponse;
 import com.mysawit.mysawit_auth.exception.InvalidCredentialException;
+import com.mysawit.mysawit_auth.exception.UserNotFoundException;
 import com.mysawit.mysawit_auth.mapper.AuthResponseMapper;
 import com.mysawit.mysawit_auth.model.Role;
 import com.mysawit.mysawit_auth.model.User;
@@ -266,9 +267,9 @@ public class AdminServiceTest {
         final UUID ghostId = UUID.randomUUID();
         when(authRepository.findById(ghostId)).thenReturn(null);
 
-        final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> adminService.getUserById(ADMIN_TOKEN, ghostId));
+        final UserNotFoundException ex = assertThrows(UserNotFoundException.class, () -> adminService.getUserById(ADMIN_TOKEN, ghostId));
 
-        assertTrue(ex.getMessage().contains("User not found"));
+        assertEquals(ex.getMessage(), "User not found: " + ghostId);
     }
 
     @Test

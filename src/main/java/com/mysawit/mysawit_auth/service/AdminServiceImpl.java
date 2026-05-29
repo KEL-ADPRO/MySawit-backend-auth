@@ -4,6 +4,7 @@ import com.mysawit.mysawit_auth.dto.UserSummary;
 import com.mysawit.mysawit_auth.dto.response.AuthResponse;
 import com.mysawit.mysawit_auth.dto.response.UserDetailResponse;
 import com.mysawit.mysawit_auth.exception.SelfDeletionException;
+import com.mysawit.mysawit_auth.exception.UserNotFoundException;
 import com.mysawit.mysawit_auth.mapper.AuthResponseMapper;
 import com.mysawit.mysawit_auth.model.Role;
 import com.mysawit.mysawit_auth.model.User;
@@ -63,7 +64,7 @@ public class AdminServiceImpl implements AdminService {
 
         final User target = authRepository.findById(targetUserId);
         if (target == null) {
-            throw new IllegalArgumentException("User not found: " + targetUserId);
+            throw new UserNotFoundException(targetUserId);
         }
 
         if (target.getRole() == Role.MANDOR) {
@@ -115,7 +116,7 @@ public class AdminServiceImpl implements AdminService {
 
         final User user = authRepository.findById(userId);
         if (user == null) {
-            throw new IllegalArgumentException("User not found: " + userId);
+            throw new UserNotFoundException(userId);
         }
 
         return switch (user.getRole()) {

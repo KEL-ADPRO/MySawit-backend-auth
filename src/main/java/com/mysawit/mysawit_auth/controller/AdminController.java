@@ -85,10 +85,6 @@ public class AdminController {
 
     private Role parseRole(final String role) {
         if (role == null || role.isBlank()) return null;
-        try {
-            return Role.valueOf(role.toUpperCase(Locale.ENGLISH));
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Invalid role: " + role);
-        }
+        return Role.fromString(role);
     }
 }

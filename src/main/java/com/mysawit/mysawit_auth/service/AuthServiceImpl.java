@@ -47,8 +47,18 @@ public class AuthServiceImpl implements AuthService {
         registrationValidator.assertEmailUnique(request.getEmail());
         registrationValidator.assertMandorCertPresent(request.getRole(), request.getNomorSertifMandor());
 
-        final User saved = authRepository.save(buildUser(request));
-        return responseMapper.toResponse(saved, null, null);
+        final User newUser = User.builder()
+                .username(request.getUsername())
+                .name(request.getName())
+                .email(request.getEmail())
+                .password(passwordHasher.hash(request.getPassword()))
+                .role(request.getRole())
+                .nomorSertifMandor(request.getNomorSertifMandor())
+                .build();
+
+        authRepository.save(newUser);
+
+        return responseMapper.toResponse(newUser, null, null);
     }
 
     @Override
@@ -121,16 +131,5 @@ public class AuthServiceImpl implements AuthService {
         final String newAccessToken = jwtUtil.generateToken(user.getId(), user.getRole());
 
         return responseMapper.toResponse(user, newAccessToken, newRefreshToken.getToken());
-    }
-
-    private User buildUser(final RegisterRequest request) {
-        return User.builder()
-                .username(request.getUsername())
-                .name(request.getName())
-                .email(request.getEmail())
-                .password(passwordHasher.hash(request.getPassword()))
-                .role(request.getRole())
-                .nomorSertifMandor(request.getNomorSertifMandor())
-                .build();
     }
 }

@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import java.time.Instant;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -127,5 +128,16 @@ public class GlobalExceptionHandlerTest {
         assertNotNull(response.getBody());
         assertFalse(response.getBody().isSuccess());
         assertEquals("Admin cannot delete self", response.getBody().getMessage());
+    }
+
+    @Test
+    void handleUserNotFound_returns404() {
+        final UUID userId = UUID.randomUUID();
+        final ResponseEntity<ApiResponse<Void>> response = handler.handleUserNotFound(new UserNotFoundException(userId));
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertFalse(response.getBody().isSuccess());
+        assertEquals("User not found: " + userId, response.getBody().getMessage());
     }
 }

@@ -24,7 +24,14 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(EmailAlreadyExistsException.class)
     public ResponseEntity<ApiResponse<Void>> handleEmailAlreadyExists(final EmailAlreadyExistsException exception) {
         return ResponseEntity
-                .status(HttpStatus.CONFLICT)
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.errorResponse(exception.getMessage()));
+    }
+
+    @ExceptionHandler(UsernameAlreadyExistsException.class)
+    public ResponseEntity<ApiResponse<Void>> handleUsernameAlreadyExists(final UsernameAlreadyExistsException exception) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
                 .body(ApiResponse.errorResponse(exception.getMessage()));
     }
 
@@ -54,10 +61,6 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.errorResponse(exception.getMessage()));
     }
 
-    /**
-     * Handles JSON parse errors — e.g. invalid enum value like 'SUPIR_TRUK' before @JsonCreator fix.
-     * Returns 400 Bad Request instead of 500.
-     */
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ApiResponse<Void>> handleMessageNotReadable(final HttpMessageNotReadableException exception) {
         final String msg = exception.getMostSpecificCause().getMessage();
@@ -84,6 +87,20 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleAccountLocked(final AccountLockedException exception) {
         return ResponseEntity
                 .status(HttpStatus.TOO_MANY_REQUESTS)
+                .body(ApiResponse.errorResponse(exception.getMessage()));
+    }
+
+    @ExceptionHandler(SelfDeletionException.class)
+    public ResponseEntity<ApiResponse<Void>> handleSelfDeletion(final SelfDeletionException exception) {
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(ApiResponse.errorResponse(exception.getMessage()));
+    }
+
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleUserNotFound(final UserNotFoundException exception) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
                 .body(ApiResponse.errorResponse(exception.getMessage()));
     }
 }

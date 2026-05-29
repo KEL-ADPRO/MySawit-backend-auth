@@ -3,19 +3,18 @@ prometheus.scrape "mysawit_auth" {
     __address__ = "mysawit-backend-auth.onrender.com",
     __scheme__  = "https",
   }]
-  metrics_path     = "/actuator/prometheus"
-  scrape_interval  = "15s"
-  forward_to       = [prometheus.remote_write.grafana_cloud.receiver]
+  metrics_path    = "/actuator/prometheus"
+  scrape_interval = "15s"
+  forward_to      = [prometheus.remote_write.grafana_cloud.receiver]
 }
 
-prometheus.remote_write "metrics_hosted_prometheus" {
-   endpoint {
-      name = "hosted-prometheus"
-      url  = "https://prometheus-prod-52-prod-ap-southeast-2.grafana.net/api/prom/push"
+prometheus.remote_write "grafana_cloud" {
+  endpoint {
+    url = "https://prometheus-prod-52-prod-ap-southeast-2.grafana.net/api/prom/push"
 
-      basic_auth {
-        username = "3249024"
-        password = env("GRAFANA_CLOUD_API_KEY")
-      }
-   }
+    basic_auth {
+      username = "3249024"
+      password = env("GRAFANA_CLOUD_API_KEY")
+    }
+  }
 }

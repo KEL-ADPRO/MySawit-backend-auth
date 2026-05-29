@@ -5,11 +5,11 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 
 import java.io.Serial;
 
-public class EmailAlreadyExistsException extends RuntimeException {
+public class UsernameAlreadyExistsException extends RuntimeException {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public EmailAlreadyExistsException(String email) {
-        super("Email " + email + " is already registered");
+    public UsernameAlreadyExistsException(String username) {
+        super("Username " + username + " is already registered");
     }
 }

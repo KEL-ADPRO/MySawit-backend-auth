@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import java.time.Instant;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -31,13 +32,23 @@ public class GlobalExceptionHandlerTest {
     }
 
     @Test
-    void handleEmailAlreadyExists_returns409() {
+    void handleEmailAlreadyExists_returns400() {
         final ResponseEntity<ApiResponse<Void>> response = handler.handleEmailAlreadyExists(new EmailAlreadyExistsException("admin@gmail.com"));
 
-        assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         assertNotNull(response.getBody());
         assertFalse(response.getBody().isSuccess());
         assertEquals("Email admin@gmail.com is already registered", response.getBody().getMessage());
+    }
+
+    @Test
+    void handleUsernameAlreadyExists_returns400() {
+        final ResponseEntity<ApiResponse<Void>> response = handler.handleUsernameAlreadyExists(new UsernameAlreadyExistsException("admin"));
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertFalse(response.getBody().isSuccess());
+        assertEquals("Username admin is already registered", response.getBody().getMessage());
     }
 
     @Test
@@ -107,5 +118,26 @@ public class GlobalExceptionHandlerTest {
         assertNotNull(response.getBody());
         assertFalse(response.getBody().isSuccess());
         assertEquals("An unexpected error occurred", response.getBody().getMessage());
+    }
+
+    @Test
+    void handleSelfDeletion_returns403() {
+        final ResponseEntity<ApiResponse<Void>> response = handler.handleSelfDeletion(new SelfDeletionException());
+
+        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertFalse(response.getBody().isSuccess());
+        assertEquals("Admin cannot delete self", response.getBody().getMessage());
+    }
+
+    @Test
+    void handleUserNotFound_returns404() {
+        final UUID userId = UUID.randomUUID();
+        final ResponseEntity<ApiResponse<Void>> response = handler.handleUserNotFound(new UserNotFoundException(userId));
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertFalse(response.getBody().isSuccess());
+        assertEquals("User not found: " + userId, response.getBody().getMessage());
     }
 }

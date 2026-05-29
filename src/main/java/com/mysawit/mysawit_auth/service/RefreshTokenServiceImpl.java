@@ -4,7 +4,7 @@ import com.mysawit.mysawit_auth.exception.InvalidCredentialException;
 import com.mysawit.mysawit_auth.model.RefreshToken;
 import com.mysawit.mysawit_auth.model.User;
 import com.mysawit.mysawit_auth.repository.RefreshTokenRepository;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -26,8 +26,6 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     @Override
     @Transactional
     public RefreshToken createRefreshToken(final User user) {
-        refreshTokenRepository.deleteByUserId(user.getId());
-
         final String rawToken = generateToken();
         final Instant now = Instant.now();
 
@@ -45,7 +43,12 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     public RefreshToken validateAndGet(final String rawToken) {
         final RefreshToken token = refreshTokenRepository.findByToken(rawToken);
 
-        if (token == null || token.getExpiresAt().isBefore(Instant.now())) {
+        if (token == null) {
+            throw new InvalidCredentialException();
+        }
+
+        if (token.getExpiresAt().isBefore(Instant.now())) {
+            refreshTokenRepository.delete(token);
             throw new InvalidCredentialException();
         }
 
@@ -54,8 +57,8 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
 
     @Override
     @Transactional
-    public void revokeAll(final User user) {
-        refreshTokenRepository.deleteByUserId(user.getId());
+    public void deleteByToken(final String token) {
+        refreshTokenRepository.deleteByToken(token);
     }
 
     private String generateToken() {

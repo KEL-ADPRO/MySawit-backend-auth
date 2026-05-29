@@ -10,7 +10,7 @@ import java.util.UUID;
 @Table (name = "users")
 @NoArgsConstructor
 @AllArgsConstructor
-@Getter @Setter
+@Getter
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -33,9 +33,11 @@ public class User {
     private String password;
 
     @Column(unique = true)
+    @Setter
     private String nomorSertifMandor;
 
     @Column
+    @Setter
     private UUID mandorId;
 
     @Enumerated(EnumType.STRING)

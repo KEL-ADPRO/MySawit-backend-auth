@@ -2,15 +2,18 @@ package com.mysawit.mysawit_auth.repository;
 
 import com.mysawit.mysawit_auth.model.Role;
 import com.mysawit.mysawit_auth.model.User;
+import com.mysawit.mysawit_auth.util.UserFilter;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.PersistenceContext;
-import jakarta.transaction.Transactional;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Root;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.NoArgsConstructor;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Repository
 @NoArgsConstructor
@@ -104,52 +107,27 @@ public class AuthRepositoryImpl implements AuthRepository {
     }
 
     @Override
-    public List<User> findByNameAndEmail(final String name, final String email) {
-        return entityManager.createQuery(
-                        SELECT_USER +
-                                "WHERE LOWER(u.name) LIKE LOWER(:name) " +
-                                "AND u.email = :email",
-                        User.class)
-                .setParameter(PARAM_NAME, "%" + name + "%")
-                .setParameter(PARAM_EMAIL, email)
-                .getResultList();
-    }
+    public List<User> findWithFilters(final UserFilter filter) {
+        final CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
+        final CriteriaQuery<User> query = criteriaBuilder.createQuery(User.class);
+        final Root<User> root = query.from(User.class);
 
-    @Override
-    public List<User> findByNameAndRole(final String name, final Role role) {
-        return entityManager.createQuery(
-                        SELECT_USER +
-                                "WHERE LOWER(u.name) LIKE LOWER(:name) " +
-                                "AND u.role = :role",
-                        User.class)
-                .setParameter(PARAM_NAME, "%" + name + "%")
-                .setParameter(PARAM_ROLE, role)
-                .getResultList();
-    }
+        final List<Predicate> predicates = new ArrayList<>();
 
-    @Override
-    public List<User> findByEmailAndRole(final String email, final Role role) {
-        return entityManager.createQuery(
-                        SELECT_USER +
-                                "WHERE u.email = :email " +
-                                "AND u.role = :role",
-                        User.class)
-                .setParameter(PARAM_EMAIL, email)
-                .setParameter(PARAM_ROLE, role)
-                .getResultList();
-    }
+        if (filter.hasName()) {
+            predicates.add(criteriaBuilder.like(
+                    criteriaBuilder.lower(root.get("name")),
+                    "%" + filter.name().toLowerCase(Locale.ROOT) + "%"
+            ));
+        }
+        if (filter.hasEmail()) {
+            predicates.add(criteriaBuilder.equal(root.get("email"), filter.email()));
+        }
+        if (filter.hasRole()) {
+            predicates.add(criteriaBuilder.equal(root.get("role"), filter.role()));
+        }
 
-    @Override
-    public List<User> findByNameAndEmailAndRole(final String name, final String email, final Role role) {
-        return entityManager.createQuery(
-                        SELECT_USER +
-                                "WHERE LOWER(u.name) LIKE LOWER(:name) " +
-                                "AND u.email = :email " +
-                                "AND u.role = :role",
-                        User.class)
-                .setParameter(PARAM_NAME, "%" + name + "%")
-                .setParameter(PARAM_EMAIL, email)
-                .setParameter(PARAM_ROLE, role)
-                .getResultList();
+        query.where(predicates.toArray(new Predicate[0]));
+        return entityManager.createQuery(query).getResultList();
     }
 }

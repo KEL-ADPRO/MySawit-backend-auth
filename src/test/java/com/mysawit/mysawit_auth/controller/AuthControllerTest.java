@@ -9,7 +9,6 @@ import com.mysawit.mysawit_auth.exception.EmailAlreadyExistsException;
 import com.mysawit.mysawit_auth.exception.InvalidCredentialException;
 import com.mysawit.mysawit_auth.exception.MandorSertifMissingException;
 import com.mysawit.mysawit_auth.handler.GlobalExceptionHandler;
-import com.mysawit.mysawit_auth.model.AuthProvider;
 import com.mysawit.mysawit_auth.model.Role;
 import com.mysawit.mysawit_auth.service.AuthService;
 import com.mysawit.mysawit_auth.service.strategy.AuthStrategy;
@@ -274,8 +273,7 @@ public class AuthControllerTest {
                                 .content(objectMapper.writeValueAsString(adminRequest)))
                                 .andExpect(status().isUnprocessableEntity())
                                 .andExpect(jsonPath("$.success").value(false))
-                                .andExpect(jsonPath("$.message")
-                                                .value("Nomor sertifikasi mandor is required for MANDOR role"));
+                                .andExpect(jsonPath("$.message").value("Nomor sertifikasi mandor is required for MANDOR role"));
         }
 
         @Test

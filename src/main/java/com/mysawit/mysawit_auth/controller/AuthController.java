@@ -78,9 +78,16 @@ public class AuthController {
     @PostMapping("/refresh")
     public ResponseEntity<ApiResponse<AuthResponse>> refresh(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) final String authHeader,
+            @CookieValue(value = CookieUtil.REFRESH_COOKIE_NAME, required = false) final String cookieToken,
             @RequestBody(required = false) final RefreshRequest body) {
 
-        final String token = BearerTokenExtractor.resolve(authHeader, body.getRefreshToken());
+        final String refreshToken = cookieToken != null ? cookieToken : (body != null ? body.getRefreshToken() : null);
+
+        if (authHeader == null && (refreshToken == null || refreshToken.isBlank())) {
+            throw new IllegalArgumentException("Refresh token is missing");
+        }
+
+        final String token = BearerTokenExtractor.resolve(authHeader, refreshToken);
         final AuthResponse authResponse = authService.refresh(token);
 
         return ResponseEntity.ok()

@@ -9,8 +9,8 @@ import java.util.List;
 import java.util.UUID;
 
 public interface AdminService {
-    AuthResponse assignBuruhToMandor(String adminToken, UUID buruhId, UUID mandorId);
-    AuthResponse unassignBuruh(String adminToken, UUID buruhId);
+    UserSummary assignBuruhToMandor(String adminToken, UUID buruhId, UUID mandorId);
+    UserSummary unassignBuruh(String adminToken, UUID buruhId);
     void deleteUser(String adminToken, UUID targetUserId);
     List<UserSummary> getUsersWithFilters(String adminToken, String name, String email, Role role);
     UserDetailResponse getUserById(String adminToken, UUID userId);

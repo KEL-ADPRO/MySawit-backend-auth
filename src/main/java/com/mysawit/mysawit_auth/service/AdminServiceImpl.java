@@ -28,7 +28,7 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     @Transactional
-    public AuthResponse assignBuruhToMandor(final String adminToken, final UUID buruhId, final UUID mandorId) {
+    public UserSummary assignBuruhToMandor(final String adminToken, final UUID buruhId, final UUID mandorId) {
         tokenAuthService.requireRole(adminToken, Role.ADMIN);
 
         final User buruh = adminValidator.requireBuruh(buruhId);
@@ -37,19 +37,19 @@ public class AdminServiceImpl implements AdminService {
         buruh.setMandorId(mandor.getId());
         final User savedUser = authRepository.save(buruh);
 
-        return responseMapper.toResponse(savedUser, null, null);
+        return responseMapper.toSummary(savedUser);
     }
 
     @Override
     @Transactional
-    public AuthResponse unassignBuruh(final String adminToken, final UUID buruhId) {
+    public UserSummary unassignBuruh(final String adminToken, final UUID buruhId) {
         tokenAuthService.requireRole(adminToken, Role.ADMIN);
 
         final User buruh = adminValidator.requireBuruh(buruhId);
         buruh.setMandorId(null);
         final User savedUser = authRepository.save(buruh);
 
-        return responseMapper.toResponse(savedUser, null, null);
+        return responseMapper.toSummary(savedUser);
     }
 
     @Override

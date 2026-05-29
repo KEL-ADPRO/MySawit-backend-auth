@@ -3,7 +3,6 @@ package com.mysawit.mysawit_auth.controller;
 import com.mysawit.mysawit_auth.dto.UserSummary;
 import com.mysawit.mysawit_auth.dto.request.AssignRequest;
 import com.mysawit.mysawit_auth.dto.response.ApiResponse;
-import com.mysawit.mysawit_auth.dto.response.AuthResponse;
 import com.mysawit.mysawit_auth.dto.response.UserDetailResponse;
 import com.mysawit.mysawit_auth.model.Role;
 import com.mysawit.mysawit_auth.service.AdminService;
@@ -51,25 +50,25 @@ public class AdminController {
     }
 
     @PutMapping("/buruh/{buruhId}/assign")
-    public ResponseEntity<ApiResponse<AuthResponse>> assignBuruh(
+    public ResponseEntity<ApiResponse<UserSummary>> assignBuruh(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) final String authHeader,
             @CookieValue(value = CookieUtil.AUTH_COOKIE_NAME, required = false) final String cookieToken,
             @PathVariable final UUID buruhId,
             @Valid @RequestBody final AssignRequest request) {
 
         final String token = BearerTokenExtractor.resolve(authHeader, cookieToken);
-        final AuthResponse response = adminService.assignBuruhToMandor(token, buruhId, request.getMandorId());
+        final UserSummary response = adminService.assignBuruhToMandor(token, buruhId, request.getMandorId());
         return ResponseEntity.ok(ApiResponse.successResponse("Buruh assigned/reassigned successfully", response));
     }
 
     @DeleteMapping("/buruh/{buruhId}/assign")
-    public ResponseEntity<ApiResponse<AuthResponse>> unassignBuruh(
+    public ResponseEntity<ApiResponse<UserSummary>> unassignBuruh(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) final String authHeader,
             @CookieValue(value = CookieUtil.AUTH_COOKIE_NAME, required = false) final String cookieToken,
             @PathVariable final UUID buruhId) {
 
         final String token = BearerTokenExtractor.resolve(authHeader, cookieToken);
-        final AuthResponse response = adminService.unassignBuruh(token, buruhId);
+        final UserSummary response = adminService.unassignBuruh(token, buruhId);
         return ResponseEntity.ok(ApiResponse.successResponse("Buruh unassigned successfully", response));
     }
 

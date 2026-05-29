@@ -1,8 +1,8 @@
 package com.mysawit.mysawit_auth.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mysawit.mysawit_auth.dto.UserSummary;
 import com.mysawit.mysawit_auth.dto.request.AssignRequest;
-import com.mysawit.mysawit_auth.dto.response.AuthResponse;
 import com.mysawit.mysawit_auth.service.AdminService;
 import jakarta.servlet.ServletException;
 import org.junit.jupiter.api.BeforeEach;
@@ -55,8 +55,8 @@ class AdminControllerTest {
                 .mandorId(mandorId)
                 .build();
 
-        AuthResponse authResponse = new AuthResponse();
-        when(adminService.assignBuruhToMandor(eq(token), eq(buruhId), eq(mandorId))).thenReturn(authResponse);
+        UserSummary summary = new UserSummary();
+        when(adminService.assignBuruhToMandor(eq(token), eq(buruhId), eq(mandorId))).thenReturn(summary);
 
         mockMvc.perform(put("/api/admin/buruh/{buruhId}/assign", buruhId)
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
@@ -81,8 +81,8 @@ class AdminControllerTest {
 
     @Test
     void unassignBuruhSuccess() throws Exception {
-        AuthResponse authResponse = new AuthResponse();
-        when(adminService.unassignBuruh(eq(token), eq(buruhId))).thenReturn(authResponse);
+        UserSummary summary = new UserSummary();
+        when(adminService.unassignBuruh(eq(token), eq(buruhId))).thenReturn(summary);
 
         mockMvc.perform(delete("/api/admin/buruh/{buruhId}/assign", buruhId)
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))

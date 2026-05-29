@@ -44,3 +44,5 @@ application.properties
 .java-version
 
 /src/main/resources/templates/
+
+data-alloy/

@@ -42,8 +42,7 @@ public class AuthServiceImpl implements AuthService {
             throw new InvalidCredentialException();
         }
 
-        registrationValidator.validateRequiredFields(request.getUsername(), request.getName(), request.getEmail(),
-                request.getRole());
+        registrationValidator.validateRequiredFields(request.getUsername(), request.getName(), request.getEmail(), request.getRole());
         registrationValidator.validatePassword(request.getPassword());
         registrationValidator.assertEmailUnique(request.getEmail());
         registrationValidator.assertMandorCertPresent(request.getRole(), request.getNomorSertifMandor());
@@ -101,11 +100,13 @@ public class AuthServiceImpl implements AuthService {
             if (user != null) {
                 refreshTokenRepository.deleteByUserId(user.getId());
             }
+
+            tokenBlacklist.blacklist(token);
+        } catch (InvalidCredentialException e) {
+            throw e;
         } catch (Exception exception) {
             throw (InvalidCredentialException) new InvalidCredentialException().initCause(exception);
         }
-
-        tokenBlacklist.blacklist(token);
     }
 
     @Override

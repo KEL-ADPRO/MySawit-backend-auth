@@ -1,0 +1,26 @@
+{
+  "title": "MySawit Auth",
+  "panels": [
+    {
+      "title": "HTTP Request Rate",
+      "type": "graph",
+      "targets": [{
+        "expr": "rate(http_server_requests_seconds_count{application=\"MySawit-Auth\"}[1m])"
+      }]
+    },
+    {
+      "title": "HTTP Error Rate (5xx)",
+      "type": "graph",
+      "targets": [{
+        "expr": "rate(http_server_requests_seconds_count{application=\"MySawit-Auth\",status=~\"5..\"}[1m])"
+      }]
+    },
+    {
+      "title": "JVM Heap Used",
+      "type": "graph",
+      "targets": [{
+        "expr": "jvm_memory_used_bytes{application=\"MySawit-Auth\",area=\"heap\"}"
+      }]
+    }
+  ]
+}

@@ -1,6 +1,5 @@
 package com.mysawit.mysawit_auth.model;
 
-import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
 import java.util.Locale;
@@ -9,7 +8,6 @@ public enum Role {
     ADMIN,
     MANDOR,
     BURUH,
-    @JsonAlias("SUPIR_TRUK")
     SUPIR;
 
     @JsonCreator

@@ -4,7 +4,7 @@ import com.mysawit.mysawit_auth.exception.InvalidCredentialException;
 import com.mysawit.mysawit_auth.model.RefreshToken;
 import com.mysawit.mysawit_auth.model.User;
 import com.mysawit.mysawit_auth.repository.RefreshTokenRepository;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;

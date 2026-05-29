@@ -1,7 +1,7 @@
 package com.mysawit.mysawit_auth.dto.request;
 
+import com.mysawit.mysawit_auth.model.Role;
 import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -11,11 +11,15 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class LoginRequest {
+public class AuthRequest {
+    // Password login
     @Email(message = "Invalid email format")
-    @NotBlank(message = "Email is required")
     private String email;
-
-    @NotBlank(message = "Password is required")
     private String password;
+
+    // Google login
+    private String idToken;
+    private String username;
+    private Role role;
+    private String nomorSertifMandor;
 }

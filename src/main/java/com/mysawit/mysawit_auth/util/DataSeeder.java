@@ -33,12 +33,13 @@ public class DataSeeder implements CommandLineRunner {
     @Transactional
     public void run(final String... args) {
         if (authRepository.findByEmail(adminEmail).isEmpty()) {
-            User admin = new User();
-            admin.setName(adminName);
-            admin.setUsername(adminUsername);
-            admin.setEmail(adminEmail);
-            admin.setPassword(passwordHasher.hash(adminPassword));
-            admin.setRole(Role.ADMIN);
+            User admin = User.builder()
+                    .name(adminName)
+                    .username(adminUsername)
+                    .email(adminEmail)
+                    .password(passwordHasher.hash(adminPassword))
+                    .role(Role.ADMIN)
+                    .build();
             authRepository.save(admin);
             log.info("=== Default admin created: {} / {} ===", adminUsername, adminEmail);
         }

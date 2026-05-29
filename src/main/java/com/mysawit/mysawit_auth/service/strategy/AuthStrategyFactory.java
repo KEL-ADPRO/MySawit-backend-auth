@@ -10,18 +10,23 @@ import java.util.stream.Collectors;
 
 @Component
 public class AuthStrategyFactory {
-    private final Map<AuthProvider,  AuthStrategy<?>> strategies;
+    private final Map<AuthProvider, AuthStrategy> strategies;
 
-    public AuthStrategyFactory(final List<AuthStrategy<?>> strategyList) {
-        this.strategies = strategyList.stream().collect(Collectors.toMap(AuthStrategy::getProviderType, Function.identity()));
+    public AuthStrategyFactory(final List<AuthStrategy> strategyList) {
+        this.strategies = strategyList.stream()
+                .collect(Collectors.toMap(AuthStrategy::getProviderType, Function.identity()));
     }
 
-    @SuppressWarnings("unchecked")
-    public <T> AuthStrategy<T> resolve(final AuthProvider provider) {
-        final AuthStrategy<?> strategy = strategies.get(provider);
-        if (strategy == null) {
-            throw new IllegalArgumentException("No authentication strategy registered for provider: " + provider);
+    public AuthStrategy resolve(final AuthProvider provider) {
+        if (provider == null) {
+            throw new IllegalArgumentException("Provider cannot be null");
         }
-        return (AuthStrategy<T>) strategy;
+
+        final AuthStrategy strategy = strategies.get(provider);
+        if (strategy == null) {
+            throw new IllegalArgumentException("No strategy registered for provider: " + provider);
+        }
+
+        return strategy;
     }
 }

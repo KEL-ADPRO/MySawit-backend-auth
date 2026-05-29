@@ -6,6 +6,7 @@ import com.mysawit.mysawit_auth.model.Role;
 import com.mysawit.mysawit_auth.util.JwtUtil;
 import com.mysawit.mysawit_auth.util.TokenBlacklist;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,7 +22,7 @@ public class TokenValidationController {
 
     @GetMapping("/validate")
     public ResponseEntity<ApiResponse<TokenValidationResponse>> validate(
-            @RequestHeader(value = "Authorization", required = false) final String authHeader) {
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) final String authHeader) {
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             return ResponseEntity.ok(ApiResponse.successResponse("Token invalid",

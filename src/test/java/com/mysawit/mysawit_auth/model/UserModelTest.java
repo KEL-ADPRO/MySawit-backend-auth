@@ -192,35 +192,11 @@ public class UserModelTest {
         assertNull(user.getNomorSertifMandor());
     }
 
-    @Test
-    void setUsernameTest() {
-        admin.setUsername("atmin");
-        assertEquals("atmin", admin.getUsername());
-    }
-
-    @Test
-    void setNameTest() {
-        admin.setName("cecep");
-        assertEquals("cecep", admin.getName());
-    }
-
-    @Test
-    void setEmailTest() {
-        admin.setEmail("adminbaru@gmail.com");
-        assertEquals("adminbaru@gmail.com", admin.getEmail());
-    }
-
-    @Test
-    void setPasswordTest() {
-        admin.setPassword("newpassword");
-        assertEquals("newpassword", admin.getPassword());
-    }
-
-    @Test
-    void setRoleTest() {
-        admin.setRole(Role.MANDOR);
-        assertEquals(Role.MANDOR, admin.getRole());
-    }
+//    @Test
+//    void setUsernameTest() {
+//        admin.setUsername("atmin");
+//        assertEquals("atmin", admin.getUsername());
+//    }
 
     @Test
     void setNomorSertifMandorTest() {
@@ -229,10 +205,10 @@ public class UserModelTest {
     }
 
     @Test
-    void setIdTest() {
-        UUID newId = UUID.randomUUID();
-        admin.setId(newId);
-        assertEquals(newId, admin.getId());
+    void setMandorIdTest() {
+        final UUID id = UUID.randomUUID();
+        buruh.setMandorId(id);
+        assertEquals(id, buruh.getMandorId());
     }
 
     @Test

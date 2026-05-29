@@ -1,14 +1,17 @@
 package com.mysawit.mysawit_auth.service;
 
+import com.mysawit.mysawit_auth.dto.request.AuthRequest;
 import com.mysawit.mysawit_auth.exception.InvalidCredentialException;
 import com.mysawit.mysawit_auth.mapper.AuthResponseMapper;
+import com.mysawit.mysawit_auth.model.AuthProvider;
 import com.mysawit.mysawit_auth.model.RefreshToken;
 import com.mysawit.mysawit_auth.model.Role;
 import com.mysawit.mysawit_auth.model.User;
 import com.mysawit.mysawit_auth.repository.AuthRepository;
+import com.mysawit.mysawit_auth.service.strategy.AuthStrategy;
+import com.mysawit.mysawit_auth.service.strategy.AuthStrategyFactory;
 import com.mysawit.mysawit_auth.repository.RefreshTokenRepository;
 import com.mysawit.mysawit_auth.util.*;
-import com.mysawit.mysawit_auth.dto.request.LoginRequest;
 import com.mysawit.mysawit_auth.dto.request.RegisterRequest;
 import com.mysawit.mysawit_auth.dto.response.AuthResponse;
 import com.mysawit.mysawit_auth.validator.RegistrationValidator;
@@ -19,7 +22,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -50,10 +52,13 @@ public class AuthServiceTest {
     private AuthResponseMapper responseMapper;
 
     @Mock
-    private LoginAttemptService loginAttemptService;
+    private RefreshTokenService refreshTokenService;
 
     @Mock
-    private RefreshTokenService refreshTokenService;
+    private AuthStrategyFactory strategyFactory;
+
+    @Mock
+    private AuthStrategy passwordStrategy;
 
     @InjectMocks
     private AuthServiceImpl authService;
@@ -67,10 +72,12 @@ public class AuthServiceTest {
     private AuthResponse mandorResponse;
     private AuthResponse buruhResponse;
     private AuthResponse supirResponse;
+    private final UUID adminId =  UUID.randomUUID();
 
     @BeforeEach
     void setUp() {
         adminUser = User.builder()
+                .id(adminId)
                 .username("Admin Sawit")
                 .name("Agus")
                 .email("admin@gmail.com")
@@ -217,20 +224,15 @@ public class AuthServiceTest {
                 .role(Role.ADMIN)
                 .build();
 
-        final RefreshToken refreshToken = RefreshToken.builder().token("dummy.refresh.token").build();
-
-        when(authRepository.findByEmail("admin@gmail.com")).thenReturn(Optional.ofNullable(adminUser));
-        when(passwordHasher.matches("admin123", "hashed_admin123")).thenReturn(true);
-        when(jwtUtil.generateToken(adminUser.getId(), adminUser.getRole())).thenReturn("dummy.jwt.token");
-        when(refreshTokenService.createRefreshToken(adminUser)).thenReturn(refreshToken);
-        when(responseMapper.toResponse(any(User.class), any(), any())).thenReturn(loginResponse);
-
-        final LoginRequest request = LoginRequest.builder()
+        final AuthRequest request = AuthRequest.builder()
                 .email("admin@gmail.com")
                 .password("admin123")
                 .build();
 
-        AuthResponse response = authService.login(request);
+        doReturn(passwordStrategy).when(strategyFactory).resolve(AuthProvider.PASSWORD);
+        when(passwordStrategy.authenticate(any(AuthRequest.class))).thenReturn(loginResponse);
+
+        final AuthResponse response = authService.login(request);
 
         assertNotNull(response);
         assertEquals("dummy.jwt.token", response.getToken());
@@ -239,151 +241,8 @@ public class AuthServiceTest {
         assertEquals("admin@gmail.com", response.getEmail());
         assertEquals(Role.ADMIN, response.getRole());
 
-        verify(authRepository, times(1)).findByEmail("admin@gmail.com");
-        verify(jwtUtil, times(1)).generateToken(adminUser.getId(), adminUser.getRole());
-        verify(responseMapper).toResponse(any(User.class), eq("dummy.jwt.token"), any());
-        verify(loginAttemptService).recordSuccess("admin@gmail.com");
-        verify(loginAttemptService, never()).recordFailure(any());
-    }
-
-    @Test
-    void loginNullRequest() {
-        assertThrows(InvalidCredentialException.class, () -> authService.login(null));
-    }
-
-    @Test
-    void loginUnknownEmail() {
-        when(authRepository.findByEmail("unknownUser@gmail.com")).thenReturn( Optional.empty());
-
-        final LoginRequest request = LoginRequest.builder()
-                .email("unknownUser@gmail.com")
-                .password("unknownPassword")
-                .build();
-
-        assertThrows(InvalidCredentialException.class, () -> authService.login(request));
-
-        verify(jwtUtil, never()).generateToken(any(), any());
-        verify(responseMapper, never()).toResponse(any(), any(), any());
-        verify(loginAttemptService).recordFailure("unknownUser@gmail.com");
-        verify(loginAttemptService, never()).recordSuccess(any());
-    }
-
-    @Test
-    void loginBlankEmail() {
-        final LoginRequest request = LoginRequest.builder()
-                .email("  ")
-                .password("admin123")
-                .build();
-
-        assertThrows(InvalidCredentialException.class, () -> authService.login(request));
-
-        verify(jwtUtil, never()).generateToken(any(), any());
-        verify(responseMapper, never()).toResponse(any(), any(), any());
-    }
-
-    @Test
-    void loginNullEmail() {
-        final LoginRequest request = LoginRequest.builder()
-                .email(null)
-                .password("admin123")
-                .build();
-
-        assertThrows(InvalidCredentialException.class, () -> authService.login(request));
-
-        verify(jwtUtil, never()).generateToken(any(), any());
-        verify(responseMapper, never()).toResponse(any(), any(), any());
-    }
-
-    @Test
-    void loginBlankPassword() {
-        final LoginRequest request = LoginRequest.builder()
-                .email("admin@gmail.com")
-                .password("")
-                .build();
-
-        assertThrows(InvalidCredentialException.class, () -> authService.login(request));
-
-        verify(jwtUtil, never()).generateToken(any(), any());
-        verify(responseMapper, never()).toResponse(any(), any(), any());
-    }
-
-    @Test
-    void loginNullPassword() {
-        final LoginRequest request = LoginRequest.builder()
-                .email("admin@gmail.com")
-                .password(null)
-                .build();
-
-        assertThrows(InvalidCredentialException.class, () -> authService.login(request));
-
-        verify(jwtUtil, never()).generateToken(any(), any());
-        verify(responseMapper, never()).toResponse(any(), any(), any());
-    }
-
-    @Test
-    void loginWrongPassword() {
-        when(authRepository.findByEmail("admin@gmail.com")).thenReturn(Optional.ofNullable(adminUser));
-        when(passwordHasher.matches("wrongPassword", "hashed_admin123")).thenReturn(false);
-
-        final LoginRequest request = LoginRequest.builder()
-                .email("admin@gmail.com")
-                .password("wrongPassword")
-                .build();
-
-        assertThrows(InvalidCredentialException.class, () -> authService.login(request));
-
-        verify(jwtUtil, never()).generateToken(any(), any());
-        verify(responseMapper, never()).toResponse(any(), any(), any());
-        verify(loginAttemptService).recordFailure("admin@gmail.com");
-        verify(loginAttemptService, never()).recordSuccess(any());
-    }
-
-    @Test
-    void loginWithGoogleOnlyAccount() {
-        final User googleOnlyUser = User.builder()
-                .email("google@gmail.com")
-                .password(null)
-                .googleId("google-id-12345")
-                .role(Role.BURUH)
-                .username("google@gmail.com")
-                .name("Google User")
-                .build();
-
-        when(authRepository.findByEmail("google@gmail.com")).thenReturn(Optional.ofNullable(googleOnlyUser));
-
-        final LoginRequest request = LoginRequest.builder()
-                .email("google@gmail.com")
-                .password("somepassword")
-                .build();
-
-        assertThrows(IllegalArgumentException.class, () -> authService.login(request));
-
-        verify(jwtUtil, never()).generateToken(any(), any());
-        verify(responseMapper, never()).toResponse(any(), any(), any());
-    }
-
-    @Test
-    void loginWithNoGoogleIdAndNoPasswordThrows() {
-        final User corruptedUser = User.builder()
-                .email("broken@gmail.com")
-                .googleId(null)
-                .password(null)
-                .role(Role.BURUH)
-                .username("broken@gmail.com")
-                .name("Broken User")
-                .build();
-
-        when(authRepository.findByEmail("broken@gmail.com")).thenReturn(Optional.ofNullable(corruptedUser));
-
-        final LoginRequest request = LoginRequest.builder()
-                .email("broken@gmail.com")
-                .password("anything")
-                .build();
-
-        assertThrows(InvalidCredentialException.class, () -> authService.login(request));
-
-        verify(jwtUtil, never()).generateToken(any(), any());
-        verify(responseMapper, never()).toResponse(any(), any(), any());
+        verify(strategyFactory).resolve(AuthProvider.PASSWORD);
+        verify(passwordStrategy).authenticate(any(AuthRequest.class));
     }
 
     @Test
@@ -441,17 +300,14 @@ public class AuthServiceTest {
         final String rawToken = "old.refresh.token";
         final String newAccessToken = "new.jwt.token";
         final String newRefreshTokenValue = "new.refresh.token";
-        final UUID userId = UUID.randomUUID();
-
-        adminUser.setId(userId);
 
         final RefreshToken oldRefreshToken = RefreshToken.builder()
-                .userId(userId)
+                .userId(adminId)
                 .token(rawToken)
                 .build();
 
         final RefreshToken newRefreshToken = RefreshToken.builder()
-                .userId(userId)
+                .userId(adminId)
                 .token(newRefreshTokenValue)
                 .build();
 
@@ -463,7 +319,7 @@ public class AuthServiceTest {
                 .build();
 
         when(refreshTokenService.validateAndGet(rawToken)).thenReturn(oldRefreshToken);
-        when(authRepository.findById(userId)).thenReturn(adminUser);
+        when(authRepository.findById(adminId)).thenReturn(adminUser);
         when(refreshTokenService.createRefreshToken(adminUser)).thenReturn(newRefreshToken);
         when(jwtUtil.generateToken(adminUser.getId(), adminUser.getRole())).thenReturn(newAccessToken);
 
@@ -476,7 +332,7 @@ public class AuthServiceTest {
         assertEquals(newRefreshTokenValue, response.getRefreshToken());
 
         verify(refreshTokenService).validateAndGet(rawToken);
-        verify(authRepository).findById(userId);
+        verify(authRepository).findById(adminId);
         verify(refreshTokenRepository, never()).deleteByUserId(any());
         verify(refreshTokenService).createRefreshToken(adminUser);
         verify(jwtUtil).generateToken(adminUser.getId(), adminUser.getRole());

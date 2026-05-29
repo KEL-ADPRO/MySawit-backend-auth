@@ -8,6 +8,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Arrays;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
@@ -16,10 +17,10 @@ import static org.mockito.Mockito.when;
 public class AuthStrategyFactoryTest {
 
     @Mock
-    private AuthStrategy<Object> passwordStrategy;
+    private AuthStrategy passwordStrategy;
 
     @Mock
-    private AuthStrategy<Object> googleStrategy;
+    private AuthStrategy googleStrategy;
 
     private AuthStrategyFactory authStrategyFactory;
 
@@ -33,7 +34,7 @@ public class AuthStrategyFactoryTest {
 
     @Test
     void resolvePasswordStrategy() {
-        final AuthStrategy<Object> strategy = authStrategyFactory.resolve(AuthProvider.PASSWORD);
+        final AuthStrategy strategy = authStrategyFactory.resolve(AuthProvider.PASSWORD);
 
         assertNotNull(strategy);
         assertEquals(passwordStrategy, strategy);
@@ -41,7 +42,7 @@ public class AuthStrategyFactoryTest {
 
     @Test
     void resolveGoogleStrategy() {
-        final AuthStrategy<Object> strategy = authStrategyFactory.resolve(AuthProvider.GOOGLE);
+        final AuthStrategy strategy = authStrategyFactory.resolve(AuthProvider.GOOGLE);
 
         assertNotNull(strategy);
         assertEquals(googleStrategy, strategy);
@@ -49,8 +50,7 @@ public class AuthStrategyFactoryTest {
 
     @Test
     void resolveUnknownStrategy() {
-        // Create a factory with only password strategy
-        AuthStrategyFactory limitedFactory = new AuthStrategyFactory(Arrays.asList(passwordStrategy));
+        AuthStrategyFactory limitedFactory = new AuthStrategyFactory(List.of(passwordStrategy));
 
         assertThrows(IllegalArgumentException.class, () -> limitedFactory.resolve(AuthProvider.GOOGLE));
     }

@@ -1,11 +1,9 @@
 package com.mysawit.mysawit_auth.controller;
 
-import com.mysawit.mysawit_auth.dto.request.GoogleAuthRequest;
+import com.mysawit.mysawit_auth.dto.request.AuthRequest;
 import com.mysawit.mysawit_auth.dto.response.ApiResponse;
 import com.mysawit.mysawit_auth.dto.response.AuthResponse;
-import com.mysawit.mysawit_auth.model.AuthProvider;
-import com.mysawit.mysawit_auth.service.strategy.AuthStrategy;
-import com.mysawit.mysawit_auth.service.strategy.AuthStrategyFactory;
+import com.mysawit.mysawit_auth.service.GoogleAuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,13 +16,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/auth/google")
 @RequiredArgsConstructor
 public class GoogleAuthController {
-    private final AuthStrategyFactory strategyFactory;
+    private final GoogleAuthService googleAuthService;
 
     @PostMapping
     public ResponseEntity<ApiResponse<AuthResponse>> loginOrRegister(
-            @Valid @RequestBody final GoogleAuthRequest request) {
-        final AuthStrategy<GoogleAuthRequest> strategy = strategyFactory.resolve(AuthProvider.GOOGLE);
-        final AuthResponse response = strategy.authenticate(request);
+            @Valid @RequestBody final AuthRequest request) {
+        final AuthResponse response = googleAuthService.loginOrRegister(request);
         return ResponseEntity.ok(ApiResponse.successResponse("Google authentication successful", response));
     }
 }

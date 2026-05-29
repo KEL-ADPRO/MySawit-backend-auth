@@ -1,7 +1,7 @@
 package com.mysawit.mysawit_auth.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mysawit.mysawit_auth.dto.request.LoginRequest;
+import com.mysawit.mysawit_auth.dto.request.AuthRequest;
 import com.mysawit.mysawit_auth.dto.request.RefreshRequest;
 import com.mysawit.mysawit_auth.dto.request.RegisterRequest;
 import com.mysawit.mysawit_auth.dto.response.AuthResponse;
@@ -9,7 +9,6 @@ import com.mysawit.mysawit_auth.exception.EmailAlreadyExistsException;
 import com.mysawit.mysawit_auth.exception.InvalidCredentialException;
 import com.mysawit.mysawit_auth.exception.MandorSertifMissingException;
 import com.mysawit.mysawit_auth.handler.GlobalExceptionHandler;
-import com.mysawit.mysawit_auth.model.AuthProvider;
 import com.mysawit.mysawit_auth.model.Role;
 import com.mysawit.mysawit_auth.service.AuthService;
 import com.mysawit.mysawit_auth.service.strategy.AuthStrategy;
@@ -42,7 +41,7 @@ public class AuthControllerTest {
         private AuthStrategyFactory strategyFactory;
 
         @Mock
-        private AuthStrategy<LoginRequest> strategy;
+        private AuthStrategy strategy;
 
         @Mock
         private CookieUtil cookieUtil;
@@ -52,7 +51,7 @@ public class AuthControllerTest {
 
         private MockMvc mockMvc;
         private final ObjectMapper objectMapper = new ObjectMapper();
-        private LoginRequest validLoginRequest;
+        private AuthRequest validLoginRequest;
         private AuthResponse loginResponse;
 
         private RegisterRequest adminRequest;
@@ -150,7 +149,10 @@ public class AuthControllerTest {
                                 .role(Role.ADMIN)
                                 .build();
 
-                validLoginRequest = new LoginRequest("admin@gmail.com", "admin123");
+                validLoginRequest = AuthRequest.builder()
+                        .email("admin@gmail.com")
+                        .password("Admin_12345")
+                        .build();
         }
 
         @Test
@@ -220,8 +222,7 @@ public class AuthControllerTest {
 
         @Test
         void loginSuccess() throws Exception {
-                doReturn(strategy).when(strategyFactory).resolve(AuthProvider.PASSWORD);
-                when(strategy.authenticate(any(LoginRequest.class))).thenReturn(loginResponse);
+                when(authService.login(any(AuthRequest.class))).thenReturn(loginResponse);
 
                 String cookie = "auth_token=dummy.jwt.token; Path=/; HttpOnly; SameSite=Strict";
                 when(cookieUtil.addAuthCookie("dummy.jwt.token")).thenReturn(cookie);
@@ -235,8 +236,7 @@ public class AuthControllerTest {
                                 .andExpect(jsonPath("$.data.token").value("dummy.jwt.token"))
                                 .andExpect(header().string(HttpHeaders.SET_COOKIE, cookie));
 
-                verify(strategyFactory, times(1)).resolve(AuthProvider.PASSWORD);
-                verify(strategy, times(1)).authenticate(any(LoginRequest.class));
+                verify(authService, times(1)).login(any(AuthRequest.class));
                 verify(cookieUtil, times(1)).addAuthCookie("dummy.jwt.token");
         }
 
@@ -254,13 +254,12 @@ public class AuthControllerTest {
 
         @Test
         void registerEmailAlreadyExists() throws Exception {
-                when(authService.register(any(RegisterRequest.class)))
-                                .thenThrow(new EmailAlreadyExistsException(adminRequest.getEmail()));
+                when(authService.register(any(RegisterRequest.class))).thenThrow(new EmailAlreadyExistsException(adminRequest.getEmail()));
 
                 mockMvc.perform(post("/api/auth/register")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(adminRequest)))
-                                .andExpect(status().isConflict())
+                                .andExpect(status().isBadRequest())
                                 .andExpect(jsonPath("$.success").value(false))
                                 .andExpect(jsonPath("$.message").value("Email admin@gmail.com is already registered"));
         }
@@ -274,14 +273,12 @@ public class AuthControllerTest {
                                 .content(objectMapper.writeValueAsString(adminRequest)))
                                 .andExpect(status().isUnprocessableEntity())
                                 .andExpect(jsonPath("$.success").value(false))
-                                .andExpect(jsonPath("$.message")
-                                                .value("Nomor sertifikasi mandor is required for MANDOR role"));
+                                .andExpect(jsonPath("$.message").value("Nomor sertifikasi mandor is required for MANDOR role"));
         }
 
         @Test
         void loginInvalidCredentials() throws Exception {
-                doReturn(strategy).when(strategyFactory).resolve(AuthProvider.PASSWORD);
-                when(strategy.authenticate(any(LoginRequest.class))).thenThrow(new InvalidCredentialException());
+                when(authService.login(any(AuthRequest.class))).thenThrow(new InvalidCredentialException());
 
                 mockMvc.perform(post("/api/auth/login")
                                 .contentType(MediaType.APPLICATION_JSON)
@@ -290,8 +287,7 @@ public class AuthControllerTest {
                                 .andExpect(jsonPath("$.success").value(false))
                                 .andExpect(jsonPath("$.message").value("Invalid credentials"));
 
-                verify(strategyFactory, times(1)).resolve(AuthProvider.PASSWORD);
-                verify(strategy, times(1)).authenticate(any(LoginRequest.class));
+                verify(authService, times(1)).login(any(AuthRequest.class));
         }
 
         @Test
@@ -351,8 +347,7 @@ public class AuthControllerTest {
                 when(authService.getLoggedInUser("cookie.jwt.token")).thenReturn(adminResponse);
 
                 mockMvc.perform(get("/api/auth/me")
-                                .cookie(new jakarta.servlet.http.Cookie(CookieUtil.AUTH_COOKIE_NAME,
-                                                "cookie.jwt.token")))
+                                .cookie(new jakarta.servlet.http.Cookie(CookieUtil.AUTH_COOKIE_NAME, "cookie.jwt.token")))
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.success").value(true))
                                 .andExpect(jsonPath("$.message").value("User retrieved"))
@@ -367,8 +362,7 @@ public class AuthControllerTest {
 
                 mockMvc.perform(get("/api/auth/me")
                                 .header("Authorization", "Bearer header.jwt.token")
-                                .cookie(new jakarta.servlet.http.Cookie(CookieUtil.AUTH_COOKIE_NAME,
-                                                "cookie.jwt.token")))
+                                .cookie(new jakarta.servlet.http.Cookie(CookieUtil.AUTH_COOKIE_NAME, "cookie.jwt.token")))
                                 .andExpect(status().isOk());
 
                 verify(authService).getLoggedInUser("header.jwt.token");

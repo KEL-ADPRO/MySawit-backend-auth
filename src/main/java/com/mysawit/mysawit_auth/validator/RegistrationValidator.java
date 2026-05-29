@@ -1,9 +1,6 @@
 package com.mysawit.mysawit_auth.validator;
 
-import com.mysawit.mysawit_auth.exception.EmailAlreadyExistsException;
-import com.mysawit.mysawit_auth.exception.InvalidCredentialException;
-import com.mysawit.mysawit_auth.exception.MandorSertifMissingException;
-import com.mysawit.mysawit_auth.exception.WeakPasswordException;
+import com.mysawit.mysawit_auth.exception.*;
 import com.mysawit.mysawit_auth.model.Role;
 import com.mysawit.mysawit_auth.repository.AuthRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +16,7 @@ public class RegistrationValidator {
     private final AuthRepository authRepository;
 
     public void validateRequiredFields(final String username, final String name, final String email, final Role role) {
-        if (isBlank(username) || isBlank(name) || isBlank(email) || role == null) {
+        if (isBlank(username) || isBlank(name) || isBlank(email) || role == null || role == Role.ADMIN) {
             throw new InvalidCredentialException();
         }
     }
@@ -57,6 +54,12 @@ public class RegistrationValidator {
     public void assertEmailUnique(final String email) {
         if (authRepository.findByEmail(email).isPresent()) {
             throw new EmailAlreadyExistsException(email);
+        }
+    }
+
+    public void assertUsernameUnique(final String username) {
+        if (authRepository.findByUsername(username) != null) {
+            throw new UsernameAlreadyExistsException(username);
         }
     }
 

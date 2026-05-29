@@ -13,9 +13,6 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AssignRequest {
-    @NotNull(message = "Buruh ID is required")
-    private UUID buruhId;
-
     @NotNull(message = "Mandor ID is required")
     private UUID mandorId;
 }

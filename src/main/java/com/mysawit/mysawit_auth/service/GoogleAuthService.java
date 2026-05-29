@@ -1,8 +1,8 @@
 package com.mysawit.mysawit_auth.service;
 
+import com.mysawit.mysawit_auth.dto.request.AuthRequest;
 import com.mysawit.mysawit_auth.dto.response.AuthResponse;
-import com.mysawit.mysawit_auth.dto.request.GoogleAuthRequest;
 
 public interface GoogleAuthService {
-    AuthResponse loginOrRegister(GoogleAuthRequest request);
+    AuthResponse loginOrRegister(AuthRequest request);
 }

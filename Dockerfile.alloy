@@ -1,0 +1,3 @@
+FROM grafana/alloy:latest
+COPY config.alloy /etc/alloy/config.alloy
+ENTRYPOINT ["alloy", "run", "--stability.level=public-preview", "/etc/alloy/config.alloy"]
